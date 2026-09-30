@@ -1,0 +1,45 @@
+{
+  "status": "success",
+  "data": {
+    "series": {
+      "id": 81797,
+      "name": "ワンピース",
+      "slug": "one-piece",
+      "image": "https://artworks.thetvdb.com/banners/series/81797/posters/5eec847d52a04.jpg",
+      "nameTranslations": ["eng", "jpn"],
+      "overviewTranslations": ["eng", "jpn"],
+      "aliases": [
+        {"language": "eng", "name": "One Piece (1998)"}
+      ],
+      "firstAired": "1999-10-20",
+      "lastAired": "2026-09-27",
+      "nextAired": "2026-09-27",
+      "score": 3236299,
+      "status": {
+        "id": 1,
+        "name": "Continuing",
+        "recordType": "series",
+        "keepUpdated": true
+      },
+      "originalCountry": "jpn",
+      "originalLanguage": "jpn",
+      "defaultSeasonType": 1,
+      "isOrderRandomized": false,
+      "lastUpdated": "2026-09-25 16:13:37",
+      "averageRuntime": 25,
+      "episodes": null,
+      "overview": "かつてこの世の全てを手に入れた海賊王ゴールド・ロジャーが遺した「ひとつなぎの大秘宝（ワンピース）」をめぐり、幾多の海賊たちが覇権を賭けて争う大海賊時代。\r\n\r\nそんな時代に生まれ、幼い頃の命の恩人である海賊赤髪のシャンクスに憧れる少年モンキー・D・ルフィは、「ゴムゴムの実」という悪魔の実を食べてゴム人間となり、その副作用で泳げない体になりながらも、海賊王を目指して仲間と共に冒険と戦いを繰り広げていく。",
+      "year": "1999"
+    },
+    "episodes": [
+      {"id": 619671, "seriesId": 81797, "name": "ONE PIECE 倒せ!海賊ギャンザック", "aired": "1998-07-26", "runtime": 25, "nameTranslations": ["eng", "jpn"], "overview": "波間に漂う小舟が一艘…。そこに、やにわにドッカーンと砲弾が襲う！！おかげで小舟はこっぱみじんの大パニック。続いて襲ってきたのは、ナント首長竜！？ウワップ、グェップ…ガボガボ…、ついに海の藻屑となりました―。ＮＯ！流れ着いたのが、これまた大変な…。ルフィ、ゾロ、ナミの三人がスゲ～悪い海賊相手に大活躍！！幻のジャンプ・スーパー・アニメツアーの作品。", "overviewTranslations": ["eng", "jpn"], "image": "https://artworks.thetvdb.com/banners/episodes/81797/619671.jpg", "imageType": 11, "isMovie": 0, "seasons": null, "number": 1, "absoluteNumber": 0, "seasonNumber": 0, "lastUpdated": "2025-05-27 12:28:53", "finaleType": null, "airsBeforeSeason": 2, "airsBeforeEpisode": 1, "year": "1998"}
+    ]
+  },
+  "links": {
+    "prev": "https://api4.thetvdb.com/v4/series/81797/episodes/default?page=0",
+    "self": "https://api4.thetvdb.com/v4/series/81797/episodes/default?page=1",
+    "next": null,
+    "total_items": 3,
+    "page_size": 500
+  }
+}

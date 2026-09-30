@@ -1,0 +1,46 @@
+{
+  "status": "success",
+  "data": {
+    "id": 412417,
+    "name": "Mayumi Tanaka",
+    "image": "https://artworks.thetvdb.com/banners/person/412417/primary.jpg",
+    "nameTranslations": ["eng", "jpn", "zhtw", "spa"],
+    "overviewTranslations": ["jpn", "spa"],
+    "aliases": [
+      {"language": "eng", "name": "Tanaka Mayumi"},
+      {"language": "jpn", "name": "たなか まゆみ"}
+    ],
+    "lastUpdated": "2024-08-18 07:14:30",
+    "birth": "1955-01-15",
+    "death": null,
+    "score": 0,
+    "birthPlace": "Tokyo, Japan",
+    "remoteIds": [
+      {"id": "nm0849028", "type": 16, "sourceName": "IMDB"},
+      {"id": "65510", "type": 15, "sourceName": "TheMovieDB.com"}
+    ],
+    "gender": 2,
+    "characters": [
+      {"id": 65111900, "name": "Monkey D. Luffy", "peopleId": 412417, "seriesId": 81797, "series": {"name": "ワンピース", "image": "https://artworks.thetvdb.com/banners/series/81797/posters/5eec847d52a04.jpg", "year": "1999"}, "movie": null, "movieId": null, "episodeId": null, "type": 3, "image": "https://artworks.thetvdb.com/banners/person/412417/65afe1871bc9d.jpg", "sort": 1, "isFeatured": true, "url": "412417-mayumi-tanaka", "nameTranslations": [], "overviewTranslations": [], "aliases": [], "peopleType": "Actor", "personName": "Mayumi Tanaka", "tagOptions": null, "personImgURL": "/banners/person/412417/primary.jpg"}
+    ],
+    "biographies": [
+      {"biography": "", "language": "eng"}
+    ],
+    "awards": null,
+    "tagOptions": [],
+    "translations": {
+      "nameTranslations": [
+        {"name": "Mayumi Tanaka", "language": "eng"},
+        {"name": "田中真弓", "overview": "田中 真弓は、日本の声優、女優、ナレーター。日本芸術専門学校特別講師。本名：阿部 真弓。東京都渋谷区代々木上原、杉並区浜田山出身。青二プロダクション所属。", "language": "jpn"},
+        {"name": "田中真弓", "language": "zhtw"},
+        {"name": "Mayumi Tanaka", "overview": "Mayumi Tanaka (15 de enero de 1955) es una seiyū afiliada a la agencia Aoni Production, actualmente trabaja como productora en Ohhashi Kyosen Jimusho.", "language": "spa"}
+      ],
+      "overviewTranslations": [
+        {"name": "田中真弓", "overview": "田中 真弓は、日本の声優、女優、ナレーター。日本芸術専門学校特別講師。本名：阿部 真弓。東京都渋谷区代々木上原、杉並区浜田山出身。青二プロダクション所属。", "language": "jpn"},
+        {"name": "Mayumi Tanaka", "overview": "Mayumi Tanaka (15 de enero de 1955) es una seiyū afiliada a la agencia Aoni Production, actualmente trabaja como productora en Ohhashi Kyosen Jimusho.", "language": "spa"}
+      ],
+      "aliases": ["Tanaka Mayumi", "たなか まゆみ"]
+    },
+    "slug": "412417-mayumi-tanaka"
+  }
+}

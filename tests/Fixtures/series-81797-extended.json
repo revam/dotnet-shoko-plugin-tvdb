@@ -1,0 +1,185 @@
+{
+  "status": "success",
+  "data": {
+    "id": 81797,
+    "name": "ワンピース",
+    "slug": "one-piece",
+    "image": "https://artworks.thetvdb.com/banners/series/81797/posters/5eec847d52a04.jpg",
+    "nameTranslations": ["deu", "eng", "ita", "jpn"],
+    "overviewTranslations": ["deu", "eng", "ita", "jpn"],
+    "aliases": [
+      {"language": "jpn", "name": "Wan Pisu"},
+      {"language": "ita", "name": "One Piece - All'arrembaggio!"},
+      {"language": "ita", "name": "All'arrembaggio!"},
+      {"language": "eng", "name": "One Piece (1998)"},
+      {"language": "eng", "name": "One Piece Log: Fish-Man Island Saga"},
+      {"language": "eng", "name": "One Piece: Egghead Island (1089-Current)"}
+    ],
+    "firstAired": "1999-10-20",
+    "lastAired": "2026-09-27",
+    "nextAired": "2026-09-27",
+    "score": 3236299,
+    "status": {
+      "id": 1,
+      "name": "Continuing",
+      "recordType": "series",
+      "keepUpdated": true
+    },
+    "originalCountry": "jpn",
+    "originalLanguage": "jpn",
+    "defaultSeasonType": 1,
+    "isOrderRandomized": false,
+    "lastUpdated": "2026-09-25 16:13:37",
+    "averageRuntime": 25,
+    "episodes": [],
+    "overview": "かつてこの世の全てを手に入れた海賊王ゴールド・ロジャーが遺した「ひとつなぎの大秘宝（ワンピース）」をめぐり、幾多の海賊たちが覇権を賭けて争う大海賊時代。",
+    "year": "1999",
+    "artworks": [
+      {"id": 1, "image": "https://artworks.thetvdb.com/banners/series/81797/posters/5eec847d52a04.jpg", "thumbnail": null, "language": "jpn", "type": 2, "score": 100010, "width": 680, "height": 1000, "includesText": false, "thumbnailWidth": 0, "thumbnailHeight": 0, "updatedAt": 0, "status": {"id": 0, "name": null}, "tagOptions": null},
+      {"id": 2, "image": "https://artworks.thetvdb.com/banners/v4/series/81797/posters/63ab23cde990b.jpg", "thumbnail": null, "language": null, "type": 2, "score": 100002, "width": 680, "height": 1000, "includesText": false, "thumbnailWidth": 0, "thumbnailHeight": 0, "updatedAt": 0, "status": {"id": 0, "name": null}, "tagOptions": null},
+      {"id": 3, "image": "https://artworks.thetvdb.com/banners/v4/series/81797/backgrounds/616009a8bd688.jpg", "thumbnail": null, "language": null, "type": 3, "score": 100036, "width": 1920, "height": 1080, "includesText": true, "thumbnailWidth": 0, "thumbnailHeight": 0, "updatedAt": 0, "status": {"id": 0, "name": null}, "tagOptions": null},
+      {"id": 4, "image": "https://artworks.thetvdb.com/banners/graphical/81797-g.jpg", "thumbnail": null, "language": "eng", "type": 1, "score": 100000, "width": 758, "height": 140, "includesText": false, "thumbnailWidth": 0, "thumbnailHeight": 0, "updatedAt": 0, "status": {"id": 0, "name": null}, "tagOptions": null},
+      {"id": 5, "image": "https://artworks.thetvdb.com/banners/v4/series/81797/clearlogo/611b6189d88b6.png", "thumbnail": null, "language": "eng", "type": 23, "score": 1, "width": 800, "height": 310, "includesText": true, "thumbnailWidth": 0, "thumbnailHeight": 0, "updatedAt": 0, "status": {"id": 0, "name": null}, "tagOptions": null},
+      {"id": 6, "image": "https://artworks.thetvdb.com/banners/v4/series/81797/clearart/611b619a94901.png", "thumbnail": null, "language": "eng", "type": 22, "score": 100000, "width": 1000, "height": 562, "includesText": false, "thumbnailWidth": 0, "thumbnailHeight": 0, "updatedAt": 0, "status": {"id": 0, "name": null}, "tagOptions": null},
+      {"id": 7, "image": "https://artworks.thetvdb.com/banners/seasons/81797-1-2.jpg", "thumbnail": null, "language": "eng", "type": 7, "score": 100000, "width": 400, "height": 578, "includesText": false, "thumbnailWidth": 0, "thumbnailHeight": 0, "updatedAt": 0, "seasonId": 31893, "status": {"id": 0, "name": null}, "tagOptions": null},
+      {"id": 8, "image": "https://images.example.com/posters/elsewhere.jpg", "thumbnail": null, "language": null, "type": 2, "score": 100000, "width": 680, "height": 1000, "includesText": false, "thumbnailWidth": 0, "thumbnailHeight": 0, "updatedAt": 0, "status": {"id": 0, "name": null}, "tagOptions": null},
+      {"id": 9, "image": "https://artworks.thetvdb.com/banners/images/missing/series.jpg", "thumbnail": null, "language": null, "type": 3, "score": 100000, "width": 1920, "height": 1080, "includesText": false, "thumbnailWidth": 0, "thumbnailHeight": 0, "updatedAt": 0, "status": {"id": 0, "name": null}, "tagOptions": null}
+    ],
+    "companies": [
+      {"id": 111, "name": "Fuji TV", "slug": "fuji-tv", "nameTranslations": ["eng", "jpn", "pt"], "overviewTranslations": ["pt"], "aliases": [], "country": "jpn", "primaryCompanyType": 1, "activeDate": null, "inactiveDate": null, "companyType": {"companyTypeId": 1, "companyTypeName": "Network"}, "parentCompany": {"id": null, "name": null, "relation": {"id": null, "typeName": null}}, "tagOptions": null},
+      {"id": 43210, "name": "Toei Animation", "slug": "toei-animation", "nameTranslations": ["eng", "jpn"], "overviewTranslations": ["eng"], "aliases": [], "country": "jpn", "primaryCompanyType": 2, "activeDate": null, "inactiveDate": null, "companyType": {"companyTypeId": 2, "companyTypeName": "Studio"}, "parentCompany": {"id": null, "name": null, "relation": {"id": null, "typeName": null}}, "tagOptions": null},
+      {"id": 43210, "name": "Toei Animation", "slug": "toei-animation", "nameTranslations": ["eng", "jpn"], "overviewTranslations": ["eng"], "aliases": [], "country": "jpn", "primaryCompanyType": 2, "activeDate": null, "inactiveDate": null, "companyType": {"companyTypeId": 2, "companyTypeName": "Studio"}, "parentCompany": {"id": null, "name": null, "relation": {"id": null, "typeName": null}}, "tagOptions": null},
+      {"id": 698, "name": "Adult Swim", "slug": "adult-swim", "nameTranslations": ["eng"], "overviewTranslations": [], "aliases": [{"language": "eng", "name": "[adult swim]"}], "country": "usa", "primaryCompanyType": 1, "activeDate": null, "inactiveDate": null, "companyType": {"companyTypeId": 1, "companyTypeName": "Network"}, "parentCompany": {"id": null, "name": null, "relation": {"id": null, "typeName": null}}, "tagOptions": null},
+      {"id": 53, "name": "Shueisha", "slug": "shueisha", "nameTranslations": ["eng", "jpn"], "overviewTranslations": [], "aliases": [], "country": "jpn", "primaryCompanyType": 3, "activeDate": null, "inactiveDate": null, "companyType": {"companyTypeId": 3, "companyTypeName": "Production Company"}, "parentCompany": {"id": null, "name": null, "relation": {"id": null, "typeName": null}}, "tagOptions": null}
+    ],
+    "originalNetwork": {
+      "id": 111,
+      "name": "Fuji TV",
+      "slug": "fuji-tv",
+      "nameTranslations": ["eng", "jpn", "pt"],
+      "overviewTranslations": ["pt"],
+      "aliases": [],
+      "country": "jpn",
+      "primaryCompanyType": 1,
+      "activeDate": null,
+      "inactiveDate": null,
+      "companyType": {
+        "companyTypeId": 1,
+        "companyTypeName": "Network"
+      },
+      "parentCompany": {
+        "id": null,
+        "name": null,
+        "relation": {
+          "id": null,
+          "typeName": null
+        }
+      },
+      "tagOptions": null
+    },
+    "latestNetwork": {
+      "id": 111,
+      "name": "Fuji TV",
+      "slug": "fuji-tv",
+      "nameTranslations": ["eng", "jpn", "pt"],
+      "overviewTranslations": ["pt"],
+      "aliases": [],
+      "country": "jpn",
+      "primaryCompanyType": 1,
+      "activeDate": null,
+      "inactiveDate": null,
+      "companyType": {
+        "companyTypeId": 1,
+        "companyTypeName": "Network"
+      },
+      "parentCompany": {
+        "id": null,
+        "name": null,
+        "relation": {
+          "id": null,
+          "typeName": null
+        }
+      },
+      "tagOptions": null
+    },
+    "genres": [
+      {"id": 19, "name": "Action", "slug": "action"},
+      {"id": 27, "name": "Anime", "slug": "anime"}
+    ],
+    "trailers": [],
+    "lists": [],
+    "remoteIds": [
+      {"id": "10.5240/22D4-5D11-56CE-C31A-CA71-X", "type": 13, "sourceName": "EIDR"},
+      {"id": "tt0388629", "type": 2, "sourceName": "IMDB"},
+      {"id": "37854", "type": 12, "sourceName": "TheMovieDB.com"},
+      {"id": "1505", "type": 19, "sourceName": "TV Maze"},
+      {"id": "OPcom_info", "type": 6, "sourceName": "X (Twitter)"},
+      {"id": "https://www.toei-anim.co.jp/tv/onep/", "type": 4, "sourceName": "Official Website"},
+      {"id": "12345", "type": 99, "sourceName": "Somewhere Unknown"}
+    ],
+    "characters": [
+      {"id": 65111900, "name": "Monkey D. Luffy", "peopleId": 412417, "seriesId": 81797, "series": null, "movie": null, "movieId": null, "episodeId": null, "type": 3, "image": "https://artworks.thetvdb.com/banners/person/412417/65afe1871bc9d.jpg", "sort": 1, "isFeatured": true, "url": "https://thetvdb.com/people/412417-mayumi-tanaka", "nameTranslations": null, "overviewTranslations": null, "aliases": null, "peopleType": "Actor", "personName": "Mayumi Tanaka", "tagOptions": null, "personImgURL": "https://artworks.thetvdb.com/banners/person/412417/primary.jpg"},
+      {"id": 7002, "name": "Roronoa Zoro", "peopleId": 602, "seriesId": 81797, "series": null, "movie": null, "movieId": null, "episodeId": null, "type": 3, "image": null, "sort": 2, "isFeatured": false, "url": "https://thetvdb.com/people/602-kazuya-nakai", "nameTranslations": null, "overviewTranslations": null, "aliases": null, "peopleType": "Actor", "personName": "Kazuya Nakai", "tagOptions": null, "personImgURL": null},
+      {"id": 7003, "name": "Guest Pirate", "peopleId": 603, "seriesId": 81797, "series": null, "movie": null, "movieId": null, "episodeId": 361887, "type": 4, "image": null, "sort": 0, "isFeatured": false, "url": "https://thetvdb.com/people/603-someone-else", "nameTranslations": null, "overviewTranslations": null, "aliases": null, "peopleType": "Guest Star", "personName": "Someone Else", "tagOptions": null, "personImgURL": null},
+      {"id": 7004, "name": null, "peopleId": 604, "seriesId": 81797, "series": null, "movie": null, "movieId": null, "episodeId": null, "type": 6, "image": null, "sort": 3, "isFeatured": false, "url": "https://thetvdb.com/people/604-eiichiro-oda", "nameTranslations": null, "overviewTranslations": null, "aliases": null, "peopleType": "Creator", "personName": "Eiichiro Oda", "tagOptions": null, "personImgURL": null},
+      {"id": 7005, "name": null, "peopleId": 605, "seriesId": 81797, "series": null, "movie": null, "movieId": null, "episodeId": null, "type": 1, "image": null, "sort": 4, "isFeatured": false, "url": "https://thetvdb.com/people/605-konosuke-uda", "nameTranslations": null, "overviewTranslations": null, "aliases": null, "peopleType": "Director", "personName": "Konosuke Uda", "tagOptions": null, "personImgURL": null},
+      {"id": 7006, "name": null, "peopleId": 604, "seriesId": 81797, "series": null, "movie": null, "movieId": null, "episodeId": null, "type": 6, "image": null, "sort": 5, "isFeatured": false, "url": "https://thetvdb.com/people/604-eiichiro-oda", "nameTranslations": null, "overviewTranslations": null, "aliases": null, "peopleType": "Creator", "personName": "Eiichiro Oda", "tagOptions": null, "personImgURL": null}
+    ],
+    "airsDays": {
+      "sunday": true,
+      "monday": false,
+      "tuesday": false,
+      "wednesday": false,
+      "thursday": false,
+      "friday": false,
+      "saturday": false
+    },
+    "airsTime": "23:15",
+    "seasons": [
+      {"id": 31892, "seriesId": 81797, "type": {"id": 1, "name": "Aired Order", "type": "official", "alternateName": null}, "number": 0, "nameTranslations": [], "overviewTranslations": [], "image": "https://artworks.thetvdb.com/banners/seasons/81797-0-3.jpg", "imageType": 7, "companies": {"studio": null, "network": null, "production": null, "distributor": null, "special_effects": null}, "lastUpdated": "2025-10-30 03:18:12"},
+      {"id": 31893, "seriesId": 81797, "type": {"id": 1, "name": "Aired Order", "type": "official", "alternateName": null}, "number": 1, "nameTranslations": ["deu,eng,spa,pt,fra,ita,tur,ind"], "overviewTranslations": [], "image": "https://artworks.thetvdb.com/banners/seasons/81797-1-3.jpg", "imageType": 7, "companies": {"studio": null, "network": null, "production": null, "distributor": null, "special_effects": null}, "lastUpdated": "2025-10-30 03:18:12"},
+      {"id": 31895, "seriesId": 81797, "type": {"id": 1, "name": "Aired Order", "type": "official", "alternateName": null}, "number": 2, "nameTranslations": [], "overviewTranslations": [], "image": null, "imageType": null, "companies": {"studio": null, "network": null, "production": null, "distributor": null, "special_effects": null}, "lastUpdated": "2025-10-30 03:18:12"},
+      {"id": 1785749, "seriesId": 81797, "type": {"id": 3, "name": "Absolute Order", "type": "absolute", "alternateName": null}, "number": 1, "nameTranslations": [], "overviewTranslations": [], "image": null, "imageType": null, "companies": {"studio": null, "network": null, "production": null, "distributor": null, "special_effects": null}, "lastUpdated": "2025-10-30 03:18:12"},
+      {"id": 1785763, "seriesId": 81797, "type": {"id": 2, "name": "DVD Order", "type": "dvd", "alternateName": null}, "number": 1, "nameTranslations": [], "overviewTranslations": [], "image": "https://artworks.thetvdb.com/banners/seasons/79424-1.jpg", "imageType": 7, "companies": {"studio": null, "network": null, "production": null, "distributor": null, "special_effects": null}, "lastUpdated": "2025-10-30 03:18:12"},
+      {"id": 1785751, "seriesId": 81797, "type": {"id": 2, "name": "DVD Order", "type": "dvd", "alternateName": null}, "number": 2, "nameTranslations": [], "overviewTranslations": [], "image": null, "imageType": null, "companies": {"studio": null, "network": null, "production": null, "distributor": null, "special_effects": null}, "lastUpdated": "2025-10-30 03:18:12"}
+    ],
+    "translations": {
+      "nameTranslations": [
+        {"name": "One Piece", "language": "deu"},
+        {"name": "One Piece", "language": "eng"},
+        {"name": "One Piece", "language": "ita"},
+        {"name": "ワンピース", "language": "jpn", "isPrimary": true},
+        {"name": "Wan Pisu", "isAlias": true, "language": "jpn"},
+        {"name": "One Piece - All'arrembaggio!", "isAlias": true, "language": "ita"},
+        {"name": "All'arrembaggio!", "isAlias": true, "language": "ita"},
+        {"name": "One Piece (1998)", "isAlias": true, "language": "eng"},
+        {"name": "One Piece Log: Fish-Man Island Saga", "isAlias": true, "language": "eng"},
+        {"name": "One Piece: Egghead Island (1089-Current)", "isAlias": true, "language": "eng"}
+      ],
+      "overviewTranslations": [
+        {"overview": "Der mächtigste und gefürchtetste Piratenkönig aller Zeiten, Gold Roger, war bekannt dafür, die wertvollsten Schätze der Welt zu besitzen. Das Versteck dieser begehrten Kostbarkeiten, genannt \"One Piece\", hat er jedoch bis zu seinem Tode nicht verraten. Seitdem fahren viele Abenteurer zur See, um Hinweise auf den Verbleib von \"One Piece\" zu sammeln.", "language": "deu"},
+        {"overview": "The adventures of Monkey D. Luffy and his pirate crew in order to find the greatest treasure ever left by the legendary Pirate, Gold Roger. The famous mystery treasure named \"One Piece\".", "language": "eng"},
+        {"overview": "Monkey D. Rufy è un giovane pirata sognatore che da piccolo ha inavvertitamente mangiato il frutto del diavolo Gom Gom che lo rende un \"uomo di gomma\", permettendogli di allungarsi e deformarsi a piacimento, a scapito, però, della capacità di nuotare. L'obiettivo che lo ha spinto in mare è quello ambizioso di diventare il Re dei pirati. Dovrà, dunque, ritrovare il leggendario \"One Piece\", il magnifico tesoro lasciato dal mitico pirata Gol D. Roger probabilmente sull'isola di Raftel, alla fine della Rotta Maggiore, mai ritrovato e sogno di ogni pirata.\r\nNella sua avventura, Rufy riunirà intorno a lui una ciurma e si troverà in mezzo a situazioni bizzarre e stravaganti, tanto almeno quanto lo sono i personaggi, amici o nemici, presenti nell'universo che lo circonda, che raggiungono spesso livelli assurdi e grotteschi e che donano all'opera un'atmosfera surreale e divertente.", "language": "ita"},
+        {"overview": "かつてこの世の全てを手に入れた海賊王ゴールド・ロジャーが遺した「ひとつなぎの大秘宝（ワンピース）」をめぐり、幾多の海賊たちが覇権を賭けて争う大海賊時代。", "language": "jpn", "isPrimary": true}
+      ],
+      "aliases": ["Wan Pisu", "One Piece - All'arrembaggio!", "All'arrembaggio!", "One Piece (1998)", "One Piece Log: Fish-Man Island Saga", "One Piece: Egghead Island (1089-Current)"]
+    },
+    "tags": [
+      {"id": 63, "tag": 3, "tagName": "TV Type or Format", "name": "Story-based Drama", "helpText": "Drama series where you must watch all episodes in order. Ex: Game of Thrones, The Walking Dead, Killing Eve"}
+    ],
+    "contentRatings": [
+      {"id": 26, "name": "14", "country": "bra", "description": "Suitable for viewers over the age of 14", "contentType": "", "order": 0, "fullname": null},
+      {"id": 218, "name": "12", "country": "esp", "description": "Not recommended for viewers under the age of 12", "contentType": "", "order": 0, "fullname": null},
+      {"id": 243, "name": "TV-Y7", "country": "usa", "description": "Suitable for children ages 7 and above", "contentType": "", "order": 0, "fullname": null},
+      {"id": 244, "name": "TV-PG", "country": "usa", "description": "Parental guidance suggested", "contentType": "", "order": 0, "fullname": null},
+      {"id": 9999, "name": "Unrated", "country": "nowhere", "description": "", "contentType": "", "order": 0, "fullname": null}
+    ],
+    "seasonTypes": [
+      {"id": 1, "name": "Aired Order", "type": "official", "alternateName": null},
+      {"id": 2, "name": "DVD Order", "type": "dvd", "alternateName": null},
+      {"id": 3, "name": "Absolute Order", "type": "absolute", "alternateName": null},
+      {"id": 4, "name": "Alternate Order", "type": "alternate", "alternateName": "Story Order"},
+      {"id": 7, "name": "Alternate Order 2", "type": "alttwo", "alternateName": "Streaming Order"}
+    ]
+  }
+}

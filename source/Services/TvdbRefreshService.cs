@@ -1,0 +1,239 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Shoko.Abstractions.Config;
+using Shoko.Abstractions.Metadata;
+using Shoko.Abstractions.Metadata.Providers;
+using Shoko.Abstractions.Metadata.Storage;
+using Shoko.Plugin.Tvdb.Api;
+using Shoko.Plugin.Tvdb.Mapping;
+using Shoko.Plugin.Tvdb.Metadata;
+using Shoko.Plugin.Tvdb.Storage;
+
+namespace Shoko.Plugin.Tvdb.Services;
+
+/// <summary>
+/// The half of the plugin that fetches a show from TheTVDB and writes it
+/// into the core's stores.
+/// </summary>
+/// <remarks>
+/// The core's refresh job calls in through the provider. It has already
+/// decided the show is due and holds its lock, so nothing here checks
+/// freshness or locks anything.
+/// </remarks>
+/// <param name="apiClient">The TheTVDB client.</param>
+/// <param name="store">The plugin's store.</param>
+/// <param name="linkingService">Matches the linked anime's episodes again.</param>
+/// <param name="peopleService">Fetches the people's own records.</param>
+/// <param name="configurationProvider">The plugin's configuration.</param>
+/// <param name="logger">The logger.</param>
+public sealed class TvdbRefreshService(
+    TvdbApiClient apiClient,
+    TvdbStore store,
+    TvdbLinkingService linkingService,
+    TvdbPeopleService peopleService,
+    ConfigurationProvider<TvdbConfiguration> configurationProvider,
+    ILogger<TvdbRefreshService> logger
+)
+{
+    /// <summary>
+    /// Fetches a show and everything the settings and options ask for, and
+    /// writes it into the stores.
+    /// </summary>
+    /// <remarks>
+    /// The show, its seasons, episodes, titles, overviews, tags, genres,
+    /// studios and content ratings are always written. The networks, the cast
+    /// and crew and the other season types as orderings follow the options,
+    /// or the settings where the options leave it open; a quick refresh leaves
+    /// out the cast and crew, the orderings and the matching of the linked
+    /// anime's episodes. The people credited are written with what their own
+    /// records add, fetching the ones missing or stale when the settings
+    /// allow; a person whose record could not be fetched keeps what the
+    /// credits say, and never fails the refresh. A show TheTVDB no longer has is left as it was
+    /// stored, and so is one TheTVDB lists no episodes for while some are
+    /// stored, which is more likely a hiccup than a show that lost them all:
+    /// the refresh fails instead, so the core tries again later.
+    /// </remarks>
+    /// <param name="seriesID">TheTVDB series ID.</param>
+    /// <param name="options">What kind of refresh it is.</param>
+    /// <param name="cancellationToken">Cancels the work.</param>
+    /// <returns>Whether TheTVDB had the show.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="options"/> is <see langword="null"/>.</exception>
+    /// <exception cref="MetadataProviderNotConfiguredException">No API key is configured.</exception>
+    /// <exception cref="TvdbApiException">
+    /// TheTVDB refused the key, failed, answered with something unexpected,
+    /// or listed no episodes for a show with episodes stored.
+    /// </exception>
+    public async Task<bool> RefreshSeries(int seriesID, MetadataRefreshOptions options, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        if (seriesID <= 0)
+            return false;
+
+        if (!apiClient.HasApiKey)
+            throw new MetadataProviderNotConfiguredException(TvdbSources.Tvdb, TvdbApiClient.NoApiKeyReason);
+
+        logger.LogInformation("Refreshing TheTVDB series {SeriesID}.", seriesID);
+        var configuration = configurationProvider.Load();
+        if (await apiClient.GetSeries(seriesID, cancellationToken).ConfigureAwait(false) is not { } remote)
+        {
+            logger.LogWarning("TheTVDB has no series with ID {SeriesID}. Keeping what is stored.", seriesID);
+            return false;
+        }
+
+        // The show's record carries its names and overviews in every
+        // language; its episodes are fetched in each language asked for but
+        // the show's own, their names already being in it.
+        var languages = (configuration.TranslationLanguages ?? [])
+            .Where(language => !string.IsNullOrWhiteSpace(language))
+            .Select(language => language.Trim().ToLowerInvariant())
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+        var existingEpisodes = store.GetSeries(seriesID)?.Episodes.Select(episode => episode.ID).ToHashSet() ?? [];
+        var episodes = await apiClient.GetEpisodes(seriesID, "default", cancellationToken).ConfigureAwait(false);
+        if (episodes.Count is 0 && existingEpisodes.Count > 0)
+        {
+            throw new TvdbApiException(
+                HttpStatusCode.NotFound,
+                $"TheTVDB listed no episodes for series {seriesID.ToString(CultureInfo.InvariantCulture)}, which has {existingEpisodes.Count.ToString(CultureInfo.InvariantCulture)} stored. Keeping what is stored."
+            );
+        }
+
+        var episodeTranslations = new Dictionary<string, IReadOnlyList<TvdbEpisode>>(StringComparer.Ordinal);
+        foreach (var language in languages.Where(language => !string.Equals(language, remote.OriginalLanguage?.Trim(), StringComparison.OrdinalIgnoreCase)))
+        {
+            var translated = await apiClient.GetTranslatedEpisodes(seriesID, "default", language, cancellationToken).ConfigureAwait(false);
+            if (translated.Count > 0)
+                episodeTranslations[language] = translated;
+        }
+
+        var seriesGuid = TvdbUtility.SeriesGuid(seriesID);
+        var data = TvdbEntityMapper.ToSeriesData(remote, languages, episodes, episodeTranslations);
+        // The core drops the links to any episode the save removed.
+        var changes = store.Series.SaveSeries(data);
+
+        // What the other stores hold for it.
+        var (tags, entryTags) = TvdbEntityMapper.Tags(remote);
+        store.Tags.SaveTags(tags);
+        store.Tags.SetTags(seriesGuid, entryTags);
+        var (studios, entryStudios) = TvdbEntityMapper.Studios(remote);
+        store.Studios.SaveStudios(studios);
+        store.Studios.SetStudios(seriesGuid, entryStudios);
+        if (options.DownloadNetworks ?? configuration.AutoDownloadNetworks)
+        {
+            var networks = TvdbEntityMapper.Networks(remote);
+            store.Studios.SaveNetworks(networks);
+            store.Studios.SetNetworks(seriesGuid, [.. networks.Select(network => network.ID)]);
+        }
+
+        if (!options.QuickRefresh && (options.DownloadCrewAndCast ?? configuration.AutoDownloadCastAndCrew))
+        {
+            var people = TvdbEntityMapper.People(remote);
+            var details = await peopleService.GetPeople(PeopleIDs(people), cancellationToken).ConfigureAwait(false);
+            var creators = new List<MetadataCreatorData>(people.Creators.Count);
+            foreach (var (creatorID, creator) in people.Creators)
+            {
+                var person = TvdbUtility.TryGetID(creatorID, MetadataEntityType.Creator, out var peopleID) ? details.GetValueOrDefault(peopleID) : null;
+                creators.Add(TvdbEntityMapper.WithPersonDetails(creator, person, languages));
+                if (person?.Image is { Length: > 0 } image)
+                    people.Portraits.TryAdd(creatorID, image);
+            }
+
+            store.People.SaveCreators(creators);
+            store.People.SaveCharacters(people.Characters.Values);
+            store.People.SetCast(seriesGuid, people.Cast);
+            store.People.SetCrew(seriesGuid, people.Crew);
+
+            // After the credits, which are what keeps a portrait from being
+            // forgotten when another show is purged.
+            store.SavePortraits(people.Portraits);
+        }
+
+        // The other season types, as orderings of the show.
+        var previous = store.GetShow(seriesID);
+        var alternateSeasonTypes = previous?.AlternateSeasonTypes ?? [];
+        if (!options.QuickRefresh && (options.DownloadAlternateOrdering ?? configuration.AutoDownloadAlternateOrderings))
+            alternateSeasonTypes = await UpdateOrderings(remote, [.. data.Episodes.Select(episode => episode.ID)], cancellationToken).ConfigureAwait(false);
+
+        store.SaveShow(TvdbEntityMapper.ToStoredSeries(remote, episodes, alternateSeasonTypes, DateTime.UtcNow));
+        if (!options.QuickRefresh)
+            await linkingService.MatchLinkedEpisodes(seriesID, cancellationToken).ConfigureAwait(false);
+
+        logger.LogInformation(
+            "Refreshed TheTVDB series {SeriesID} ({Title}): {Changes} changes to the series and its {Seasons} seasons and {Episodes} episodes.",
+            seriesID,
+            remote.Name,
+            changes,
+            data.Seasons.Count,
+            data.Episodes.Count
+        );
+        return true;
+    }
+
+    private static IEnumerable<int> PeopleIDs(TvdbPeople people)
+        => people.Creators.Keys
+            .Select(creatorID => TvdbUtility.TryGetID(creatorID, MetadataEntityType.Creator, out var peopleID) ? peopleID : 0)
+            .Where(peopleID => peopleID > 0);
+
+    /// <summary>
+    /// Stores each of a show's other season types as an ordering of it, and
+    /// removes the orderings of season types it no longer has.
+    /// </summary>
+    /// <remarks>
+    /// A season type the show still has keeps its ordering even when none of
+    /// its episodes could be placed this time; only one gone from the show's
+    /// seasons is removed.
+    /// </remarks>
+    /// <param name="series">The show.</param>
+    /// <param name="storedEpisodes">The episodes stored under the show.</param>
+    /// <param name="cancellationToken">Cancels the work.</param>
+    /// <returns>The season types stored as orderings.</returns>
+    private async Task<List<string>> UpdateOrderings(TvdbSeriesExtended series, IReadOnlyList<MetadataGuid> storedEpisodes, CancellationToken cancellationToken)
+    {
+        var episodeIDs = storedEpisodes
+            .Select(episode => TvdbUtility.TryGetID(episode, MetadataEntityType.Episode, out var id) ? id : 0)
+            .Where(id => id > 0)
+            .ToHashSet();
+        var defaultSeasonType = TvdbEntityMapper.DefaultSeasonType(series);
+        var stored = new List<string>();
+        var kept = new HashSet<MetadataGuid>();
+        foreach (var seasonType in TvdbEntityMapper.AlternateSeasonTypes(series, defaultSeasonType))
+        {
+            var orderingID = TvdbUtility.OrderingGuid(series.ID, seasonType);
+            kept.Add(orderingID);
+            var episodes = await apiClient.GetEpisodes(series.ID, seasonType, cancellationToken).ConfigureAwait(false);
+            if (TvdbEntityMapper.ToOrderingData(series, seasonType, episodes, episodeIDs) is not { } ordering)
+            {
+                if (store.GetOrderings(series.ID).Any(existing => existing.ID == orderingID))
+                    stored.Add(seasonType);
+                continue;
+            }
+
+            try
+            {
+                store.Orderings.SaveOrdering(ordering);
+                stored.Add(seasonType);
+            }
+            catch (ArgumentException ex)
+            {
+                // One season type the core will not take is no reason to fail
+                // the refresh; whatever was stored for it stays.
+                logger.LogWarning(ex, "Unable to store the {SeasonType} order of TheTVDB series {SeriesID}.", seasonType, series.ID);
+            }
+        }
+
+        foreach (var ordering in store.GetOrderings(series.ID).Where(ordering => !kept.Contains(ordering.ID)))
+        {
+            logger.LogInformation("Removing ordering {OrderingID}, which TheTVDB no longer has.", ordering.ID);
+            store.Orderings.RemoveOrdering(ordering.ID);
+        }
+
+        return stored;
+    }
+}

@@ -1,0 +1,43 @@
+{
+  "status": "success",
+  "data": {
+    "id": 81797,
+    "name": "ワンピース",
+    "slug": "one-piece",
+    "image": "https://artworks.thetvdb.com/banners/series/81797/posters/5eec847d52a04.jpg",
+    "nameTranslations": ["eng", "jpn"],
+    "overviewTranslations": ["eng", "jpn"],
+    "aliases": [
+      {"language": "eng", "name": "One Piece (1998)"}
+    ],
+    "firstAired": "1999-10-20",
+    "lastAired": "2026-09-27",
+    "nextAired": "2026-09-27",
+    "score": 3236299,
+    "status": {
+      "id": 1,
+      "name": "Continuing",
+      "recordType": "series",
+      "keepUpdated": true
+    },
+    "originalCountry": "jpn",
+    "originalLanguage": "jpn",
+    "defaultSeasonType": 1,
+    "isOrderRandomized": false,
+    "lastUpdated": "2026-09-25 16:13:37",
+    "averageRuntime": 25,
+    "overview": "かつてこの世の全てを手に入れた海賊王ゴールド・ロジャーが遺した「ひとつなぎの大秘宝（ワンピース）」をめぐり、幾多の海賊たちが覇権を賭けて争う大海賊時代。\r\n\r\nそんな時代に生まれ、幼い頃の命の恩人である海賊赤髪のシャンクスに憧れる少年モンキー・D・ルフィは、「ゴムゴムの実」という悪魔の実を食べてゴム人間となり、その副作用で泳げない体になりながらも、海賊王を目指して仲間と共に冒険と戦いを繰り広げていく。",
+    "year": "1999",
+    "episodes": [
+      {"id": 361887, "seriesId": 81797, "name": "I'm Luffy! The Man Who's Gonna Be King of the Pirates!", "aired": "1999-10-20", "runtime": 25, "nameTranslations": null, "overview": "Alvida pirates plunder a ship only to find a barrel containing a strange boy names Luffy who is on a quest to find the legendary One Piece and become the King of Pirates.", "overviewTranslations": null, "image": "/banners/v4/episode/361887/screencap/604df7d3ecf3a.jpg", "imageType": 12, "isMovie": 0, "seasons": null, "number": 1, "absoluteNumber": 1, "seasonNumber": 1, "seasonName": "Romance Dawn & Orange Island", "lastUpdated": "2025-10-30 00:07:58", "finaleType": null, "year": "1999"},
+      {"id": 361888, "seriesId": 81797, "name": "Enter the Great Swordsman! Pirate Hunter Roronoa Zoro!", "aired": "1999-11-17", "runtime": 25, "nameTranslations": null, "overview": null, "overviewTranslations": null, "image": "/banners/v4/episode/361888/screencap/604df7f785903.jpg", "imageType": 12, "isMovie": 0, "seasons": null, "number": 2, "absoluteNumber": 2, "seasonNumber": 1, "seasonName": "Romance Dawn & Orange Island", "lastUpdated": "2025-10-30 02:53:55", "finaleType": null, "year": "1999"}
+    ]
+  },
+  "links": {
+    "prev": null,
+    "self": "https://api4.thetvdb.com/v4/series/81797/episodes/default/eng?page=0",
+    "next": null,
+    "total_items": 2,
+    "page_size": 500
+  }
+}

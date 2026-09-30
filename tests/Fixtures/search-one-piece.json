@@ -1,0 +1,14 @@
+{
+  "status": "success",
+  "data": [
+    {"objectID": "series-81797", "aliases": ["ワンピース", "Wan Pisu"], "country": "jpn", "id": "series-81797", "image_url": "https://artworks.thetvdb.com/banners/series/81797/posters/5eec847d52a04.jpg", "name": "One Piece", "first_air_time": "1999-10-20", "overview": "The adventures of Monkey D. Luffy and his pirate crew in order to find the greatest treasure ever left by the legendary Pirate, Gold Roger. The famous mystery treasure named \"One Piece\".", "primary_language": "jpn", "primary_type": "series", "status": "Continuing", "type": "series", "tvdb_id": "81797", "year": "1999", "slug": "one-piece", "overviews": {"eng": "The adventures of Monkey D. Luffy and his pirate crew in order to find the greatest treasure ever left by the legendary Pirate, Gold Roger. The famous mystery treasure named \"One Piece\".", "jpn": "かつてこの世の全てを手に入れた海賊王ゴールド・ロジャーが遺した「ひとつなぎの大秘宝（ワンピース）」をめぐり、幾多の海賊たちが覇権を賭けて争う大海賊時代。"}, "translations": {"eng": "One Piece", "jpn": "ワンピース"}, "network": "Fuji TV", "remote_ids": [{"id": "tt0388629", "type": 2, "sourceName": "IMDB"}, {"id": "37854", "type": 12, "sourceName": "TheMovieDB.com"}], "thumbnail": "https://artworks.thetvdb.com/banners/series/81797/posters/5eec847d52a04_t.jpg"},
+    {"objectID": "series-999999", "aliases": [], "country": "usa", "id": "series-999999", "image_url": null, "name": "One Peace", "first_air_time": null, "overview": null, "primary_language": "eng", "primary_type": "series", "status": "Continuing", "type": "series", "tvdb_id": "999999", "year": "2011", "slug": "one-peace", "overviews": {}, "translations": {"eng": "One Peace"}, "network": null, "remote_ids": [], "thumbnail": null}
+  ],
+  "links": {
+    "prev": null,
+    "self": "https://api4.thetvdb.com/v4/search?query=One Piece&type=series&limit=10&page=0",
+    "next": null,
+    "total_items": 2,
+    "page_size": 10
+  }
+}

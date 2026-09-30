@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit.v3" Version="3.1.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <PackageReference Include="Moq" Version="4.20.72" />
+    <!-- The server supplies these to the plugin; the tests bring their own to open its database. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.12" />
+  </ItemGroup>
+
+  <!--
+    The plugin's own reference excludes runtime assets, because the host
+    supplies the abstractions in production. The test host is not the host, so
+    it has to bring its own copy or nothing that touches a Shoko type will
+    load. The version comes from `Directory.Build.props`, so the tests run
+    against exactly the contract the plugin was built for.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Shoko.Abstractions" Version="$(ShokoAbstractionsVersion)" />
+    <ProjectReference Include="..\source\Shoko.Plugin.Tvdb.csproj" />
+  </ItemGroup>
+
+  <!--
+    HAND-WRITTEN fixtures, not captures. TheTVDB v4 requires an API key for all
+    access and none was available when this plugin was written, so these
+    reproduce the shapes documented at thetvdb.github.io/v4-api. They prove the
+    mapping does what it means to; they cannot prove the shape is right.
+  -->
+  <ItemGroup>
+    <Content Include="Fixtures/**/*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

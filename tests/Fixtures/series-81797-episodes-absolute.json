@@ -1,0 +1,46 @@
+{
+  "status": "success",
+  "data": {
+    "series": {
+      "id": 81797,
+      "name": "ワンピース",
+      "slug": "one-piece",
+      "image": "https://artworks.thetvdb.com/banners/series/81797/posters/5eec847d52a04.jpg",
+      "nameTranslations": ["eng", "jpn"],
+      "overviewTranslations": ["eng", "jpn"],
+      "aliases": [
+        {"language": "eng", "name": "One Piece (1998)"}
+      ],
+      "firstAired": "1999-10-20",
+      "lastAired": "2026-09-27",
+      "nextAired": "2026-09-27",
+      "score": 3236299,
+      "status": {
+        "id": 1,
+        "name": "Continuing",
+        "recordType": "series",
+        "keepUpdated": true
+      },
+      "originalCountry": "jpn",
+      "originalLanguage": "jpn",
+      "defaultSeasonType": 1,
+      "isOrderRandomized": false,
+      "lastUpdated": "2026-09-25 16:13:37",
+      "averageRuntime": 25,
+      "episodes": null,
+      "overview": "かつてこの世の全てを手に入れた海賊王ゴールド・ロジャーが遺した「ひとつなぎの大秘宝（ワンピース）」をめぐり、幾多の海賊たちが覇権を賭けて争う大海賊時代。\r\n\r\nそんな時代に生まれ、幼い頃の命の恩人である海賊赤髪のシャンクスに憧れる少年モンキー・D・ルフィは、「ゴムゴムの実」という悪魔の実を食べてゴム人間となり、その副作用で泳げない体になりながらも、海賊王を目指して仲間と共に冒険と戦いを繰り広げていく。",
+      "year": "1999"
+    },
+    "episodes": [
+      {"id": 361887, "seriesId": 81797, "name": "俺はルフィ！海賊王になる男だ！", "aired": "1999-10-20", "runtime": 25, "nameTranslations": null, "overview": null, "overviewTranslations": null, "image": null, "imageType": null, "isMovie": 0, "seasons": null, "number": 1, "absoluteNumber": 1, "seasonNumber": 1, "lastUpdated": "2025-10-30 00:07:58", "finaleType": null, "year": "1999"},
+      {"id": 361888, "seriesId": 81797, "name": "大剣豪現る！ 海賊狩りロロノア・ゾロ", "aired": "1999-11-17", "runtime": 25, "nameTranslations": null, "overview": null, "overviewTranslations": null, "image": null, "imageType": null, "isMovie": 0, "seasons": null, "number": 2, "absoluteNumber": 2, "seasonNumber": 1, "lastUpdated": "2025-10-30 00:07:58", "finaleType": null, "year": "1999"}
+    ]
+  },
+  "links": {
+    "prev": null,
+    "self": "https://api4.thetvdb.com/v4/series/81797/episodes/absolute?page=0",
+    "next": null,
+    "total_items": 2,
+    "page_size": 500
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "status": "success",
+  "data": {
+    "id": 602,
+    "name": "Kazuya Nakai",
+    "image": null,
+    "nameTranslations": ["eng", "jpn"],
+    "overviewTranslations": [],
+    "aliases": [],
+    "lastUpdated": "2023-11-05 08:00:00",
+    "birth": "1967",
+    "death": null,
+    "score": 0,
+    "birthPlace": null,
+    "remoteIds": [
+      {"id": "tt0388629", "type": 2, "sourceName": "IMDB"},
+      {"id": "54321", "type": 15, "sourceName": null}
+    ],
+    "gender": 1,
+    "characters": [],
+    "biographies": [
+      {"language": "eng", "biography": ""}
+    ],
+    "awards": null,
+    "tagOptions": [],
+    "translations": {
+      "nameTranslations": [
+        {"name": "Kazuya Nakai", "language": "eng"},
+        {"name": "中井和哉", "language": "jpn"}
+      ],
+      "overviewTranslations": [],
+      "aliases": null
+    },
+    "slug": "602-kazuya-nakai"
+  }
+}

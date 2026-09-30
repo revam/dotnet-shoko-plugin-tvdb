@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <!--
+      Only for `dotnet ef`, which needs the Entity Framework Core assemblies
+      the plugin leaves out of its output. Never built into the plugin or
+      shipped. Add a migration from the repository root with:
+
+        dotnet ef migrations add <Name> -p source -s design -o Storage/Migrations
+    -->
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <OutputType>Exe</OutputType>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../source/Shoko.Plugin.Tvdb.csproj" />
+        <PackageReference Include="Shoko.Abstractions" Version="$(ShokoAbstractionsVersion)" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.12" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12" PrivateAssets="All" />
+    </ItemGroup>
+</Project>

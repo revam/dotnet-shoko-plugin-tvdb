@@ -1,0 +1,51 @@
+<Project TreatAsLocalProperty="Version;InformationalVersion;TargetFramework" Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <OutputType>Library</OutputType>
+        <LangVersion>latest</LangVersion>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <Title>Shoko TheTVDB Metadata</Title>
+        <Authors>revam</Authors>
+        <Version>1.0.0</Version>
+        <Configurations>Debug;Release</Configurations>
+        <Platforms>AnyCPU;x64</Platforms>
+        <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+        <Nullable>enable</Nullable>
+        <EnableDynamicLoading>true</EnableDynamicLoading>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Shoko.Plugin.Tvdb.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- `ExcludeAssets="runtime"` is kept for the same reason the sibling
+             Fanart plugin keeps it: the server supplies the abstractions at
+             runtime, and a plugin that ships its own copy resolves `IPlugin`
+             against that copy and is then skipped without an error. -->
+        <PackageReference Include="Shoko.Abstractions" Version="$(ShokoAbstractionsVersion)" ExcludeAssets="runtime" PrivateAssets="All" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- The server already loads Entity Framework Core and SQLite and
+             configures the plugin's database, so they are referenced for
+             compiling only. The version is the server's. -->
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.12" ExcludeAssets="runtime;native" PrivateAssets="All" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- Pulls in Microsoft.Extensions.{Logging,DependencyInjection,Hosting,Http}
+             for us, and is what `Shoko.Abstractions` itself is built against. -->
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- Injects the embedded plugin identity metadata the server reads during
+             discovery, taken from `manifest.json` one directory up. PrivateAssets
+             alone is not enough: without ExcludeAssets the package's own MSBuild
+             tasks and satellite assemblies end up in the plugin output. -->
+        <PackageReference Include="Shoko.BuildTools.Targets" Version="0.3.0" PrivateAssets="All" ExcludeAssets="runtime" />
+        <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.203" PrivateAssets="All" />
+        <PackageReference Include="SmartAnalyzers.MultithreadingAnalyzer" Version="1.1.31" PrivateAssets="All" />
+    </ItemGroup>
+</Project>

@@ -1,0 +1,32 @@
+{
+  "status": "success",
+  "data": {
+    "id": 700001,
+    "name": "Example Person",
+    "image": null,
+    "nameTranslations": ["eng"],
+    "overviewTranslations": [],
+    "aliases": [],
+    "lastUpdated": "2023-11-05 08:00:00",
+    "birth": "1930-04-00",
+    "death": "2001-11-23",
+    "score": 0,
+    "birthPlace": null,
+    "remoteIds": [],
+    "gender": 3,
+    "characters": [],
+    "biographies": [
+      {"language": "deu", "biography": "Eine Beispielperson."}
+    ],
+    "awards": null,
+    "tagOptions": [],
+    "translations": {
+      "nameTranslations": [
+        {"name": "Example Person", "language": "eng"}
+      ],
+      "overviewTranslations": [],
+      "aliases": null
+    },
+    "slug": "700001-example-person"
+  }
+}

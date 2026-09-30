@@ -1,0 +1,286 @@
+name: Release Build
+
+# The Gitea half of dual hosting (.github/workflows/release.yml is the
+# GitHub half). Both fire at the same tag, each builds its own archive
+# and each writes its own manifest naming its own copy, because the two
+# archives are not the same bytes: the assembly embeds the checkout path
+# and the zip embeds the mtimes, so one checksum cannot describe both.
+#
+# The two halves run the same steps in the same order. They differ only
+# where the hosts do: the asset base URL, the token, the uploader, the
+# release-notes source, and the HTTP/1.1 workaround below.
+
+on:
+  release:
+    types: [published]
+
+env:
+  # The published manifest lives on a branch of its own and CI writes
+  # nowhere else. A manifest committed to `stable` is a bot commit on the
+  # branch people work from; and `stable` is shared with GitHub, so two
+  # CIs writing one file on it would fork the branch across the remotes
+  # and make every later push a non-fast-forward.
+  METADATA_BRANCH: metadata
+  # One manifest at the branch root rather than one per release channel.
+  # A channel split earns its own path only where high-churn dev releases
+  # exist that stable users have to opt into rather than receive by
+  # accident, and this repository cuts stable releases alone. The flat
+  # path is also what every other plugin repository here publishes at.
+  # There is no plugin axis either: this repository holds one plugin.
+  MANIFEST_PATH: manifest.json
+  # The stub in the work tree. `Shoko.BuildTools.Targets` reaches it from
+  # `source/` through the parent leg of its search and stamps what it
+  # reads into the assembly, and `shoko-build` takes identity, tags and
+  # dependencies from the same path. The live manifest is pulled over it
+  # before anything builds, so the embedded metadata and the published
+  # manifest are read from one file and cannot disagree.
+  IDENTITY_MANIFEST: manifest.json
+  # The proxy in front of the Gitea host answers 403 to any HTTP/2 request
+  # that streams a body, which is every push over 1 MiB. GIT_CONFIG_*
+  # reaches actions/checkout's own git, which a `git config` step would
+  # not. Remove when the proxy is fixed; it is not a property of this
+  # workflow.
+  GIT_CONFIG_COUNT: "1"
+  GIT_CONFIG_KEY_0: http.version
+  GIT_CONFIG_VALUE_0: HTTP/1.1
+
+jobs:
+  build:
+    # Pinned. `ubuntu-latest` is a moving pointer, and 24.04 is the image
+    # that carries node24 - which the action pins below need, node20 being
+    # end of life - along with jq and curl.
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # The image has no SDK. `global-json-file` rather than a literal
+      # version, so this cannot drift from what a developer builds with.
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      # `shoko-build` keys a manifest entry by the project's `<Version>`, not by
+      # the tag, so a tag cut without bumping the project rewrites the previous
+      # entry in place instead of adding one, leaving a manifest whose `version`
+      # and `tag` disagree. Fail here rather than publish that.
+      - name: Check the version matches the tag
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          PROJECT=$(ls source/*.csproj)
+          VERSION=$(dotnet msbuild "${PROJECT}" -getProperty:Version -nologo)
+          if [ "${TAG#v}" != "${VERSION}" ]; then
+            echo "Tag ${TAG} does not match <Version> ${VERSION} in ${PROJECT}." >&2
+            echo "Bump the project version, or re-cut the tag as v${VERSION}." >&2
+            exit 1
+          fi
+
+      - name: Check the toolchain
+        run: |
+          for tool in dotnet jq curl git; do
+            command -v "$tool" >/dev/null 2>&1 || {
+              echo "runner image is missing: ${tool}" >&2
+              exit 1
+            }
+          done
+
+      # Anything a user reads out of a manifest points at the CDN in
+      # front of the Gitea host; anything that talks to Gitea goes to the
+      # origin. The Gitea host is behind SSO, so a download URL naming it
+      # is not installable, and it cannot come from GITHUB_SERVER_URL for
+      # that same reason: the download host deliberately differs from the
+      # server host, which is the whole reason this value exists.
+      #
+      # Only the domain travels, as an Actions variable or secret
+      # configured on the Gitea side rather than written here: this
+      # branch is published to both hosts, so a host named in it is
+      # public on the other. `github.repository` supplies the owner and
+      # repository, so one instance-wide domain set once at organisation
+      # level serves every repository unchanged.
+      - name: Resolve the asset base URL
+        env:
+          ASSET_BASE_DOMAIN: ${{ vars.ASSET_BASE_DOMAIN || secrets.ASSET_BASE_DOMAIN }}
+        run: |
+          # Stop here rather than build `https:///owner/repo/releases`
+          # and publish a manifest whose download URLs go nowhere. A
+          # release that fails is better than one that installs nothing.
+          if [ -z "${ASSET_BASE_DOMAIN}" ]; then
+            echo "ASSET_BASE_DOMAIN is empty." >&2
+            echo "Set it as a repository or organisation Actions variable, or a" >&2
+            echo "secret, holding the bare domain the release assets are served" >&2
+            echo "from, e.g. cdn.example.org." >&2
+            exit 1
+          fi
+          # The scheme is this workflow's to add and the path is
+          # `github.repository`'s to fill, so a value carrying either
+          # would double one of them. Rejected rather than trimmed, so
+          # the variable is fixed where it is set instead of being
+          # quietly reinterpreted on every release.
+          case "${ASSET_BASE_DOMAIN}" in
+            *://*)
+              echo "ASSET_BASE_DOMAIN must not carry a scheme: ${ASSET_BASE_DOMAIN}" >&2
+              echo "Set it to the bare domain, e.g. cdn.example.org." >&2
+              exit 1
+              ;;
+            */*)
+              echo "ASSET_BASE_DOMAIN must not carry a path or a trailing slash: ${ASSET_BASE_DOMAIN}" >&2
+              echo "Set it to the bare domain, e.g. cdn.example.org." >&2
+              exit 1
+              ;;
+          esac
+          echo "ASSET_BASE_URL=https://${ASSET_BASE_DOMAIN}/${GITHUB_REPOSITORY}/releases" >> "${GITHUB_ENV}"
+
+      - name: Fetch the live manifest
+        run: |
+          # checkout only sets up a remote-tracking ref for the branch it
+          # checked out, hence the explicit refspec.
+          #
+          # No fallback. The branch is seeded by hand once, and falling
+          # back to the stub in the work tree would publish a release
+          # against a description that says it is a stub and points at
+          # this very branch, with an empty release list in front of it.
+          # A fetch of a refspec naming a branch the remote does not
+          # have exits 128 with "couldn't find remote ref", so a first
+          # run stops here, before the build and well before the upload.
+          git fetch --no-tags origin "+refs/heads/${METADATA_BRANCH}:refs/remotes/origin/${METADATA_BRANCH}"
+          git show "origin/${METADATA_BRANCH}:${MANIFEST_PATH}" > "${IDENTITY_MANIFEST}"
+
+      - name: Read the release notes
+        env:
+          # Gitea has no GITHUB_TOKEN. The automatic token is GITEA_TOKEN,
+          # and it can write a release even though it cannot write a
+          # package registry.
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+        run: |
+          # Gitea's release event payload is not GitHub's, so the body is
+          # read back from the API rather than trusted from the event.
+          # The file is always written, empty if there is no body: a
+          # --release-notes-path it cannot read stops shoko-build, while
+          # an empty one just leaves the notes off the release entry.
+          curl --silent --show-error --fail \
+            --header "Authorization: token ${GITEA_TOKEN}" \
+            --header "Accept: application/json" \
+            "${GITHUB_SERVER_URL%/}/api/v1/repos/${GITHUB_REPOSITORY}/releases/tags/${{ github.event.release.tag_name }}" \
+            | jq -r '.body // empty' > "${RUNNER_TEMP}/release-notes.md"
+
+      # Official builds ship the licensed project key TheTVDB issued for this
+      # plugin. TheTVDB issues keys per project rather than per user, and a
+      # licensed key authenticates on its own, so a user of an official build
+      # needs neither a key nor a subscriber PIN. The key is a secret rather
+      # than a value in the tree, so an unofficial build of this repository
+      # keeps the placeholder and asks the user for a key instead of borrowing
+      # ours. Only `Constants.cs` is rewritten: the comparison against the
+      # placeholder lives in `TvdbApiClient.cs` on purpose, so that it
+      # survives this step.
+      #
+      # The placeholder is checked before the secret, so a tree that already
+      # carries a key is refused even when the secret is unset.
+      - name: Stamp the project key
+        env:
+          TVDB_PROJECT_KEY: ${{ secrets.TVDB_PROJECT_KEY }}
+        run: |
+          file=source/Constants.cs
+          if ! grep -q 'TVDB_PROJECT_KEY_GOES_HERE' "${file}"; then
+            echo "No placeholder left in ${file}; refusing to publish a build whose key state is unknown." >&2
+            exit 1
+          fi
+          if [ -z "${TVDB_PROJECT_KEY}" ]; then
+            echo "TVDB_PROJECT_KEY is unset; leaving the placeholder in place." >&2
+            exit 0
+          fi
+          # Escaped for the replacement side of `s`, so a `/`, `&` or `\` in
+          # the key is written as itself rather than read by sed.
+          key=$(printf '%s' "${TVDB_PROJECT_KEY}" | sed -e 's/[\/&\\]/\\&/g')
+          sed -i "s/TVDB_PROJECT_KEY_GOES_HERE/${key}/" "${file}"
+          if grep -q 'TVDB_PROJECT_KEY_GOES_HERE' "${file}"; then
+            echo "The placeholder in ${file} survived the stamp." >&2
+            exit 1
+          fi
+          echo "Stamped the project key into ${file}."
+
+      # Pinned in .config/dotnet-tools.json, so the packaging of a release
+      # is reproducible instead of depending on whichever shoko-build is
+      # latest on the day it is cut.
+      - name: Restore the build tool
+        run: dotnet tool restore
+
+      # shoko-build discovers the plugin tags from the source, builds the
+      # project, packs the whole output directory (dependencies and the
+      # .deps.json included, not just the plugin assembly), checksums the
+      # archive and writes the release entry into the manifest with the
+      # abstraction version the assembly was actually compiled against. It
+      # reads the project from the working directory, hence `source`, and
+      # updates the manifest in place - the live one, fetched over the stub
+      # by the step above.
+      #
+      # Everything after the bare `--` is forwarded to MSBuild, and `-p` on
+      # its own is shoko-build's prune flag, so the property has to sit past
+      # the separator. `RepositoryUrl` is supplied per build rather than set
+      # in the csproj: `stable` is published to both hosts, and the pair of
+      # `github.server_url` and `github.repository` names whichever one is
+      # running the build.
+      - name: Build and package
+        working-directory: source
+        run: |
+          dotnet shoko-build \
+            --configuration Release \
+            --channel Stable \
+            --tag "${{ github.event.release.tag_name }}" \
+            --release-notes-path "${RUNNER_TEMP}/release-notes.md" \
+            --manifest "${GITHUB_WORKSPACE}/${IDENTITY_MANIFEST}" \
+            --output "${GITHUB_WORKSPACE}/dist/{name}-{tag}-{runtime}.zip" \
+            --url "${ASSET_BASE_URL}/{tag}/{name}-{tag}-{runtime}.zip" \
+            -- \
+            -p:RepositoryUrl=${{ github.server_url }}/${{ github.repository }}
+
+      # A glob rather than a name, so an archive per runtime identifier
+      # uploads without touching this step.
+      - name: Upload to Release
+        env:
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+        run: |
+          scripts/gitea-release-asset.sh \
+            --tag "${{ github.event.release.tag_name }}" \
+            dist/*.zip
+
+      - name: Commit the manifest on the metadata branch
+        run: |
+          # The manifest travels in RUNNER_TEMP rather than in a stash: a
+          # stash of a path that already exists on the metadata branch
+          # conflicts on every apply. The work tree also has to be clean
+          # to switch branches, and both branches track this path, so the
+          # copy has to land outside the tree, and has to happen before
+          # the reset puts the stub back over what was just built.
+          cp "${IDENTITY_MANIFEST}" "${RUNNER_TEMP}/manifest.json"
+          git reset --hard
+          git checkout -B "${METADATA_BRANCH}" "origin/${METADATA_BRANCH}"
+          # A no-op for a path at the branch root, and what keeps
+          # MANIFEST_PATH free to name a subdirectory.
+          mkdir -p "$(dirname "${MANIFEST_PATH}")"
+          cp "${RUNNER_TEMP}/manifest.json" "${MANIFEST_PATH}"
+          # The host comes from the run rather than from this file, and
+          # the local part carries no brackets: `[` and `]` are not legal
+          # in an unquoted local part under RFC 5322, and some tools
+          # reject the address outright.
+          host="${GITHUB_SERVER_URL%/}"
+          git config user.name "gitea-actions[bot]"
+          git config user.email "noreply.actions@${host#*://}"
+          git add "${MANIFEST_PATH}"
+          # The only commit and the only push, and it is on the metadata
+          # branch. Nothing lands on a source branch, so `stable` stays
+          # byte-identical on both remotes and nobody has to pull a bot
+          # commit before their next change.
+          #
+          # Guarded, because `git commit` exits 1 on an empty index and
+          # this step runs after the assets are uploaded: a re-run that
+          # produced a byte-identical manifest would otherwise fail a
+          # release that had already succeeded.
+          if git diff --cached --quiet; then
+            echo "Manifest unchanged; nothing to commit."
+          else
+            git commit -m "ci: update manifest for ${{ github.event.release.tag_name }}"
+            git push origin "${METADATA_BRANCH}"
+          fi

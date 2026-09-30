@@ -1,0 +1,26 @@
+## Ignore Visual Studio / .NET build artifacts
+bin/
+obj/
+
+## Ignore user-specific files
+*.user
+*.suo
+*.userprefs
+
+## Ignore IDE directories
+.vs/
+.vscode/
+.idea/
+
+## Ignore NuGet packages (if checked in)
+*.nupkg
+
+## Ignore logs
+*.log
+
+## Ignore OS files
+.DS_Store
+Thumbs.db
+
+## Ignore packaged plugin archives
+dist/
