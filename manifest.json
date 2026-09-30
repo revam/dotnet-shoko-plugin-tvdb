@@ -1,9 +1,28 @@
 {
   "id": "12126642-8c32-455f-aca1-e1a2f7b35a8c",
   "name": "TheTVDB Metadata",
-  "overview": "Reference implementation of Shoko's metadata provider contract, supplying TheTVDB v4 series, season and episode metadata for the `tvdb` metadata source.",
+  "overview": "Reference implementation of Shoko\u0027s metadata provider contract, supplying TheTVDB v4 series, season and episode metadata for the \u0060tvdb\u0060 metadata source.",
   "authors": "revam",
   "repository_url": "https://github.com/revam/dotnet-shoko-plugin-tvdb",
-  "tags": [],
-  "releases": []
+  "tags": [
+    "service-registration"
+  ],
+  "releases": [
+    {
+      "version": "1.0.0",
+      "tag": "v1.0.0",
+      "released_at": "2026-09-30T16:23:54.6398574Z",
+      "channel": "Stable",
+      "release_notes": "First release. Supplies TheTVDB v4 series, season and episode metadata to Shoko through its metadata provider contract, for the \u0060tvdb\u0060 metadata source. By default it also stores TheTVDB\u0027s other season types, such as the DVD and absolute orders, as alternate orderings. Official builds ship with a licensed project key, so no personal API key or subscriber PIN is needed.\n\nRequires Shoko Server with abstractions \u00606.0.0-alpha.95\u0060.",
+      "dependencies": [],
+      "archives": [
+        {
+          "runtime": "any",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/revam/dotnet-shoko-plugin-tvdb/releases/download/v1.0.0/TheTVDBMetadata-v1.0.0-any.zip",
+          "checksum": "sha256:51780eae6f6222cec5bb983b9e536b9ad0f8f57c8284eecd402cc8b9f1514263"
+        }
+      ]
+    }
+  ]
 }
