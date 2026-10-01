@@ -1,6 +1,8 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Shoko.Plugin.Tvdb.Api;
 
@@ -27,6 +29,7 @@ public sealed class TvdbRateLimiter : IDisposable
     private readonly int _maxTokens;
     private readonly double _tokensPerSecond;
     private readonly TimeProvider _timeProvider;
+    private readonly ILogger<TvdbRateLimiter> _logger;
     private readonly SemaphoreSlim _concurrencySemaphore;
     private readonly Lock _lock = new();
 
@@ -47,11 +50,15 @@ public sealed class TvdbRateLimiter : IDisposable
     /// <see cref="TimeProvider.System"/>; a test passes its own so refills can
     /// be simulated without a real wait.
     /// </param>
+    /// <param name="logger">
+    /// Where pauses and resumes are logged. Defaults to a logger that drops
+    /// everything.
+    /// </param>
     /// <exception cref="ArgumentOutOfRangeException">
     /// Thrown when <paramref name="maxTokens"/> or
     /// <paramref name="tokensPerSecond"/> is not positive.
     /// </exception>
-    public TvdbRateLimiter(int maxTokens = 5, double tokensPerSecond = 2.0, TimeProvider? timeProvider = null)
+    public TvdbRateLimiter(int maxTokens = 5, double tokensPerSecond = 2.0, TimeProvider? timeProvider = null, ILogger<TvdbRateLimiter>? logger = null)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxTokens);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(tokensPerSecond);
@@ -59,6 +66,7 @@ public sealed class TvdbRateLimiter : IDisposable
         _maxTokens = maxTokens;
         _tokensPerSecond = tokensPerSecond;
         _timeProvider = timeProvider ?? TimeProvider.System;
+        _logger = logger ?? NullLogger<TvdbRateLimiter>.Instance;
         _concurrencySemaphore = new SemaphoreSlim(maxTokens, maxTokens);
         _currentTokens = maxTokens;
         _lastRefill = _timeProvider.GetUtcNow();
@@ -155,19 +163,23 @@ public sealed class TvdbRateLimiter : IDisposable
         if (duration <= TimeSpan.Zero)
             return;
 
+        TimeSpan pausedFor;
         lock (_lock)
         {
-            var until = _timeProvider.GetUtcNow() + duration;
+            var now = _timeProvider.GetUtcNow();
+            var until = now + duration;
             if (_pausedUntil is { } current && current >= until && string.Equals(_pauseReason, reason, StringComparison.Ordinal))
                 return;
 
             if (_pausedUntil is not { } existing || existing < until)
                 _pausedUntil = until;
             _pauseReason = reason;
+            pausedFor = _pausedUntil.Value - now;
             _pauseTimer?.Dispose();
-            _pauseTimer = _timeProvider.CreateTimer(_ => Expire(), null, _pausedUntil.Value - _timeProvider.GetUtcNow(), Timeout.InfiniteTimeSpan);
+            _pauseTimer = _timeProvider.CreateTimer(_ => Expire(), null, pausedFor, Timeout.InfiniteTimeSpan);
         }
 
+        _logger.LogInformation("{Reason} All TheTVDB jobs paused for {Duration}. They will resume automatically.", reason, pausedFor);
         PauseStateChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -187,6 +199,7 @@ public sealed class TvdbRateLimiter : IDisposable
             _pauseTimer = null;
         }
 
+        _logger.LogInformation("TheTVDB pause lifted. Queued TheTVDB jobs will now resume.");
         PauseStateChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -211,6 +224,7 @@ public sealed class TvdbRateLimiter : IDisposable
             _pauseTimer = null;
         }
 
+        _logger.LogInformation("TheTVDB pause expired. Queued TheTVDB jobs will now resume.");
         PauseStateChanged?.Invoke(this, EventArgs.Empty);
     }
 
