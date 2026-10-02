@@ -267,7 +267,7 @@ public static class TvdbEntityMapper
             {
                 Type = ResourceType.Metadata,
                 Name = "TvDB",
-                Url = string.IsNullOrWhiteSpace(series.Slug) ? $"https://thetvdb.com/dereferrer/series/{id}" : $"https://thetvdb.com/series/{Uri.EscapeDataString(series.Slug.Trim())}",
+                Url = TvdbUtility.SeriesUrl(series.ID, series.Slug),
                 ID = id,
             },
         ];
@@ -581,9 +581,7 @@ public static class TvdbEntityMapper
                 {
                     Type = ResourceType.Metadata,
                     Name = "TvDB",
-                    Url = string.IsNullOrWhiteSpace(series.Slug)
-                        ? $"https://thetvdb.com/dereferrer/episode/{id}"
-                        : $"https://thetvdb.com/series/{Uri.EscapeDataString(series.Slug.Trim())}/episodes/{id}",
+                    Url = TvdbUtility.EpisodeUrl(episode.ID, series.Slug),
                     ID = id,
                 },
             ],
@@ -863,7 +861,7 @@ public static class TvdbEntityMapper
         {
             ID = creatorID,
             Name = credit.PersonName.Trim(),
-            Resources = [new() { Type = ResourceType.Metadata, Name = "TvDB", Url = $"https://thetvdb.com/dereferrer/people/{id}", ID = id }],
+            Resources = [new() { Type = ResourceType.Metadata, Name = "TvDB", Url = TvdbUtility.PersonUrl(peopleID), ID = id }],
             DefaultImageResourceIDs = TvdbImages.ToPortraitDefault(TvdbImages.ToResourceID(credit.PersonImage)),
         });
         if (TvdbImages.ToResourceID(credit.PersonImage) is { } photo)

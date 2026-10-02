@@ -1,6 +1,7 @@
 using System.Reflection;
 using Moq;
 using Shoko.Abstractions.Metadata;
+using Shoko.Abstractions.Metadata.Containers;
 using Shoko.Abstractions.Metadata.Enums;
 using Shoko.Abstractions.Metadata.Matching;
 using Shoko.Abstractions.Metadata.Providers;
@@ -74,7 +75,7 @@ public class TvdbMetadataProviderTests
     {
         var methods = typeof(TvdbMetadataProvider).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
 
-        Assert.DoesNotContain(methods, method => method.Name.StartsWith("Get", StringComparison.Ordinal) && method.Name is not nameof(TvdbMetadataProvider.GetImages));
+        Assert.DoesNotContain(methods, method => method.Name.StartsWith("Get", StringComparison.Ordinal) && method.Name is not nameof(TvdbMetadataProvider.GetImages) and not nameof(TvdbMetadataProvider.GetSiteUrl));
     }
 
     #endregion
@@ -419,6 +420,69 @@ public class TvdbMetadataProviderTests
         Assert.Empty(await harness.Get<TvdbMetadataProvider>().FindAutoLinks(1, TestContext.Current.CancellationToken));
         Assert.Empty(harness.Http.Requests);
     }
+
+    #endregion
+
+    #region Site URLs
+
+    [Fact]
+    public void GetSiteUrl_PrefersTheStoredPage_ThenTheDereferrer()
+    {
+        using var harness = new ServiceHarness();
+        var provider = harness.Get<TvdbMetadataProvider>();
+        var stored = new Entry(_seriesID, [new() { Type = ResourceType.Metadata, Name = "TvDB", Url = "https://thetvdb.com/series/one-piece", ID = "81797" }]);
+
+        Assert.Equal("https://thetvdb.com/series/one-piece", provider.GetSiteUrl(stored));
+        Assert.Equal("https://thetvdb.com/dereferrer/series/81797", provider.GetSiteUrl(new Entry(_seriesID, [])));
+        Assert.Equal("https://thetvdb.com/dereferrer/episode/362102", provider.GetSiteUrl(new Entry(TvdbUtility.EpisodeGuid(362102), [])));
+        Assert.Null(provider.GetSiteUrl(new Entry(TvdbUtility.SeasonGuid(28707), [])));
+        Assert.Null(provider.GetSiteUrl(new Entry(new MetadataGuid(MetadataSource.TMDB, MetadataEntityType.Series, "37854"), [])));
+    }
+
+    [Fact]
+    public void GetSiteUrl_GivesAPersonTheirSluggedPage_ThenTheDereferrer()
+    {
+        using var harness = new ServiceHarness();
+        var provider = harness.Get<TvdbMetadataProvider>();
+        var personID = TvdbUtility.CreatorGuid(412417);
+        var stored = new Entry(personID,
+        [
+            new() { Type = ResourceType.Metadata, Name = "TvDB", Url = "https://thetvdb.com/dereferrer/people/412417", ID = "412417" },
+            new() { Type = ResourceType.Metadata, Name = "TvDB", Url = "https://thetvdb.com/people/412417-mayumi-tanaka", ID = "412417" },
+        ]);
+
+        Assert.Equal("https://thetvdb.com/people/412417-mayumi-tanaka", provider.GetSiteUrl(stored));
+        Assert.Equal("https://thetvdb.com/dereferrer/people/412417", provider.GetSiteUrl(new Entry(personID, [])));
+    }
+
+    [Fact]
+    public void GetSiteUrl_GivesACharacterOnlyItsStoredPage()
+    {
+        using var harness = new ServiceHarness();
+        var provider = harness.Get<TvdbMetadataProvider>();
+        var characterID = TvdbUtility.CharacterGuid(6200000);
+        var stored = new Entry(characterID, [new() { Type = ResourceType.Metadata, Name = "TvDB", Url = "https://thetvdb.com/series/one-piece/people/6200000", ID = "6200000" }]);
+
+        Assert.Equal("https://thetvdb.com/series/one-piece/people/6200000", provider.GetSiteUrl(stored));
+        Assert.Null(provider.GetSiteUrl(new Entry(characterID, [])));
+    }
+
+    [Fact]
+    public void GetSiteUrl_GivesNoPageForStudiosOrNetworks()
+    {
+        using var harness = new ServiceHarness();
+        var provider = harness.Get<TvdbMetadataProvider>();
+
+        Assert.Null(provider.GetSiteUrl(new Entry(TvdbUtility.StudioGuid(1234), [])));
+        Assert.Null(provider.GetSiteUrl(new Entry(TvdbUtility.NetworkGuid(1234), [])));
+    }
+
+    /// <summary>
+    /// An entry with the resources it was stored with.
+    /// </summary>
+    /// <param name="ID">The entry's ID.</param>
+    /// <param name="Resources">The entry's resources.</param>
+    private sealed record Entry(MetadataGuid ID, IReadOnlyList<Resource> Resources) : IMetadata, IWithResources;
 
     #endregion
 }

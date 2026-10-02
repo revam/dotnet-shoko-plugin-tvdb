@@ -137,6 +137,48 @@ public static class TvdbUtility
 
     #endregion
 
+    #region Site URLs
+
+    /// <summary>
+    /// The site every TvDB page is under.
+    /// </summary>
+    public const string SiteUrl = "https://thetvdb.com";
+
+    /// <summary>
+    /// A show's page: by its slug when known, else through TvDB's
+    /// dereferrer, which redirects an ID to the page.
+    /// </summary>
+    /// <param name="seriesID">TvDB series ID.</param>
+    /// <param name="slug">The show's slug, or <see langword="null"/>.</param>
+    /// <returns>The URL.</returns>
+    public static string SeriesUrl(int seriesID, string? slug)
+        => string.IsNullOrWhiteSpace(slug)
+            ? $"{SiteUrl}/dereferrer/series/{FormatID(seriesID)}"
+            : $"{SiteUrl}/series/{Uri.EscapeDataString(slug.Trim())}";
+
+    /// <summary>
+    /// An episode's page: under its show's slug when known, else through
+    /// TvDB's dereferrer.
+    /// </summary>
+    /// <param name="episodeID">TvDB episode ID.</param>
+    /// <param name="slug">The show's slug, or <see langword="null"/>.</param>
+    /// <returns>The URL.</returns>
+    public static string EpisodeUrl(int episodeID, string? slug)
+        => string.IsNullOrWhiteSpace(slug)
+            ? $"{SiteUrl}/dereferrer/episode/{FormatID(episodeID)}"
+            : $"{SiteUrl}/series/{Uri.EscapeDataString(slug.Trim())}/episodes/{FormatID(episodeID)}";
+
+    /// <summary>
+    /// A person's page through TvDB's dereferrer, which redirects an ID to
+    /// the page under their slug.
+    /// </summary>
+    /// <param name="peopleID">TvDB people ID.</param>
+    /// <returns>The URL.</returns>
+    public static string PersonUrl(int peopleID)
+        => $"{SiteUrl}/dereferrer/people/{FormatID(peopleID)}";
+
+    #endregion
+
     #region Languages & Countries
 
     /// <summary>

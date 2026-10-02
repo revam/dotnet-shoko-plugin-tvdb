@@ -11,6 +11,7 @@ using Shoko.Abstractions.Config;
 using Shoko.Abstractions.Config.Events;
 using Shoko.Abstractions.Metadata;
 using Shoko.Abstractions.Metadata.Anidb;
+using Shoko.Abstractions.Metadata.Containers;
 using Shoko.Abstractions.Metadata.CrossReferences;
 using Shoko.Abstractions.Metadata.Enums;
 using Shoko.Abstractions.Metadata.Image;
@@ -159,6 +160,52 @@ public sealed class TvdbMetadataProvider : IMetadataSeriesLinkingProvider, IMeta
         _store.RemoveUncreditedPeople();
         return Task.CompletedTask;
     }
+
+    #endregion
+
+    #region Site URLs
+
+    /// <summary>
+    /// The page of a TvDB show, episode, person or character: the one stored
+    /// with the entry, which goes by a slug, else one made from its ID. A
+    /// character has no page without a stored one, nor have seasons, studios
+    /// and networks.
+    /// </summary>
+    /// <param name="entry">The entry, of the TvDB source.</param>
+    /// <returns>The URL, or <see langword="null"/> when the entry has no page.</returns>
+    public string? GetSiteUrl(IMetadata entry)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+
+        if (TvdbUtility.TryGetID(entry.ID, MetadataEntityType.Series, out var seriesID))
+            return StoredSiteUrl(entry) ?? TvdbUtility.SeriesUrl(seriesID, null);
+        if (TvdbUtility.TryGetID(entry.ID, MetadataEntityType.Episode, out var episodeID))
+            return StoredSiteUrl(entry) ?? TvdbUtility.EpisodeUrl(episodeID, null);
+        if (TvdbUtility.TryGetID(entry.ID, MetadataEntityType.Creator, out var peopleID))
+            return StoredSiteUrl(entry) ?? TvdbUtility.PersonUrl(peopleID);
+        if (entry.ID.Source == MetadataSource.Tvdb && entry.ID.EntityType == MetadataEntityType.Character)
+            return StoredSiteUrl(entry);
+
+        return null;
+    }
+
+    /// <summary>
+    /// The TvDB page among a stored entry's resources, preferring one under
+    /// a slug to one through the dereferrer.
+    /// </summary>
+    /// <param name="entry">The entry.</param>
+    /// <returns>The URL, or <see langword="null"/> when the entry holds none.</returns>
+    private static string? StoredSiteUrl(IMetadata entry)
+        => entry is IWithResources withResources
+            ? withResources.Resources
+                .Where(resource =>
+                    resource.Type == ResourceType.Metadata &&
+                    string.Equals(resource.ID, entry.ID.ID, StringComparison.Ordinal) &&
+                    resource.Url.StartsWith(TvdbUtility.SiteUrl + "/", StringComparison.OrdinalIgnoreCase)
+                )
+                .OrderBy(resource => resource.Url.StartsWith(TvdbUtility.SiteUrl + "/dereferrer/", StringComparison.OrdinalIgnoreCase))
+                .FirstOrDefault()?.Url
+            : null;
 
     #endregion
 
