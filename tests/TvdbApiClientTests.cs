@@ -10,7 +10,7 @@ using Xunit;
 namespace Shoko.Plugin.Tvdb.Tests;
 
 /// <summary>
-/// How the client talks to TheTVDB: what it sends, when it logs in again, and
+/// How the client talks to TvDB: what it sends, when it logs in again, and
 /// what it makes of each answer.
 /// </summary>
 public class TvdbApiClientTests
@@ -78,7 +78,7 @@ public class TvdbApiClientTests
 
         await client.GetSeries(81797, TestContext.Current.CancellationToken);
 
-        // Not `"pin":null` and not `"pin":""`: TheTVDB rejects both, where an
+        // Not `"pin":null` and not `"pin":""`: TvDB rejects both, where an
         // absent field authenticates as the program's own account.
         Assert.DoesNotContain("pin", handler.Requests[0].Body, StringComparison.Ordinal);
     }

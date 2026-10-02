@@ -48,7 +48,7 @@ public sealed class TvdbBackgroundService(
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Unable to register the TheTVDB image template URL.");
+            logger.LogWarning(ex, "Unable to register the TvDB image template URL.");
         }
 
         await WaitForStart(stoppingToken).ConfigureAwait(false);
@@ -67,18 +67,18 @@ public sealed class TvdbBackgroundService(
     {
         try
         {
-            if (seriesStore.GetAllSeries(TvdbSources.Tvdb).Count > 0)
+            if (seriesStore.GetAllSeries(MetadataSource.Tvdb).Count > 0)
                 return 0;
 
-            if (!crossReferences.GetAllSeriesLinks(TvdbSources.Tvdb).Any(link => link.ProviderID is not null))
+            if (!crossReferences.GetAllSeriesLinks(MetadataSource.Tvdb).Any(link => link.ProviderID is not null))
                 return 0;
 
-            logger.LogInformation("No TheTVDB show is stored while some are linked. Refreshing every linked TheTVDB show.");
-            return await refreshService.RefreshAllLinked(TvdbSources.Tvdb, entityType: MetadataEntityType.Series, cancellationToken: cancellationToken).ConfigureAwait(false);
+            logger.LogInformation("No TvDB show is stored while some are linked. Refreshing every linked TvDB show.");
+            return await refreshService.RefreshAllLinked(MetadataSource.Tvdb, entityType: MetadataEntityType.Series, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            logger.LogWarning(ex, "Unable to refresh the linked TheTVDB shows.");
+            logger.LogWarning(ex, "Unable to refresh the linked TvDB shows.");
             return 0;
         }
     }
@@ -101,12 +101,12 @@ public sealed class TvdbBackgroundService(
             if (Directory.Exists(directory) && !Directory.EnumerateFileSystemEntries(directory).Any())
                 Directory.Delete(directory);
 
-            logger.LogInformation("Deleted the old TheTVDB store at {Path}; the shows are kept in the server's database now.", path);
+            logger.LogInformation("Deleted the old TvDB store at {Path}; the shows are kept in the server's database now.", path);
             return true;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            logger.LogWarning(ex, "Unable to delete the old TheTVDB store at {Path}.", path);
+            logger.LogWarning(ex, "Unable to delete the old TvDB store at {Path}.", path);
             return false;
         }
     }

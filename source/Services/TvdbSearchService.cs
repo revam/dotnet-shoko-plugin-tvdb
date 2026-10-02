@@ -20,10 +20,10 @@ using Shoko.Plugin.Tvdb.Storage;
 namespace Shoko.Plugin.Tvdb.Services;
 
 /// <summary>
-/// Searches TheTVDB, for a person looking for a show to link and for the
+/// Searches TvDB, for a person looking for a show to link and for the
 /// auto-linker looking for the best one.
 /// </summary>
-/// <param name="apiClient">The TheTVDB client.</param>
+/// <param name="apiClient">The TvDB client.</param>
 /// <param name="store">The plugin's store, for the shows already stored.</param>
 /// <param name="matchingEngine">The core's matching engine, which judges the shows found.</param>
 /// <param name="linkingService">The core's linking service, for the shows the anime's other links name.</param>
@@ -49,10 +49,10 @@ public sealed class TvdbSearchService(
     #region Search
 
     /// <summary>
-    /// Searches TheTVDB for shows a user might link to.
+    /// Searches TvDB for shows a user might link to.
     /// </summary>
     /// <remarks>
-    /// TheTVDB's search is across every entity type and answers one flat list
+    /// TvDB's search is across every entity type and answers one flat list
     /// with no total, so the paging asked for is applied here over what came
     /// back rather than sent along.
     /// </remarks>
@@ -60,7 +60,7 @@ public sealed class TvdbSearchService(
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The page asked for, and how many hits there were in total.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="options"/> is <see langword="null"/>.</exception>
-    /// <exception cref="TvdbApiException">TheTVDB answered with something unexpected.</exception>
+    /// <exception cref="TvdbApiException">TvDB answered with something unexpected.</exception>
     public async Task<(IReadOnlyList<MetadataSeriesSearchResult> Page, int TotalCount)> Search(MetadataSearchOptions options, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -89,7 +89,7 @@ public sealed class TvdbSearchService(
     #region Auto-Linking
 
     /// <summary>
-    /// Works out which TheTVDB show an anime is: searches for it, judges every
+    /// Works out which TvDB show an anime is: searches for it, judges every
     /// show found through the core's matching engine, and judges the shows
     /// the anime's links on other sources name as hints.
     /// </summary>
@@ -98,13 +98,13 @@ public sealed class TvdbSearchService(
     ///   Up to three of the anime's titles are searched, one after another,
     ///   stopping once a show matches on both title and date, which nothing
     ///   can outrank. Every show found is judged against all of the anime's
-    ///   titles rather than the one that found it, TheTVDB keeping every
+    ///   titles rather than the one that found it, TvDB keeping every
     ///   season of a show in one entry.
     /// </para>
     /// <para>
     ///   A stored show is judged with every season's episodes, and the first
     ///   <see cref="AlignedCandidateCount"/> others rated anything with the
-    ///   episodes TheTVDB lists for them, each fetched once per anime, so the
+    ///   episodes TvDB lists for them, each fetched once per anime, so the
     ///   engine can line their air dates up with the anime's.
     /// </para>
     /// <para>
@@ -120,7 +120,7 @@ public sealed class TvdbSearchService(
     /// without an API key, or when nothing was found.
     /// </returns>
     /// <exception cref="ArgumentNullException"><paramref name="anime"/> is <see langword="null"/>.</exception>
-    /// <exception cref="TvdbApiException">TheTVDB answered with something unexpected.</exception>
+    /// <exception cref="TvdbApiException">TvDB answered with something unexpected.</exception>
     public async Task<IReadOnlyList<MetadataAutoLinkCandidate>> FindAutoLinks(IAnidbAnime anime, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(anime);
@@ -149,7 +149,7 @@ public sealed class TvdbSearchService(
     }
 
     /// <summary>
-    /// Searches TheTVDB by the anime's titles and has the engine judge every
+    /// Searches TvDB by the anime's titles and has the engine judge every
     /// show found.
     /// </summary>
     /// <param name="anime">The AniDB anime.</param>
@@ -202,7 +202,7 @@ public sealed class TvdbSearchService(
 
     /// <summary>
     /// Gives the first few shows rated anything, in the engine's order, the
-    /// episodes TheTVDB lists for them, up to <see cref="AlignedCandidateCount"/>
+    /// episodes TvDB lists for them, up to <see cref="AlignedCandidateCount"/>
     /// per anime.
     /// </summary>
     /// <param name="matches">The engine's judgement, best first.</param>
@@ -238,7 +238,7 @@ public sealed class TvdbSearchService(
     /// </summary>
     /// <remarks>
     /// <para>
-    ///   TheTVDB's search is across every kind of show, not only animation, so
+    ///   TvDB's search is across every kind of show, not only animation, so
     ///   a name that only comes close, or a show that only started the same
     ///   year, is found by chance far more often than it is right: 16 of 19
     ///   such picks on a sample were wrong. A show is taken when:
@@ -280,7 +280,7 @@ public sealed class TvdbSearchService(
 
         static string Refusal(SeriesMatch match)
             => $"Rated {match.Rating}{(match.EpisodeAlignment is { IsConclusive: true } ? ", its episodes lining up with the anime's by air date" : string.Empty)}. " +
-                "TheTVDB's search spans every kind of show, so a show is taken only when one of its names matches one of the anime's titles, " +
+                "TvDB's search spans every kind of show, so a show is taken only when one of its names matches one of the anime's titles, " +
                 "when its names come close and its episodes' air dates line up conclusively with the anime's, or when the anime's links on other sources name it.";
     }
 
@@ -304,24 +304,24 @@ public sealed class TvdbSearchService(
     #region Hints
 
     /// <summary>
-    /// The TheTVDB shows the anime's links on other sources name, such as a
-    /// linked TMDB show's TheTVDB ID.
+    /// The TvDB shows the anime's links on other sources name, such as a
+    /// linked TMDB show's TvDB ID.
     /// </summary>
     /// <remarks>
     /// An episode the core could not place in a stored show is looked up on
-    /// TheTVDB for its show. An entry of another kind, a film, is left out:
-    /// the plugin does not read TheTVDB's films.
+    /// TvDB for its show. An entry of another kind, a film, is left out:
+    /// the plugin does not read TvDB's films.
     /// </remarks>
     /// <param name="anime">The AniDB anime.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>Each show once, in the core's order, with every entry naming it.</returns>
-    /// <exception cref="TvdbApiException">TheTVDB failed looking an episode up.</exception>
+    /// <exception cref="TvdbApiException">TvDB failed looking an episode up.</exception>
     private async Task<IReadOnlyList<TvdbHint>> FindHints(IAnidbAnime anime, CancellationToken cancellationToken)
     {
         var found = new List<TvdbHint>();
-        foreach (var hint in linkingService.GetCrossSourceHints(TvdbSources.Tvdb, anime.AnidbID))
+        foreach (var hint in linkingService.GetCrossSourceHints(MetadataSource.Tvdb, anime.AnidbID))
         {
-            if (hint.ID.Source != TvdbSources.Tvdb)
+            if (hint.ID.Source != MetadataSource.Tvdb)
                 continue;
 
             int seriesID;
@@ -333,7 +333,7 @@ public sealed class TvdbSearchService(
             {
                 if (await apiClient.GetEpisode(episodeID, cancellationToken).ConfigureAwait(false) is not { SeriesID: > 0 } episode)
                 {
-                    logger.LogDebug("The links of AniDB anime {AnimeID} name TheTVDB episode {EpisodeID}, which TheTVDB does not know.", anime.AnidbID, episodeID);
+                    logger.LogDebug("The links of AniDB anime {AnimeID} name TvDB episode {EpisodeID}, which TvDB does not know.", anime.AnidbID, episodeID);
                     continue;
                 }
 
@@ -361,7 +361,7 @@ public sealed class TvdbSearchService(
     /// </summary>
     /// <remarks>
     /// A show the search found is judged as found; any other is read from the
-    /// store with every season's episodes, or fetched from TheTVDB with its
+    /// store with every season's episodes, or fetched from TvDB with its
     /// episodes when the engine rates it anything. One that cannot be had is
     /// left out. A hint is turned down only for being restricted or of a
     /// kind the engine refuses; whether the search took something it competes
@@ -376,7 +376,7 @@ public sealed class TvdbSearchService(
     /// <param name="episodes">The episode lists fetched for the anime so far.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>One candidate per show that could be had, as <see cref="MetadataAutoLinkOrigin.CrossSourceLink"/>.</returns>
-    /// <exception cref="TvdbApiException">TheTVDB answered with something unexpected.</exception>
+    /// <exception cref="TvdbApiException">TvDB answered with something unexpected.</exception>
     private async Task<IReadOnlyList<MetadataAutoLinkCandidate>> JudgeHints(
         IAnidbAnime anime,
         IReadOnlyList<TvdbHint> hints,
@@ -399,7 +399,7 @@ public sealed class TvdbSearchService(
                 (candidate, isLocal) = (TvdbEntityMapper.ToSearchResult(remote), false);
             else
             {
-                logger.LogDebug("{Hint} for AniDB anime {AnimeID}, which TheTVDB does not know.", hint.Source, anime.AnidbID);
+                logger.LogDebug("{Hint} for AniDB anime {AnimeID}, which TvDB does not know.", hint.Source, anime.AnidbID);
                 continue;
             }
 
@@ -486,9 +486,9 @@ public sealed class TvdbSearchService(
     private sealed record Found(SeriesMatch Match, string Query, string? Refusal);
 
     /// <summary>
-    /// A TheTVDB show the anime's links on other sources name.
+    /// A TvDB show the anime's links on other sources name.
     /// </summary>
-    /// <param name="SeriesID">TheTVDB series ID.</param>
+    /// <param name="SeriesID">TvDB series ID.</param>
     /// <param name="NamedBy">The linked entries of other sources naming it, or an episode of it.</param>
     private sealed record TvdbHint(int SeriesID, IReadOnlyList<MetadataGuid> NamedBy)
     {
@@ -501,15 +501,15 @@ public sealed class TvdbSearchService(
         /// Where the hint came from, as a clause.
         /// </summary>
         public string Source => NamedBy is { Count: > 0 }
-            ? $"{NamedBy[0]}{(NamedBy.Count > 1 ? $" and {NamedBy.Count - 1} more" : string.Empty)}, linked to the anime, {(NamedBy.Count > 1 ? "name" : "names")} TheTVDB series {SeriesID}"
-            : $"The anime's links name TheTVDB series {SeriesID}";
+            ? $"{NamedBy[0]}{(NamedBy.Count > 1 ? $" and {NamedBy.Count - 1} more" : string.Empty)}, linked to the anime, {(NamedBy.Count > 1 ? "name" : "names")} TvDB series {SeriesID}"
+            : $"The anime's links name TvDB series {SeriesID}";
     }
 
     /// <summary>
-    /// The episodes TheTVDB lists for the shows judged for one anime, fetched
+    /// The episodes TvDB lists for the shows judged for one anime, fetched
     /// once each and grouped into seasons.
     /// </summary>
-    /// <param name="apiClient">The TheTVDB client.</param>
+    /// <param name="apiClient">The TvDB client.</param>
     private sealed class EpisodeLists(TvdbApiClient apiClient)
     {
         private readonly Dictionary<int, IReadOnlyList<MetadataSearchResultSeason>> _fetched = [];
@@ -522,7 +522,7 @@ public sealed class TvdbSearchService(
         /// <summary>
         /// Whether a show's episodes were fetched already.
         /// </summary>
-        /// <param name="seriesID">TheTVDB series ID.</param>
+        /// <param name="seriesID">TvDB series ID.</param>
         /// <returns><see langword="true"/> when they were.</returns>
         public bool WasFetched(int seriesID)
             => _fetched.ContainsKey(seriesID);
@@ -531,10 +531,10 @@ public sealed class TvdbSearchService(
         /// A show's regular seasons with their episodes, in its default season
         /// type, fetched the first time only.
         /// </summary>
-        /// <param name="seriesID">TheTVDB series ID.</param>
+        /// <param name="seriesID">TvDB series ID.</param>
         /// <param name="cancellationToken">A cancellation token.</param>
-        /// <returns>The seasons; empty when TheTVDB lists none.</returns>
-        /// <exception cref="TvdbApiException">TheTVDB answered with something unexpected.</exception>
+        /// <returns>The seasons; empty when TvDB lists none.</returns>
+        /// <exception cref="TvdbApiException">TvDB answered with something unexpected.</exception>
         public async Task<IReadOnlyList<MetadataSearchResultSeason>> Get(int seriesID, CancellationToken cancellationToken)
         {
             if (_fetched.TryGetValue(seriesID, out var seasons))

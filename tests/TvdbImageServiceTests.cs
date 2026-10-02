@@ -52,7 +52,9 @@ public class TvdbImageServiceTests
         await provider.GetImages(TvdbUtility.SeriesGuid(81797), TestContext.Current.CancellationToken);
         await provider.GetImages(TvdbUtility.EpisodeGuid(361887), TestContext.Current.CancellationToken);
 
-        harness.ImageManager.Verify(manager => manager.RegisterTemplateUrl(TvdbSources.Tvdb, "https://artworks.thetvdb.com/banners/{0}"), Times.Once);
+        // An expression tree can't read an extension property, so take it first.
+        var tvdb = MetadataSource.Tvdb;
+        harness.ImageManager.Verify(manager => manager.RegisterTemplateUrl(tvdb, "https://artworks.thetvdb.com/banners/{0}"), Times.Once);
     }
 
     [Fact]

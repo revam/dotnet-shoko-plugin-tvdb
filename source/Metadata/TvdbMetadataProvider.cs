@@ -26,19 +26,19 @@ using Shoko.Plugin.Tvdb.Storage;
 namespace Shoko.Plugin.Tvdb.Metadata;
 
 /// <summary>
-/// Supplies TheTVDB shows with their seasons and episodes to Shoko, under the
-/// <see cref="TvdbSources.Tvdb"/> source.
+/// Supplies TvDB shows with their seasons and episodes to Shoko, under the
+/// <c>MetadataSource.Tvdb</c> source.
 /// </summary>
 /// <remarks>
 /// <para>
-///   Series-shaped only: TheTVDB's films are a database of their own, which
+///   Series-shaped only: TvDB's films are a database of their own, which
 ///   the plugin does not read.
 /// </para>
 /// <para>
 ///   The core runs the refresh, search, image and purge jobs and calls in
-///   here; the provider fetches from TheTVDB and writes into the core's
+///   here; the provider fetches from TvDB and writes into the core's
 ///   stores, and the core reads the shows back from them. Without an API key
-///   the provider says it is not configured. While TheTVDB refused the key,
+///   the provider says it is not configured. While TvDB refused the key,
 ///   rate limits the plugin or failed, it says it is paused, and the core
 ///   holds its jobs back.
 /// </para>
@@ -67,11 +67,11 @@ public sealed class TvdbMetadataProvider : IMetadataSeriesLinkingProvider, IMeta
     /// Initializes a new instance of the <see cref="TvdbMetadataProvider"/> class.
     /// </summary>
     /// <param name="refreshService">Fetches a show and writes it into the stores.</param>
-    /// <param name="searchService">Searches TheTVDB.</param>
+    /// <param name="searchService">Searches TvDB.</param>
     /// <param name="linkingService">Matches episodes and records links.</param>
     /// <param name="imageService">Hands out the images.</param>
     /// <param name="store">The plugin's store, cleaned up after a purge.</param>
-    /// <param name="apiClient">The TheTVDB client, whose key makes up the configuration and whose rate limiter makes up the pause.</param>
+    /// <param name="apiClient">The TvDB client, whose key makes up the configuration and whose rate limiter makes up the pause.</param>
     /// <param name="configurationProvider">The plugin's configuration, watched for a new key.</param>
     /// <param name="metadataService">The core's metadata service, for the AniDB anime to link.</param>
     /// <param name="logger">The logger.</param>
@@ -103,13 +103,13 @@ public sealed class TvdbMetadataProvider : IMetadataSeriesLinkingProvider, IMeta
     #region Provider
 
     /// <inheritdoc/>
-    public string Name => "TheTVDB";
+    public string Name => "TvDB";
 
     /// <inheritdoc/>
-    public string? Description => "TheTVDB, a community database of television, film and animation.";
+    public string? Description => "TvDB, a community database of television, film and animation.";
 
     /// <inheritdoc/>
-    public MetadataSource Source => TvdbSources.Tvdb;
+    public MetadataSource Source => MetadataSource.Tvdb;
 
     /// <summary>
     /// Four of each job at once. Every request is paced by the rate limiter
@@ -153,7 +153,7 @@ public sealed class TvdbMetadataProvider : IMetadataSeriesLinkingProvider, IMeta
         if (!TvdbUtility.TryGetID(entryID, MetadataEntityType.Series, out var seriesID))
             return Task.CompletedTask;
 
-        _logger.LogInformation("Cleaning up after TheTVDB series {SeriesID}.", seriesID);
+        _logger.LogInformation("Cleaning up after TvDB series {SeriesID}.", seriesID);
         _store.RemoveShow(seriesID);
         _store.RemoveUncreditedPortraits();
         _store.RemoveUncreditedPeople();
@@ -165,7 +165,7 @@ public sealed class TvdbMetadataProvider : IMetadataSeriesLinkingProvider, IMeta
     #region Pausing
 
     /// <summary>
-    /// Paused while the rate limiter holds a pause: after TheTVDB rate limited
+    /// Paused while the rate limiter holds a pause: after TvDB rate limited
     /// the plugin, answered with a server error or refused the key. A missing
     /// key is not a pause but <see cref="IsConfigured"/>.
     /// </summary>
@@ -187,7 +187,7 @@ public sealed class TvdbMetadataProvider : IMetadataSeriesLinkingProvider, IMeta
     private void OnPauseStateChanged(object? sender, EventArgs eventArgs)
         => PauseStatusChanged?.Invoke(this, EventArgs.Empty);
 
-    // A saved configuration may replace a key TheTVDB refused, which lifts
+    // A saved configuration may replace a key TvDB refused, which lifts
     // the pause the refusal set; lifting it raises the change.
     private void OnConfigurationSaved(object? sender, ConfigurationSavedEventArgs<TvdbConfiguration> eventArgs)
     {
@@ -200,7 +200,7 @@ public sealed class TvdbMetadataProvider : IMetadataSeriesLinkingProvider, IMeta
     #region Refresh
 
     /// <summary>
-    /// Fetches a show from TheTVDB and writes it, its seasons and episodes,
+    /// Fetches a show from TvDB and writes it, its seasons and episodes,
     /// its orderings and what the other stores hold for it.
     /// </summary>
     /// <param name="seriesID">The show.</param>
@@ -210,7 +210,7 @@ public sealed class TvdbMetadataProvider : IMetadataSeriesLinkingProvider, IMeta
     /// <exception cref="ArgumentNullException">An argument is <see langword="null"/>.</exception>
     /// <exception cref="MetadataProviderNotConfiguredException">No API key is configured.</exception>
     /// <exception cref="TvdbApiException">
-    /// TheTVDB refused the key, failed, answered with something unexpected,
+    /// TvDB refused the key, failed, answered with something unexpected,
     /// or listed no episodes for a show with episodes stored.
     /// </exception>
     public async Task RefreshSeries(MetadataGuid seriesID, MetadataRefreshOptions options, CancellationToken cancellationToken = default)
@@ -237,19 +237,19 @@ public sealed class TvdbMetadataProvider : IMetadataSeriesLinkingProvider, IMeta
     #region Search & Matching
 
     /// <inheritdoc/>
-    /// <exception cref="MetadataProviderUnavailableException">TheTVDB failed or is rate limiting the plugin.</exception>
+    /// <exception cref="MetadataProviderUnavailableException">TvDB failed or is rate limiting the plugin.</exception>
     public Task<(IReadOnlyList<MetadataSeriesSearchResult> Page, int TotalCount)> SearchSeries(MetadataSearchOptions options, CancellationToken cancellationToken = default)
         => Upstream(() => _searchService.Search(options, cancellationToken));
 
     /// <summary>
-    /// Works out which TheTVDB episodes an anime's episodes line up with,
+    /// Works out which TvDB episodes an anime's episodes line up with,
     /// through the core's matcher, without writing anything.
     /// </summary>
     /// <remarks>
     /// The show has to be stored already; one that is not has no episodes to
     /// match against. A season may be one of the show's own or a group of one
     /// of its orderings; one of another show is refused with nothing. No link
-    /// can name an episode TheTVDB no longer lists, since the core removes
+    /// can name an episode TvDB no longer lists, since the core removes
     /// those links when a refresh saves the show without it.
     /// </remarks>
     /// <param name="anime">The AniDB anime.</param>
@@ -287,7 +287,7 @@ public sealed class TvdbMetadataProvider : IMetadataSeriesLinkingProvider, IMeta
     }
 
     /// <summary>
-    /// Searches TheTVDB for the anime and hands back every show found, judged
+    /// Searches TvDB for the anime and hands back every show found, judged
     /// by the core's matching engine, and the shows the anime's links on
     /// other sources name, without linking anything.
     /// </summary>
@@ -303,10 +303,10 @@ public sealed class TvdbMetadataProvider : IMetadataSeriesLinkingProvider, IMeta
     /// <param name="cancellationToken">Cancels the search.</param>
     /// <returns>
     /// The shows, best first, then the hints, or nothing without an API key,
-    /// for an anime not stored, or when TheTVDB found nothing.
+    /// for an anime not stored, or when TvDB found nothing.
     /// </returns>
-    /// <exception cref="MetadataProviderUnavailableException">TheTVDB failed or is rate limiting the plugin.</exception>
-    /// <exception cref="TvdbApiException">TheTVDB refused the key or answered with something unexpected.</exception>
+    /// <exception cref="MetadataProviderUnavailableException">TvDB failed or is rate limiting the plugin.</exception>
+    /// <exception cref="TvdbApiException">TvDB refused the key or answered with something unexpected.</exception>
     public async Task<IReadOnlyList<MetadataAutoLinkCandidate>> FindAutoLinks(int anidbAnimeID, CancellationToken cancellationToken = default)
     {
         if (anidbAnimeID <= 0 || !_apiClient.HasApiKey)
@@ -324,14 +324,14 @@ public sealed class TvdbMetadataProvider : IMetadataSeriesLinkingProvider, IMeta
     }
 
     /// <summary>
-    /// Runs a request to TheTVDB, telling the core it cannot be reached for
+    /// Runs a request to TvDB, telling the core it cannot be reached for
     /// now when it failed or rate limits the plugin, so the core tries again
     /// later.
     /// </summary>
     /// <typeparam name="T">What the request answers.</typeparam>
     /// <param name="request">The request.</param>
     /// <returns>The answer.</returns>
-    /// <exception cref="MetadataProviderUnavailableException">TheTVDB failed, timed out or is rate limiting the plugin.</exception>
+    /// <exception cref="MetadataProviderUnavailableException">TvDB failed, timed out or is rate limiting the plugin.</exception>
     private async Task<T> Upstream<T>(Func<Task<T>> request)
     {
         try
@@ -354,7 +354,7 @@ public sealed class TvdbMetadataProvider : IMetadataSeriesLinkingProvider, IMeta
 
     private MetadataProviderUnavailableException Unavailable(Exception ex)
         => new(
-            TvdbSources.Tvdb,
+            MetadataSource.Tvdb,
             ex.Message,
             _apiClient.RateLimiter.ResumesAt is { } resumesAt && resumesAt > DateTimeOffset.UtcNow ? resumesAt - DateTimeOffset.UtcNow : null,
             ex

@@ -2,6 +2,7 @@ using System;
 using System.Net.Http.Headers;
 using System.Threading;
 using Microsoft.Extensions.DependencyInjection;
+using Shoko.Abstractions.Metadata;
 using Shoko.Abstractions.Plugin;
 using Shoko.Plugin.Tvdb.Api;
 using Shoko.Plugin.Tvdb.Metadata;
@@ -11,7 +12,7 @@ using Shoko.Plugin.Tvdb.Storage;
 namespace Shoko.Plugin.Tvdb;
 
 /// <summary>
-/// Plugin supplying TheTVDB series, season and episode metadata through
+/// Plugin supplying TvDB series, season and episode metadata through
 /// Shoko's metadata provider contract.
 /// </summary>
 /// <remarks>
@@ -29,14 +30,14 @@ public class Plugin : IPlugin, IPluginServiceRegistration
     public Guid ID { get; private init; } = new("12126642-8c32-455f-aca1-e1a2f7b35a8c");
 
     /// <inheritdoc/>
-    public string Name { get; private set; } = "TheTVDB Metadata";
+    public string Name { get; private set; } = "TvDB";
 
     /// <inheritdoc/>
     public string Description { get; private set; } = """
-        Supplies TheTVDB series, season and episode metadata for the tvdb metadata source
+        Supplies TvDB series, season and episode metadata for the tvdb metadata source
         through Shoko's metadata provider contract: titles, overviews, images, cast and
         crew, studios and networks, genres and tags, content ratings and alternate episode
-        orderings. Official builds ship a licensed TheTVDB key and need no setup; a build
+        orderings. Official builds ship a licensed TvDB key and need no setup; a build
         from source needs its own project key in the settings.
     """;
 
@@ -45,7 +46,7 @@ public class Plugin : IPlugin, IPluginServiceRegistration
     {
         // Touching the class runs its static constructor, which registers the
         // source before the core closes registration after plugin setup.
-        _ = TvdbSources.Tvdb;
+        _ = MetadataSource.Tvdb;
 
         // Concrete singletons, because the plugin's own code resolves them.
         // The provider is also discovered by the server, which prefers a

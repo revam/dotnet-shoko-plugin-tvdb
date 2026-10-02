@@ -65,16 +65,16 @@ internal sealed class FakeCrossReferenceStore : IMetadataCrossReferenceStore
         return this;
     }
 
-    /// <summary>Links an AniDB anime to a TheTVDB show, for arranging a test.</summary>
+    /// <summary>Links an AniDB anime to a TvDB show, for arranging a test.</summary>
     public FakeCrossReferenceStore AddSeries(int anidbAnimeID, int tvdbSeriesID, MatchRating rating = MatchRating.UserVerified)
-        => Add(new() { EntityType = MetadataEntityType.Series, Source = TvdbSources.Tvdb, AnidbAnimeID = anidbAnimeID, ProviderID = TvdbUtility.SeriesGuid(tvdbSeriesID), MatchRating = rating });
+        => Add(new() { EntityType = MetadataEntityType.Series, Source = MetadataSource.Tvdb, AnidbAnimeID = anidbAnimeID, ProviderID = TvdbUtility.SeriesGuid(tvdbSeriesID), MatchRating = rating });
 
-    /// <summary>Links an AniDB episode to a TheTVDB episode, or to nothing, for arranging a test.</summary>
+    /// <summary>Links an AniDB episode to a TvDB episode, or to nothing, for arranging a test.</summary>
     public FakeCrossReferenceStore AddEpisode(int anidbAnimeID, int anidbEpisodeID, int tvdbSeriesID, int tvdbEpisodeID, MatchRating rating = MatchRating.UserVerified)
         => Add(new()
         {
             EntityType = MetadataEntityType.Episode,
-            Source = TvdbSources.Tvdb,
+            Source = MetadataSource.Tvdb,
             AnidbAnimeID = anidbAnimeID,
             AnidbEpisodeID = anidbEpisodeID,
             ProviderID = tvdbEpisodeID is 0 ? null : TvdbUtility.EpisodeGuid(tvdbEpisodeID),

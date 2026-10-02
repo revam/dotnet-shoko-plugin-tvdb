@@ -10,13 +10,13 @@ using Shoko.Plugin.Tvdb.Metadata;
 namespace Shoko.Plugin.Tvdb.Mapping;
 
 /// <summary>
-/// The identifiers the plugin names TheTVDB's entries by, and the language
+/// The identifiers the plugin names TvDB's entries by, and the language
 /// and country codes it hands the core.
 /// </summary>
 public static class TvdbUtility
 {
     /// <summary>
-    /// The season type TheTVDB answers for <c>default</c> when a show names
+    /// The season type TvDB answers for <c>default</c> when a show names
     /// none of its own.
     /// </summary>
     public const string OfficialSeasonType = "official";
@@ -24,7 +24,7 @@ public static class TvdbUtility
     #region Identifiers
 
     /// <summary>
-    /// Writes a TheTVDB ID the way every identifier holds it.
+    /// Writes a TvDB ID the way every identifier holds it.
     /// </summary>
     /// <param name="id">The ID.</param>
     /// <returns>The ID as invariant text.</returns>
@@ -32,104 +32,104 @@ public static class TvdbUtility
         => id.ToString(CultureInfo.InvariantCulture);
 
     /// <summary>A show, as <c>tvdb://series/&lt;id&gt;</c>.</summary>
-    /// <param name="seriesID">TheTVDB series ID.</param>
+    /// <param name="seriesID">TvDB series ID.</param>
     /// <returns>The identifier.</returns>
     public static MetadataGuid SeriesGuid(int seriesID)
-        => new(TvdbSources.Tvdb, MetadataEntityType.Series, FormatID(seriesID));
+        => new(MetadataSource.Tvdb, MetadataEntityType.Series, FormatID(seriesID));
 
     /// <summary>A season, as <c>tvdb://season/&lt;id&gt;</c>.</summary>
-    /// <param name="seasonID">TheTVDB season ID.</param>
+    /// <param name="seasonID">TvDB season ID.</param>
     /// <returns>The identifier.</returns>
     public static MetadataGuid SeasonGuid(int seasonID)
-        => new(TvdbSources.Tvdb, MetadataEntityType.Season, FormatID(seasonID));
+        => new(MetadataSource.Tvdb, MetadataEntityType.Season, FormatID(seasonID));
 
     /// <summary>An episode, as <c>tvdb://episode/&lt;id&gt;</c>.</summary>
-    /// <param name="episodeID">TheTVDB episode ID.</param>
+    /// <param name="episodeID">TvDB episode ID.</param>
     /// <returns>The identifier.</returns>
     public static MetadataGuid EpisodeGuid(int episodeID)
-        => new(TvdbSources.Tvdb, MetadataEntityType.Episode, FormatID(episodeID));
+        => new(MetadataSource.Tvdb, MetadataEntityType.Episode, FormatID(episodeID));
 
     /// <summary>A person, as <c>tvdb://creator/&lt;id&gt;</c>.</summary>
-    /// <param name="peopleID">TheTVDB people ID.</param>
+    /// <param name="peopleID">TvDB people ID.</param>
     /// <returns>The identifier.</returns>
     public static MetadataGuid CreatorGuid(int peopleID)
-        => new(TvdbSources.Tvdb, MetadataEntityType.Creator, FormatID(peopleID));
+        => new(MetadataSource.Tvdb, MetadataEntityType.Creator, FormatID(peopleID));
 
     /// <summary>A character, as <c>tvdb://character/&lt;id&gt;</c>.</summary>
-    /// <param name="characterID">TheTVDB character ID.</param>
+    /// <param name="characterID">TvDB character ID.</param>
     /// <returns>The identifier.</returns>
     public static MetadataGuid CharacterGuid(long characterID)
-        => new(TvdbSources.Tvdb, MetadataEntityType.Character, FormatID(characterID));
+        => new(MetadataSource.Tvdb, MetadataEntityType.Character, FormatID(characterID));
 
     /// <summary>A tag option, as <c>tvdb://tag/&lt;id&gt;</c>.</summary>
-    /// <param name="tagOptionID">TheTVDB tag option ID.</param>
+    /// <param name="tagOptionID">TvDB tag option ID.</param>
     /// <returns>The identifier.</returns>
     public static MetadataGuid TagGuid(int tagOptionID)
-        => new(TvdbSources.Tvdb, MetadataEntityType.Tag, FormatID(tagOptionID));
+        => new(MetadataSource.Tvdb, MetadataEntityType.Tag, FormatID(tagOptionID));
 
     /// <summary>
     /// A genre, as <c>tvdb://tag/genre/&lt;id&gt;</c>, kept apart from the tag
     /// options, whose IDs are numbered separately, the way the core names
     /// TMDB's genres.
     /// </summary>
-    /// <param name="genreID">TheTVDB genre ID.</param>
+    /// <param name="genreID">TvDB genre ID.</param>
     /// <returns>The identifier.</returns>
     public static MetadataGuid GenreGuid(int genreID)
-        => new(TvdbSources.Tvdb, MetadataEntityType.Tag, $"genre/{FormatID(genreID)}");
+        => new(MetadataSource.Tvdb, MetadataEntityType.Tag, $"genre/{FormatID(genreID)}");
 
     /// <summary>A studio, as <c>tvdb://studio/&lt;id&gt;</c>.</summary>
-    /// <param name="companyID">TheTVDB company ID.</param>
+    /// <param name="companyID">TvDB company ID.</param>
     /// <returns>The identifier.</returns>
     public static MetadataGuid StudioGuid(int companyID)
-        => new(TvdbSources.Tvdb, MetadataEntityType.Studio, FormatID(companyID));
+        => new(MetadataSource.Tvdb, MetadataEntityType.Studio, FormatID(companyID));
 
     /// <summary>A network, as <c>tvdb://network/&lt;id&gt;</c>.</summary>
-    /// <param name="companyID">TheTVDB company ID.</param>
+    /// <param name="companyID">TvDB company ID.</param>
     /// <returns>The identifier.</returns>
     public static MetadataGuid NetworkGuid(int companyID)
-        => new(TvdbSources.Tvdb, MetadataEntityType.Network, FormatID(companyID));
+        => new(MetadataSource.Tvdb, MetadataEntityType.Network, FormatID(companyID));
 
     /// <summary>
     /// One of a show's season types as a global ordering, as
     /// <c>tvdb://ordering/&lt;series id&gt;-&lt;season type&gt;</c>.
     /// </summary>
-    /// <param name="seriesID">TheTVDB series ID.</param>
+    /// <param name="seriesID">TvDB series ID.</param>
     /// <param name="seasonType">The season type, e.g. <c>dvd</c>.</param>
     /// <returns>The identifier.</returns>
     public static MetadataGuid OrderingGuid(int seriesID, string seasonType)
-        => new(TvdbSources.Tvdb, MetadataEntityType.Ordering, $"{FormatID(seriesID)}-{seasonType}");
+        => new(MetadataSource.Tvdb, MetadataEntityType.Ordering, $"{FormatID(seriesID)}-{seasonType}");
 
     /// <summary>
     /// One season of a season type, as
     /// <c>tvdb://season/&lt;series id&gt;-&lt;season type&gt;-&lt;number&gt;</c>.
     /// </summary>
     /// <remarks>
-    /// The groups of an ordering and a season TheTVDB lists no record for are
-    /// named this way. It never looks like TheTVDB's own season IDs, which are
+    /// The groups of an ordering and a season TvDB lists no record for are
+    /// named this way. It never looks like TvDB's own season IDs, which are
     /// plain numbers, so a group can never take a stored season's ID.
     /// </remarks>
-    /// <param name="seriesID">TheTVDB series ID.</param>
+    /// <param name="seriesID">TvDB series ID.</param>
     /// <param name="seasonType">The season type, e.g. <c>dvd</c>.</param>
     /// <param name="seasonNumber">The season's number in that season type.</param>
     /// <returns>The identifier.</returns>
     public static MetadataGuid SeasonTypeSeasonGuid(int seriesID, string seasonType, int seasonNumber)
-        => new(TvdbSources.Tvdb, MetadataEntityType.Season, $"{FormatID(seriesID)}-{seasonType}-{FormatID(seasonNumber)}");
+        => new(MetadataSource.Tvdb, MetadataEntityType.Season, $"{FormatID(seriesID)}-{seasonType}-{FormatID(seasonNumber)}");
 
     /// <summary>
-    /// Reads TheTVDB's own numeric ID out of one of the plugin's identifiers.
+    /// Reads TvDB's own numeric ID out of one of the plugin's identifiers.
     /// </summary>
     /// <param name="id">The identifier.</param>
     /// <param name="entityType">The kind it has to be.</param>
     /// <param name="tvdbID">The ID, when it is one.</param>
     /// <returns>
-    /// <see langword="true"/> for a positive numeric ID on the TheTVDB source
+    /// <see langword="true"/> for a positive numeric ID on the TvDB source
     /// and of that kind.
     /// </returns>
     public static bool TryGetID([NotNullWhen(true)] MetadataGuid? id, MetadataEntityType entityType, out int tvdbID)
     {
         tvdbID = 0;
         return id is not null
-            && id.Source == TvdbSources.Tvdb
+            && id.Source == MetadataSource.Tvdb
             && id.EntityType == entityType
             && id.TryGetNumericID(out tvdbID)
             && tvdbID > 0;
@@ -140,17 +140,17 @@ public static class TvdbUtility
     #region Languages & Countries
 
     /// <summary>
-    /// The code the core keeps a TheTVDB language under: the two-letter code
-    /// where there is one, since TheTVDB writes three.
+    /// The code the core keeps a TvDB language under: the two-letter code
+    /// where there is one, since TvDB writes three.
     /// </summary>
     /// <remarks>
-    /// Two of TheTVDB's codes are its own: <c>pt</c> is Brazilian Portuguese,
+    /// Two of TvDB's codes are its own: <c>pt</c> is Brazilian Portuguese,
     /// the Portuguese of Portugal being <c>por</c>, and <c>zhtw</c> is the
     /// Chinese of Taiwan, kept as traditional Chinese.
     /// </remarks>
-    /// <param name="code">TheTVDB's language code.</param>
+    /// <param name="code">TvDB's language code.</param>
     /// <returns>
-    /// The two-letter code, or a regional one such as <c>pt-BR</c>, TheTVDB's
+    /// The two-letter code, or a regional one such as <c>pt-BR</c>, TvDB's
     /// own code lower-cased when the language has neither, or
     /// <see langword="null"/> for none.
     /// </returns>
@@ -166,22 +166,22 @@ public static class TvdbUtility
     }
 
     /// <summary>
-    /// The title language a TheTVDB language code stands for.
+    /// The title language a TvDB language code stands for.
     /// </summary>
-    /// <param name="code">TheTVDB's language code.</param>
+    /// <param name="code">TvDB's language code.</param>
     /// <returns>The language, or <see cref="TitleLanguage.Unknown"/>.</returns>
     public static TitleLanguage ToTitleLanguage(string? code)
         => !string.IsNullOrWhiteSpace(code) && ToIetfTag(code).TryGetTitleLanguage(out var language) ? language : TitleLanguage.Unknown;
 
     /// <summary>
-    /// The ISO 639-1 code of a TheTVDB language, for an image.
+    /// The ISO 639-1 code of a TvDB language, for an image.
     /// </summary>
-    /// <param name="code">TheTVDB's language code.</param>
+    /// <param name="code">TvDB's language code.</param>
     /// <returns>The two-letter code, or <see langword="null"/> for none or one without a two-letter code.</returns>
     public static string? ToImageLanguageCode(string? code)
         => ToLanguageCode(code)?.Split('-')[0] is { Length: 2 } twoLetter ? twoLetter : null;
 
-    // TheTVDB's own codes as the tags the core reads, and the rest trimmed.
+    // TvDB's own codes as the tags the core reads, and the rest trimmed.
     private static string ToIetfTag(string code)
         => code.Trim().ToLowerInvariant() switch
         {
@@ -191,10 +191,10 @@ public static class TvdbUtility
         };
 
     /// <summary>
-    /// The ISO 3166-1 alpha-2 code of a TheTVDB country, which TheTVDB writes
+    /// The ISO 3166-1 alpha-2 code of a TvDB country, which TvDB writes
     /// as three letters.
     /// </summary>
-    /// <param name="code">TheTVDB's country code, e.g. <c>usa</c>.</param>
+    /// <param name="code">TvDB's country code, e.g. <c>usa</c>.</param>
     /// <returns>The upper-case two-letter code, e.g. <c>US</c>, or <see langword="null"/> when it is not a country.</returns>
     public static string? ToCountryCode(string? code)
     {

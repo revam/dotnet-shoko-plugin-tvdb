@@ -1,6 +1,6 @@
-# Shoko TheTVDB Metadata
+# Shoko TvDB Metadata
 
-Supplies TheTVDB v4 series, season and episode metadata to Shoko through the
+Supplies TvDB v4 series, season and episode metadata to Shoko through the
 metadata provider contract, under the `tvdb` metadata source.
 
 This is a **reference implementation** as much as a plugin. It shows a
@@ -14,15 +14,16 @@ authentication, real rate limiting, and tests.
 
 The core owns the links, the stores and the jobs. The plugin owns the refresh.
 
-- **The source.** `TvdbSources` registers `tvdb` (display name `TheTVDB`,
+- **The source.** `TvdbSources` registers `tvdb` (display name `TvDB`,
   `thetvdb` accepted as input, with a short description) from its static
   constructor, which `RegisterServices` runs by touching the class, before the
-  core closes registration after plugin setup. The old `TvDB` spelling reads
+  core closes registration after plugin setup. The plugin reads it as
+  `MetadataSource.Tvdb`, a C# 14 extension member. The old `TvDB` spelling reads
   back as the same source, ignoring case.
 - **Identifiers.** Every entry is a `MetadataGuid`: `tvdb://series/81797`,
   `tvdb://season/31893`, `tvdb://episode/361887`, `tvdb://creator/412417`,
   `tvdb://character/65111900`, `tvdb://tag/63`, `tvdb://tag/genre/19`,
-  `tvdb://studio/43210` and `tvdb://network/111`, each with TheTVDB's own ID.
+  `tvdb://studio/43210` and `tvdb://network/111`, each with TvDB's own ID.
 - **No getters.** The core resolves every entry from its own stores, so a
   stored show still reads while the plugin is disabled or gone.
 - **No queue code.** The core's `RefreshMetadataJob`, `SearchMetadataJob`,
@@ -44,28 +45,28 @@ and three more in each of English and German. It writes:
 
 | Into | What |
 |---|---|
-| `IMetadataSeriesStore` | The show with its seasons and episodes: titles and overviews in every language fetched, air dates, runtimes, status, original language, popularity, content ratings (one per country, under its two-letter code), resources (TheTVDB's page, IMDb, TMDB, Wikidata and the rest, each with its bare ID) and the show's IMDb, TMDB and TVmaze IDs as its cross-source IDs (`imdb://series/tt0388629`). An episode has none, TheTVDB's episode listing carrying no IDs elsewhere. |
+| `IMetadataSeriesStore` | The show with its seasons and episodes: titles and overviews in every language fetched, air dates, runtimes, status, original language, popularity, content ratings (one per country, under its two-letter code), resources (TvDB's page, IMDb, TMDB, Wikidata and the rest, each with its bare ID) and the show's IMDb, TMDB and TVmaze IDs as its cross-source IDs (`imdb://series/tt0388629`). An episode has none, TvDB's episode listing carrying no IDs elsewhere. |
 | `IMetadataTagStore` | Genres as `tvdb://tag/genre/<id>` with `TagKind.Genre`, and tag options as `tvdb://tag/<id>` with their category. |
 | `IMetadataStudioStore` | Studios (as animation studios) and production companies, and the networks the show aired on. |
-| `IMetadataPeopleStore` | The cast (`SetCast`, one credit per character) and crew (`SetCrew`, TheTVDB's job name, mapped onto a role type where one fits). Credits for a single episode are left out. A person is written with what their own record adds (see [People](#people)). A character is written with its name, its aliases and its page, which TheTVDB files among the show's people (`https://thetvdb.com/series/<slug>/people/<id>`) with no dereferrer, so a show without a slug leaves its characters unlinked. |
+| `IMetadataPeopleStore` | The cast (`SetCast`, one credit per character) and crew (`SetCrew`, TvDB's job name, mapped onto a role type where one fits). Credits for a single episode are left out. A person is written with what their own record adds (see [People](#people)). A character is written with its name, its aliases and its page, which TvDB files among the show's people (`https://thetvdb.com/series/<slug>/people/<id>`) with no dereferrer, so a show without a slug leaves its characters unlinked. |
 | `IMetadataOrderingService` | Each other season type the show has (DVD, absolute, alternate, regional and so on) as a global ordering, `tvdb://ordering/<series>-<type>`, one group per season, `tvdb://season/<series>-<type>-<number>`. An ordering is removed once the show no longer has its season type. |
-| The plugin's own database | What only TheTVDB has (see [Its own database](#its-own-database)): the slug, status, season types and where the images are (`Shows`), the portraits of people and characters (`Portraits`), and what each person's own record said and when it was fetched (`People`). |
+| The plugin's own database | What only TvDB has (see [Its own database](#its-own-database)): the slug, status, season types and where the images are (`Shows`), the portraits of people and characters (`Portraits`), and what each person's own record said and when it was fetched (`People`). |
 
-The show's own seasons are the season type TheTVDB uses for it by default. A
-season TheTVDB lists no record for is made up as
+The show's own seasons are the season type TvDB uses for it by default. A
+season TvDB lists no record for is made up as
 `tvdb://season/<series>-<type>-<number>`, which never looks like one of
-TheTVDB's own numeric season IDs, so an ordering group can never take a stored
+TvDB's own numeric season IDs, so an ordering group can never take a stored
 season's ID.
 
 A quick refresh leaves out the cast and crew, the orderings and the matching.
 The networks, the cast and crew and the orderings follow the refresh options,
 and the settings where the options leave it open. After a full refresh the
 episodes of every anime linked to the show are matched again, keeping the
-links already there. The core removes the links to an episode TheTVDB no
-longer lists when the refresh saves the show. A show TheTVDB no longer has is
+links already there. The core removes the links to an episode TvDB no
+longer lists when the refresh saves the show. A show TvDB no longer has is
 left as it was stored. A refresh
 that could not get the whole answer fails rather than write part of it: when
-TheTVDB refuses the key partway through, loses a page of episodes, or lists
+TvDB refuses the key partway through, loses a page of episodes, or lists
 none for a show with episodes stored. The core then keeps the last refresh
 time and tries again.
 
@@ -84,9 +85,9 @@ also fetches each credited person's own record,
   their name in every language as other names;
 - one biography as the overview: the first of the **Translation
   Languages** that has one, then English, then any;
-- their gender, birth and death, where a date TheTVDB knows only part of
+- their gender, birth and death, where a date TvDB knows only part of
   (`1967`, `1930-04-00`) keeps the parts it knows;
-- their page on TheTVDB under their slug, after the dereferrer link, and their
+- their page on TvDB under their slug, after the dereferrer link, and their
   IMDb (`nm` IDs), TMDB, TVmaze and Wikidata IDs and social accounts;
 - their photo, when the credits had none.
 
@@ -99,7 +100,7 @@ fetched; the plugin's own record does. A show with a large cast fetches at
 most **Person Details Per Refresh** people (50 by default), those never
 fetched first in credit order, and the rest on later refreshes.
 
-A person TheTVDB does not have (404) keeps what the credits say and is not
+A person TvDB does not have (404) keeps what the credits say and is not
 asked for again for 30 days. A failed fetch keeps what the credits say, or the
 last record fetched, and never fails the refresh; a refused key, a rate limit
 or a server error also stops the fetching until the next refresh. Turning the
@@ -121,7 +122,7 @@ the record does not say which language is the person's own.
 
 Every image is a resource ID completing the template
 `https://artworks.thetvdb.com/banners/{0}`, which the plugin registers with
-`IImageManager.RegisterTemplateUrl` on start. Images on other hosts, TheTVDB's
+`IImageManager.RegisterTemplateUrl` on start. Images on other hosts, TvDB's
 placeholders for a missing image and paths longer than the core's image table
 holds are left out. The core decides what to download from the admin's image
 settings for the source.
@@ -139,9 +140,9 @@ API with `503 Service Unavailable`, and a refresh throws
 The provider reports a `MetadataProviderPauseStatus`, and the core holds its
 jobs back, while:
 
-- TheTVDB refused the key or PIN (for an hour, or until the settings are saved);
-- TheTVDB rate limits the plugin (for as long as its `Retry-After` says);
-- TheTVDB answered with a server error (for a minute).
+- TvDB refused the key or PIN (for an hour, or until the settings are saved);
+- TvDB rate limits the plugin (for as long as its `Retry-After` says);
+- TvDB answered with a server error (for a minute).
 
 ## Linking and matching
 
@@ -153,18 +154,18 @@ jobs back, while:
   aliases and translations among its names.
   - **Episodes.** A stored show is judged with every season's episodes, and
     the first three other shows rated anything, over all the titles searched,
-    with the episodes of TheTVDB's default listing for them (one call per
+    with the episodes of TvDB's default listing for them (one call per
     500 episodes, each show fetched once per anime). The engine lines their
     air dates up with the anime's (`SeriesMatch.EpisodeAlignment`).
   - **Hints.** The shows the anime's links on other sources name, such as a
-    linked TMDB show's TheTVDB ID, come from
+    linked TMDB show's TvDB ID, come from
     `IMetadataLinkingService.GetCrossSourceHints`; an episode named without
-    its show is looked up on TheTVDB for it, and a film is left out. Each is
-    judged by the engine with its episodes, from the store or TheTVDB, and
+    its show is looked up on TvDB for it, and a film is left out. Each is
+    judged by the engine with its episodes, from the store or TvDB, and
     handed back as `CrossSourceLink`, turned down only when it is restricted
     or of a kind the engine refuses. The core takes one only when the search
     took nothing it competes with, or only picks rated below it.
-  - **What is taken.** TheTVDB's search is across every kind of show, and a
+  - **What is taken.** TvDB's search is across every kind of show, and a
     name that only came close was wrong 16 times in 19 on a sample. So the
     show the engine picks is taken only when one of its names matches one of
     the anime's titles, when its names come close and its episodes line up
@@ -188,7 +189,7 @@ jobs back, while:
 
 ## Its own database
 
-The plugin keeps what only TheTVDB has in an Entity Framework Core database of
+The plugin keeps what only TvDB has in an Entity Framework Core database of
 its own, `TvdbDbContext`, registered from `RegisterServices` with
 `AddPluginDbContext<Plugin, TvdbDbContext>("tvdb")`. The server owns the rest:
 it configures the context (SQLite in WAL mode, at `data/<plugin-id>/tvdb.db3`),
@@ -196,7 +197,7 @@ applies its migrations while it starts, before `Ready`, copies the file before
 each one, includes it in its backups, and removes it when the plugin is
 uninstalled with its data. The plugin never names a provider.
 
-There are three tables, one per kind of record, keyed by TheTVDB's ID (the
+There are three tables, one per kind of record, keyed by TvDB's ID (the
 portraits by `creator/<id>` or `character/<id>`). Scalars are columns; the
 artwork, names, biographies and remote IDs are JSON columns mapped as complex
 collections, and the season posters and episode thumbnails are JSON objects
@@ -228,21 +229,21 @@ deletes the old file.
 ## Credentials
 
 **An official build needs no API key and no PIN.** It ships a licensed
-TheTVDB project key, which the release workflow stamps into
+TvDB project key, which the release workflow stamps into
 `Constants.ProjectApiKey` from the `TVDB_PROJECT_KEY` secret. A licensed key
 authenticates on its own, so a user of an official build sets nothing.
 
-TheTVDB issues keys per project, not to individual users. The **API Key**
+TvDB issues keys per project, not to individual users. The **API Key**
 setting is for a build from source or a fork, which has no key stamped into
 it: register the fork as a project at <https://thetvdb.com/api-information>
 and paste its key there. A key in the setting wins over a stamped one.
 
 The **Subscriber PIN** setting is optional. It only matters for a
-user-supported key, which authenticates as the TheTVDB subscriber whose PIN
+user-supported key, which authenticates as the TvDB subscriber whose PIN
 comes with it (found under the account's dashboard after subscribing at
 <https://thetvdb.com/subscribe>). With a licensed key, leave it empty. When no
 PIN is set, the `pin` field is left out of the login body entirely, since
-TheTVDB rejects an empty one.
+TvDB rejects an empty one.
 
 A key embedded in a binary can be read back out of it. The stamped key stays
 out of the source tree, not out of the hands of anyone holding the DLL.
@@ -251,9 +252,9 @@ out of the source tree, not out of the hands of anyone holding the DLL.
 
 | Setting | Default | What it does |
 |---|---|---|
-| API Key | *(none)* | For a build from source or a fork: its own TheTVDB project key. Official builds ship one, and a key set here wins over it. |
+| API Key | *(none)* | For a build from source or a fork: its own TvDB project key. Official builds ship one, and a key set here wins over it. |
 | Subscriber PIN | *(none)* | Optional. Only for a user-supported key; leave it empty with a licensed one. |
-| Translation Languages | `eng`, `jpn` | TheTVDB's language codes to take translations in: three letters, but `pt` for Brazilian Portuguese (`por` is Portugal's) and `zhtw` for Taiwan's Chinese. The show's own come with its record; its episodes cost one request per page of them per language, the show's own language aside. |
+| Translation Languages | `eng`, `jpn` | TvDB's language codes to take translations in: three letters, but `pt` for Brazilian Portuguese (`por` is Portugal's) and `zhtw` for Taiwan's Chinese. The show's own come with its record; its episodes cost one request per page of them per language, the show's own language aside. |
 | Search Result Limit | `10` | How many search hits to judge per title when auto-linking. |
 | Consider Existing Other Links | off | Leave out episodes another anime is linked to when matching. |
 | Download Alternate Orderings | on | Store the other season types as orderings. |
@@ -270,21 +271,21 @@ are the core's, per source.
 
 ## What it does not do
 
-- **No movies.** `IMetadataMovieProvider` is not implemented. TheTVDB has a
+- **No movies.** `IMetadataMovieProvider` is not implemented. TvDB has a
   movie database, and adding it is a second provider shape.
-- **No collections.** TheTVDB's lists are a user feature rather than a
+- **No collections.** TvDB's lists are a user feature rather than a
   franchise graph, so there is nothing to gather that Shoko would recognise.
-- **No relations or suggestions.** TheTVDB has neither.
-- **No company logos.** TheTVDB's company artwork is not on the show record.
+- **No relations or suggestions.** TvDB has neither.
+- **No company logos.** TvDB's company artwork is not on the show record.
 - **No season pages.** The core keeps no resources for a season
   (`MetadataSeasonData` and `ISeason` have none), so a season's page on
-  TheTVDB, `https://thetvdb.com/dereferrer/season/{id}`, has nowhere to go.
-- **No placement of specials.** TheTVDB says where a special airs among the
+  TvDB, `https://thetvdb.com/dereferrer/season/{id}`, has nowhere to go.
+- **No placement of specials.** TvDB says where a special airs among the
   episodes (`airsBeforeSeason`, `airsBeforeEpisode`, `airsAfterSeason`), but
   the core's episodes have no field for it, and an ordering reads every
   episode outside its special group as a regular one, numbered in its group,
   so a special cannot be placed there either.
-- **No character overviews.** TheTVDB's character record lists the
+- **No character overviews.** TvDB's character record lists the
   languages it has a name or overview in, but not the text, and no endpoint
   serves it, so fetching each character on its own would add nothing.
 
@@ -296,7 +297,7 @@ dotnet test tests/Shoko.Plugin.Tvdb.Tests.csproj
 scripts/pack.sh --zip
 ```
 
-The test fixtures are trimmed from live TheTVDB answers, with a few records
+The test fixtures are trimmed from live TvDB answers, with a few records
 added by hand for cases One Piece does not have; see
 [`tests/Fixtures/README.md`](tests/Fixtures/README.md).
 

@@ -5,10 +5,10 @@ using System.Text.Json.Serialization;
 namespace Shoko.Plugin.Tvdb.Api;
 
 /// <summary>
-/// The JSON settings every TheTVDB response is read with.
+/// The JSON settings every TvDB response is read with.
 /// </summary>
 /// <remarks>
-/// TheTVDB v4 is snake_case in places and camelCase in others, sometimes for
+/// TvDB v4 is snake_case in places and camelCase in others, sometimes for
 /// two fields of the same object, so the names are spelled out per property
 /// with <see cref="JsonPropertyNameAttribute"/> rather than inferred from a
 /// naming policy. <see cref="JsonNumberHandling.AllowReadingFromString"/> is
@@ -75,7 +75,7 @@ public sealed class TvdbLoginRequest
 
     /// <summary>
     /// The subscriber PIN identifying the user, omitted entirely when unset:
-    /// TheTVDB rejects an empty string here rather than treating it as absent.
+    /// TvDB rejects an empty string here rather than treating it as absent.
     /// </summary>
     [JsonPropertyName("pin")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -97,7 +97,7 @@ public sealed class TvdbLoginData
 /// </summary>
 public sealed class TvdbSeriesExtended
 {
-    /// <summary>TheTVDB series id.</summary>
+    /// <summary>TvDB series id.</summary>
     [JsonPropertyName("id")]
     public int ID { get; set; }
 
@@ -130,13 +130,13 @@ public sealed class TvdbSeriesExtended
     public int? AverageRuntime { get; set; }
 
     /// <summary>
-    /// TheTVDB's score, a popularity count on its own scale rather than a
+    /// TvDB's score, a popularity count on its own scale rather than a
     /// rating: One Piece's is in the millions.
     /// </summary>
     [JsonPropertyName("score")]
     public double? Score { get; set; }
 
-    /// <summary>Whether TheTVDB shuffles the show's episode order.</summary>
+    /// <summary>Whether TvDB shuffles the show's episode order.</summary>
     [JsonPropertyName("isOrderRandomized")]
     public bool IsOrderRandomized { get; set; }
 
@@ -148,7 +148,7 @@ public sealed class TvdbSeriesExtended
     [JsonPropertyName("aliases")]
     public List<TvdbAlias>? Aliases { get; set; }
 
-    /// <summary>The seasons, across every ordering TheTVDB holds.</summary>
+    /// <summary>The seasons, across every ordering TvDB holds.</summary>
     [JsonPropertyName("seasons")]
     public List<TvdbSeason>? Seasons { get; set; }
 
@@ -205,7 +205,7 @@ public sealed class TvdbSeriesExtended
     public List<TvdbCharacter>? Characters { get; set; }
 
     /// <summary>
-    /// The show's names and overviews in every language TheTVDB has, which
+    /// The show's names and overviews in every language TvDB has, which
     /// <c>meta=translations</c> adds to the record.
     /// </summary>
     [JsonPropertyName("translations")]
@@ -232,10 +232,10 @@ public sealed class TvdbAlias
     public string? Name { get; set; }
 }
 
-/// <summary>A season of a show, in one of TheTVDB's orderings.</summary>
+/// <summary>A season of a show, in one of TvDB's orderings.</summary>
 public sealed class TvdbSeason
 {
-    /// <summary>TheTVDB season id, unique across orderings.</summary>
+    /// <summary>TvDB season id, unique across orderings.</summary>
     [JsonPropertyName("id")]
     public int ID { get; set; }
 
@@ -265,7 +265,7 @@ public sealed class TvdbSeason
     public string? Image { get; set; }
 }
 
-/// <summary>One of TheTVDB's parallel episode orderings.</summary>
+/// <summary>One of TvDB's parallel episode orderings.</summary>
 public sealed class TvdbSeasonType
 {
     /// <summary>The ordering's ID.</summary>
@@ -291,7 +291,7 @@ public sealed class TvdbSeasonType
 /// <summary>A company credited on a show.</summary>
 public sealed class TvdbCompany
 {
-    /// <summary>TheTVDB company id.</summary>
+    /// <summary>TvDB company id.</summary>
     [JsonPropertyName("id")]
     public int ID { get; set; }
 
@@ -358,7 +358,7 @@ public sealed class TvdbEpisodesData
 /// <summary>An episode.</summary>
 public sealed class TvdbEpisode
 {
-    /// <summary>TheTVDB episode id.</summary>
+    /// <summary>TvDB episode id.</summary>
     [JsonPropertyName("id")]
     public int ID { get; set; }
 
@@ -375,7 +375,7 @@ public sealed class TvdbEpisode
     public string? Overview { get; set; }
 
     /// <summary>
-    /// The season number within the requested ordering. TheTVDB has no
+    /// The season number within the requested ordering. TvDB has no
     /// special flag: season zero is the convention, and
     /// <see cref="Mapping.TvdbEntityMapper"/> reads it that way.
     /// </summary>
@@ -441,7 +441,7 @@ public sealed class TvdbTranslation
     [JsonPropertyName("language")]
     public string? Language { get; set; }
 
-    /// <summary>Whether TheTVDB considers this the primary translation.</summary>
+    /// <summary>Whether TvDB considers this the primary translation.</summary>
     [JsonPropertyName("isPrimary")]
     public bool? IsPrimary { get; set; }
 
@@ -458,13 +458,13 @@ public sealed class TvdbTranslation
 public sealed class TvdbSearchResult
 {
     /// <summary>
-    /// The prefixed id, e.g. <c>series-71663</c>. TheTVDB's search is across
+    /// The prefixed id, e.g. <c>series-71663</c>. TvDB's search is across
     /// every entity type, so the bare id is only unique together with the type.
     /// </summary>
     [JsonPropertyName("id")]
     public string? ID { get; set; }
 
-    /// <summary>The bare TheTVDB id, as a string.</summary>
+    /// <summary>The bare TvDB id, as a string.</summary>
     [JsonPropertyName("tvdb_id")]
     public string? TvdbID { get; set; }
 
@@ -480,7 +480,7 @@ public sealed class TvdbSearchResult
     [JsonPropertyName("year")]
     public string? Year { get; set; }
 
-    /// <summary>The first air date, <c>yyyy-MM-dd</c>, when TheTVDB knows it.</summary>
+    /// <summary>The first air date, <c>yyyy-MM-dd</c>, when TvDB knows it.</summary>
     [JsonPropertyName("first_air_time")]
     public string? FirstAirTime { get; set; }
 
@@ -516,7 +516,7 @@ public sealed class TvdbSearchResult
 /// <summary>A genre.</summary>
 public sealed class TvdbGenre
 {
-    /// <summary>TheTVDB genre ID.</summary>
+    /// <summary>TvDB genre ID.</summary>
     [JsonPropertyName("id")]
     public int ID { get; set; }
 
@@ -532,7 +532,7 @@ public sealed class TvdbGenre
 /// <summary>One option of a tag, as set on a show.</summary>
 public sealed class TvdbTagOption
 {
-    /// <summary>TheTVDB ID of the option.</summary>
+    /// <summary>TvDB ID of the option.</summary>
     [JsonPropertyName("id")]
     public int ID { get; set; }
 
@@ -548,7 +548,7 @@ public sealed class TvdbTagOption
     [JsonPropertyName("name")]
     public string? Name { get; set; }
 
-    /// <summary>What the option means, when TheTVDB says.</summary>
+    /// <summary>What the option means, when TvDB says.</summary>
     [JsonPropertyName("helpText")]
     public string? HelpText { get; set; }
 }
@@ -561,7 +561,7 @@ public sealed class TvdbRemoteID
     public string? ID { get; set; }
 
     /// <summary>
-    /// TheTVDB's number for the site, as <c>/sources/types</c> lists them:
+    /// TvDB's number for the site, as <c>/sources/types</c> lists them:
     /// 2 an IMDb title, 16 an IMDb person, 12 a TMDB show, 15 a TMDB person
     /// and so on.
     /// </summary>
@@ -579,7 +579,7 @@ public sealed class TvdbRemoteID
 /// <summary>One piece of artwork.</summary>
 public sealed class TvdbArtwork
 {
-    /// <summary>TheTVDB artwork ID.</summary>
+    /// <summary>TvDB artwork ID.</summary>
     [JsonPropertyName("id")]
     public int ID { get; set; }
 
@@ -598,7 +598,7 @@ public sealed class TvdbArtwork
     [JsonPropertyName("language")]
     public string? Language { get; set; }
 
-    /// <summary>TheTVDB's score for it, higher being better.</summary>
+    /// <summary>TvDB's score for it, higher being better.</summary>
     [JsonPropertyName("score")]
     public double? Score { get; set; }
 
@@ -621,7 +621,7 @@ public sealed class TvdbArtwork
 
 /// <summary>
 /// A credit on a show: a character and who plays them, or a crew member and
-/// their job. TheTVDB files both under <c>characters</c>.
+/// their job. TvDB files both under <c>characters</c>.
 /// </summary>
 /// <remarks>
 /// The record also has <c>nameTranslations</c> and <c>overviewTranslations</c>,
@@ -631,7 +631,7 @@ public sealed class TvdbArtwork
 /// </remarks>
 public sealed class TvdbCharacter
 {
-    /// <summary>TheTVDB ID of the credit, which is the character's for a role.</summary>
+    /// <summary>TvDB ID of the credit, which is the character's for a role.</summary>
     [JsonPropertyName("id")]
     public long ID { get; set; }
 
@@ -639,7 +639,7 @@ public sealed class TvdbCharacter
     [JsonPropertyName("name")]
     public string? Name { get; set; }
 
-    /// <summary>TheTVDB ID of the person credited.</summary>
+    /// <summary>TvDB ID of the person credited.</summary>
     [JsonPropertyName("peopleId")]
     public int? PeopleID { get; set; }
 
@@ -654,7 +654,7 @@ public sealed class TvdbCharacter
     [JsonPropertyName("peopleType")]
     public string? PeopleType { get; set; }
 
-    /// <summary>TheTVDB's number for <see cref="PeopleType"/>.</summary>
+    /// <summary>TvDB's number for <see cref="PeopleType"/>.</summary>
     [JsonPropertyName("type")]
     public int? Type { get; set; }
 
@@ -707,7 +707,7 @@ public sealed class TvdbCharacter
 /// </remarks>
 public sealed class TvdbPersonExtended
 {
-    /// <summary>TheTVDB person ID.</summary>
+    /// <summary>TvDB person ID.</summary>
     [JsonPropertyName("id")]
     public int ID { get; set; }
 
@@ -726,7 +726,7 @@ public sealed class TvdbPersonExtended
     [JsonPropertyName("image")]
     public string? Image { get; set; }
 
-    /// <summary>When the person was born, as TheTVDB writes it: a full date, or only part of one.</summary>
+    /// <summary>When the person was born, as TvDB writes it: a full date, or only part of one.</summary>
     [JsonPropertyName("birth")]
     public string? Birth { get; set; }
 
@@ -739,7 +739,7 @@ public sealed class TvdbPersonExtended
     public string? BirthPlace { get; set; }
 
     /// <summary>
-    /// TheTVDB's number for the person's gender, as <c>/genders</c> lists
+    /// TvDB's number for the person's gender, as <c>/genders</c> lists
     /// them: 1 male, 2 female, 3 other.
     /// </summary>
     [JsonPropertyName("gender")]
@@ -764,7 +764,7 @@ public sealed class TvdbPersonExtended
     [JsonPropertyName("translations")]
     public TvdbTranslations? Translations { get; set; }
 
-    /// <summary>When TheTVDB last changed the record, e.g. <c>2024-01-02 03:04:05</c>.</summary>
+    /// <summary>When TvDB last changed the record, e.g. <c>2024-01-02 03:04:05</c>.</summary>
     [JsonPropertyName("lastUpdated")]
     public string? LastUpdated { get; set; }
 }
@@ -782,7 +782,7 @@ public sealed class TvdbBiography
 }
 
 /// <summary>
-/// An entity's names and overviews in every language TheTVDB has, as
+/// An entity's names and overviews in every language TvDB has, as
 /// <c>meta=translations</c> adds them to a record.
 /// </summary>
 public sealed class TvdbTranslations

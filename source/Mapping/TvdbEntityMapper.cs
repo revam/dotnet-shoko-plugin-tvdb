@@ -14,7 +14,7 @@ using Shoko.Plugin.Tvdb.Storage;
 namespace Shoko.Plugin.Tvdb.Mapping;
 
 /// <summary>
-/// Turns what TheTVDB returns into what the core's stores keep. Pure and
+/// Turns what TvDB returns into what the core's stores keep. Pure and
 /// static, so the shape of the mapping can be tested without a network, a
 /// store or a server.
 /// </summary>
@@ -23,7 +23,7 @@ public static class TvdbEntityMapper
     #region Season Types
 
     /// <summary>
-    /// The season type a show's own seasons are in: the one TheTVDB uses for
+    /// The season type a show's own seasons are in: the one TvDB uses for
     /// it by default, which is what its <c>default</c> episode listing
     /// answers in.
     /// </summary>
@@ -51,7 +51,7 @@ public static class TvdbEntityMapper
     /// </summary>
     /// <param name="series">The show.</param>
     /// <param name="defaultSeasonType">The show's default season type.</param>
-    /// <returns>The season types, lower-case, in the order TheTVDB lists them.</returns>
+    /// <returns>The season types, lower-case, in the order TvDB lists them.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="series"/> is <see langword="null"/>.</exception>
     public static IReadOnlyList<string> AlternateSeasonTypes(TvdbSeriesExtended series, string defaultSeasonType)
     {
@@ -84,11 +84,11 @@ public static class TvdbEntityMapper
         };
 
     /// <summary>
-    /// The name of a season type, as the show names it, else as TheTVDB
+    /// The name of a season type, as the show names it, else as TvDB
     /// lists it, else made up from its key.
     /// </summary>
     /// <remarks>
-    /// A show names its alternate orderings where TheTVDB only numbers them:
+    /// A show names its alternate orderings where TvDB only numbers them:
     /// One Piece's <c>alternate</c> and <c>alttwo</c> are its
     /// <c>Story Order</c> and <c>Streaming Order</c>.
     /// </remarks>
@@ -127,7 +127,7 @@ public static class TvdbEntityMapper
     /// Maps a show with its seasons and episodes into what the series store
     /// keeps.
     /// </summary>
-    /// <param name="series">The show as TheTVDB returned it, with its translations.</param>
+    /// <param name="series">The show as TvDB returned it, with its translations.</param>
     /// <param name="languages">The three-letter codes of the languages to take the show's translations in.</param>
     /// <param name="episodes">The show's episodes in its default season type.</param>
     /// <param name="episodeTranslations">The same episodes in other languages, by the three-letter code they were asked for in.</param>
@@ -235,7 +235,7 @@ public static class TvdbEntityMapper
     }
 
     // A record's translations in each of the languages asked for, in the
-    // order they were asked for, matched on TheTVDB's own codes.
+    // order they were asked for, matched on TvDB's own codes.
     private static IEnumerable<(string Language, List<TvdbTranslation> Translations)> TranslationsIn(IReadOnlyList<TvdbTranslation>? translations, IReadOnlyList<string>? languages)
     {
         if (translations is not { Count: > 0 } || languages is not { Count: > 0 })
@@ -250,11 +250,11 @@ public static class TvdbEntityMapper
     }
 
     /// <summary>
-    /// A show's page on TheTVDB and its IDs on other sites, each with its bare
+    /// A show's page on TvDB and its IDs on other sites, each with its bare
     /// ID where the site has IDs of its own.
     /// </summary>
     /// <param name="series">The show.</param>
-    /// <returns>The resources, TheTVDB's page first.</returns>
+    /// <returns>The resources, TvDB's page first.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="series"/> is <see langword="null"/>.</exception>
     public static IReadOnlyList<Resource> SeriesResources(TvdbSeriesExtended series)
     {
@@ -266,7 +266,7 @@ public static class TvdbEntityMapper
             new()
             {
                 Type = ResourceType.Metadata,
-                Name = "TheTVDB",
+                Name = "TvDB",
                 Url = string.IsNullOrWhiteSpace(series.Slug) ? $"https://thetvdb.com/dereferrer/series/{id}" : $"https://thetvdb.com/series/{Uri.EscapeDataString(series.Slug.Trim())}",
                 ID = id,
             },
@@ -279,17 +279,17 @@ public static class TvdbEntityMapper
     }
 
     /// <summary>
-    /// The IDs other metadata sources gave the show, as TheTVDB lists them:
+    /// The IDs other metadata sources gave the show, as TvDB lists them:
     /// its IMDb title, its TMDB show (or film) and its TVmaze show.
     /// </summary>
     /// <remarks>
     /// Only the sources that describe the show itself; the other sites
-    /// TheTVDB lists, such as EIDR, Wikidata or the show's socials, stay
+    /// TvDB lists, such as EIDR, Wikidata or the show's socials, stay
     /// among its resources. IMDb and TVmaze are parsed on every call rather
     /// than kept, so a plugin registering either later is still found.
     /// </remarks>
     /// <param name="series">The show.</param>
-    /// <returns>The IDs, each once, in the order TheTVDB lists them.</returns>
+    /// <returns>The IDs, each once, in the order TvDB lists them.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="series"/> is <see langword="null"/>.</exception>
     public static IReadOnlyList<MetadataGuid> SeriesCrossSourceIDs(TvdbSeriesExtended series)
     {
@@ -317,7 +317,7 @@ public static class TvdbEntityMapper
     /// A show's ID on another site as a resource.
     /// </summary>
     /// <remarks>
-    /// The site is read from TheTVDB's number for it, which tells a show's
+    /// The site is read from TvDB's number for it, which tells a show's
     /// IMDb or TMDB ID from a person's or a movie's, and from its name when
     /// the number is missing or unknown. IDs of people, companies, seasons
     /// and episodes are left out.
@@ -347,7 +347,7 @@ public static class TvdbEntityMapper
     }
 
     /// <summary>
-    /// The slug TheTVDB gives a site it keeps IDs for, from its number for
+    /// The slug TvDB gives a site it keeps IDs for, from its number for
     /// the site as <c>/sources/types</c> lists them, else from the site's
     /// name.
     /// </summary>
@@ -356,10 +356,10 @@ public static class TvdbEntityMapper
     /// kind for shows and another for people, so it is read as the kind the
     /// record is.
     /// </remarks>
-    /// <param name="type">TheTVDB's number for the site.</param>
+    /// <param name="type">TvDB's number for the site.</param>
     /// <param name="sourceName">The site's name, e.g. <c>IMDB</c>.</param>
     /// <param name="person">Whether the ID is on a person's record rather than a show's.</param>
-    /// <returns>The slug, e.g. <c>imdbperson</c>, or <see langword="null"/> for a site TheTVDB does not list.</returns>
+    /// <returns>The slug, e.g. <c>imdbperson</c>, or <see langword="null"/> for a site TvDB does not list.</returns>
     public static string? SourceSlug(int? type, string? sourceName, bool person)
         => type switch
         {
@@ -426,7 +426,7 @@ public static class TvdbEntityMapper
     /// A show's content ratings, one per country.
     /// </summary>
     /// <remarks>
-    /// TheTVDB names a rating's country in three letters, which is turned into
+    /// TvDB names a rating's country in three letters, which is turned into
     /// the two-letter code the core keeps; a rating whose country cannot be
     /// read is dropped. The language is left to the core, which takes the
     /// country's main one.
@@ -450,7 +450,7 @@ public static class TvdbEntityMapper
     }
 
     /// <summary>
-    /// Where a show is in its release, from TheTVDB's status name.
+    /// Where a show is in its release, from TvDB's status name.
     /// </summary>
     /// <param name="status">The status name, e.g. <c>Continuing</c>.</param>
     /// <returns>The release status.</returns>
@@ -469,7 +469,7 @@ public static class TvdbEntityMapper
 
     /// <summary>
     /// The seasons of a show's default season type, with one made up for any
-    /// season number an episode has and TheTVDB lists no record for.
+    /// season number an episode has and TvDB lists no record for.
     /// </summary>
     /// <param name="series">The show.</param>
     /// <param name="seasonType">The show's default season type.</param>
@@ -501,14 +501,14 @@ public static class TvdbEntityMapper
     }
 
     /// <summary>
-    /// The English name of a season by its number, as TheTVDB shows it.
+    /// The English name of a season by its number, as TvDB shows it.
     /// </summary>
     /// <param name="number">The season number.</param>
     /// <returns><c>Specials</c> for season zero, <c>Season N</c> otherwise.</returns>
     public static string SeasonName(int number)
         => number is 0 ? "Specials" : $"Season {number.ToString(CultureInfo.InvariantCulture)}";
 
-    // A season gets its English name by number as its main title, TheTVDB's
+    // A season gets its English name by number as its main title, TvDB's
     // base record rarely naming one, and its own name besides when it has one.
     private static IReadOnlyList<ITitle> SeasonTitles(int number, string? name, string? originalLanguage)
     {
@@ -580,7 +580,7 @@ public static class TvdbEntityMapper
                 new()
                 {
                     Type = ResourceType.Metadata,
-                    Name = "TheTVDB",
+                    Name = "TvDB",
                     Url = string.IsNullOrWhiteSpace(series.Slug)
                         ? $"https://thetvdb.com/dereferrer/episode/{id}"
                         : $"https://thetvdb.com/series/{Uri.EscapeDataString(series.Slug.Trim())}/episodes/{id}",
@@ -592,10 +592,10 @@ public static class TvdbEntityMapper
     }
 
     /// <summary>
-    /// What Shoko calls an episode in a given TheTVDB season.
+    /// What Shoko calls an episode in a given TvDB season.
     /// </summary>
     /// <remarks>
-    /// TheTVDB has no episode-type field. Season zero is its universal
+    /// TvDB has no episode-type field. Season zero is its universal
     /// convention for everything that is not a numbered episode, which covers
     /// specials, OVAs, recaps, opening and ending credits and web shorts all at
     /// once. They all land on <see cref="EpisodeType.Special"/>, because
@@ -609,10 +609,10 @@ public static class TvdbEntityMapper
         => seasonNumber is 0 ? EpisodeType.Special : EpisodeType.Episode;
 
     /// <summary>
-    /// Where TheTVDB places a special among the show's numbered episodes.
+    /// Where TvDB places a special among the show's numbered episodes.
     /// </summary>
     /// <remarks>
-    /// TheTVDB places specials in its aired order, so the placement only holds
+    /// TvDB places specials in its aired order, so the placement only holds
     /// when the show's seasons are in that order.
     /// </remarks>
     /// <param name="seasonType">The show's default season type.</param>
@@ -641,7 +641,7 @@ public static class TvdbEntityMapper
 
     /// <summary>
     /// Maps one of a show's other season types into a global ordering of the
-    /// show, one group per season. TheTVDB's season 0 is the special group,
+    /// show, one group per season. TvDB's season 0 is the special group,
     /// last in viewing order; the core numbers the groups.
     /// </summary>
     /// <param name="series">The show.</param>
@@ -773,7 +773,7 @@ public static class TvdbEntityMapper
             _ => StudioType.None,
         };
 
-    // TheTVDB's company types: 1 a network, 2 a studio, 3 a production
+    // TvDB's company types: 1 a network, 2 a studio, 3 a production
     // company, 4 a distributor, 5 a special effects company. A record carries
     // the number, the name or both.
     private static int? CompanyType(TvdbCompany company)
@@ -794,15 +794,15 @@ public static class TvdbEntityMapper
     #region People
 
     /// <summary>
-    /// A show's cast and crew, from the credits TheTVDB files under
+    /// A show's cast and crew, from the credits TvDB files under
     /// <c>characters</c>.
     /// </summary>
     /// <remarks>
     /// Only the credits for the whole show are read; one for a single episode
     /// is left out. An actor's credit is a cast credit on the character; every
-    /// other credit is a crew credit under TheTVDB's name for the job. A
+    /// other credit is a crew credit under TvDB's name for the job. A
     /// character links to its page under the show, which needs the show's
-    /// slug, since TheTVDB has no dereferrer for characters.
+    /// slug, since TvDB has no dereferrer for characters.
     /// </remarks>
     /// <param name="series">The show.</param>
     /// <returns>The people to store and the show's credits.</returns>
@@ -838,9 +838,9 @@ public static class TvdbEntityMapper
     }
 
     /// <summary>
-    /// The kind of job a TheTVDB crew credit is, where its name maps onto one.
+    /// The kind of job a TvDB crew credit is, where its name maps onto one.
     /// </summary>
-    /// <param name="peopleType">TheTVDB's name for the job, e.g. <c>Director</c>.</param>
+    /// <param name="peopleType">TvDB's name for the job, e.g. <c>Director</c>.</param>
     /// <returns>The kind of job.</returns>
     public static CrewRoleType ToCrewRoleType(string? peopleType)
         => peopleType?.Trim().ToLowerInvariant() switch
@@ -863,7 +863,7 @@ public static class TvdbEntityMapper
         {
             ID = creatorID,
             Name = credit.PersonName.Trim(),
-            Resources = [new() { Type = ResourceType.Metadata, Name = "TheTVDB", Url = $"https://thetvdb.com/dereferrer/people/{id}", ID = id }],
+            Resources = [new() { Type = ResourceType.Metadata, Name = "TvDB", Url = $"https://thetvdb.com/dereferrer/people/{id}", ID = id }],
             DefaultImageResourceIDs = TvdbImages.ToPortraitDefault(TvdbImages.ToResourceID(credit.PersonImage)),
         });
         if (TvdbImages.ToResourceID(credit.PersonImage) is { } photo)
@@ -885,7 +885,7 @@ public static class TvdbEntityMapper
                 Name = name,
                 AlternativeNames = CharacterAliases(credit, name),
                 Resources = CharacterPage(credit, slug) is { } page
-                    ? [new() { Type = ResourceType.Metadata, Name = "TheTVDB", Url = page, ID = TvdbUtility.FormatID(credit.ID) }]
+                    ? [new() { Type = ResourceType.Metadata, Name = "TvDB", Url = page, ID = TvdbUtility.FormatID(credit.ID) }]
                     : [],
                 DefaultImageResourceIDs = TvdbImages.ToPortraitDefault(TvdbImages.ToResourceID(credit.Image)),
             });
@@ -909,7 +909,7 @@ public static class TvdbEntityMapper
     }
 
     /// <summary>
-    /// The page of a character on TheTVDB, which is filed among the people
+    /// The page of a character on TvDB, which is filed among the people
     /// of its show: <c>https://thetvdb.com/series/{slug}/people/{id}</c>.
     /// </summary>
     /// <param name="credit">The character's credit.</param>
@@ -934,7 +934,7 @@ public static class TvdbEntityMapper
         => OtherNames((credit.Aliases ?? []).Select(alias => (alias.Language, alias.Name)), name);
 
     // Other names, each once per language, leaving out the name the person or
-    // character is stored under. TheTVDB repeats a person's aliases without
+    // character is stored under. TvDB repeats a person's aliases without
     // their language under `translations.aliases`, so a name given with a
     // language is not given again without one.
     private static IReadOnlyList<MetadataNameData> OtherNames(IEnumerable<(string? Language, string? Name)> names, string name)
@@ -963,7 +963,7 @@ public static class TvdbEntityMapper
             && (string.Equals(last, id, StringComparison.Ordinal) || last.StartsWith(id + "-", StringComparison.Ordinal));
     }
 
-    // TheTVDB's people types 3 and 4 are an actor and a guest star.
+    // TvDB's people types 3 and 4 are an actor and a guest star.
     private static bool IsCastCredit(TvdbCharacter credit)
         => credit.Type is 3 or 4
             || string.Equals(credit.PeopleType?.Trim(), "Actor", StringComparison.OrdinalIgnoreCase)
@@ -981,7 +981,7 @@ public static class TvdbEntityMapper
     /// the aliases given with it; the biographies are the person's own and
     /// their overview in each language. Blank ones are left out.
     /// </remarks>
-    /// <param name="person">The record as TheTVDB returned it.</param>
+    /// <param name="person">The record as TvDB returned it.</param>
     /// <param name="fetchedAt">When it was fetched, in UTC.</param>
     /// <returns>The record to keep.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="person"/> is <see langword="null"/>.</exception>
@@ -1029,10 +1029,10 @@ public static class TvdbEntityMapper
     }
 
     /// <summary>
-    /// What the plugin keeps of a person TheTVDB did not have, so they are
+    /// What the plugin keeps of a person TvDB did not have, so they are
     /// not asked for again until the record is stale.
     /// </summary>
-    /// <param name="peopleID">TheTVDB person ID.</param>
+    /// <param name="peopleID">TvDB person ID.</param>
     /// <param name="fetchedAt">When they were asked for, in UTC.</param>
     /// <returns>The record to keep.</returns>
     public static TvdbStoredPerson MissingPerson(int peopleID, DateTime fetchedAt)
@@ -1046,7 +1046,7 @@ public static class TvdbEntityMapper
     /// translated names become other names. The overview is the
     /// biography in the first of <paramref name="languages"/> that has one,
     /// then English, then any. The links are the credits' own, then the
-    /// person's page and their IDs elsewhere. A record TheTVDB did not have
+    /// person's page and their IDs elsewhere. A record TvDB did not have
     /// adds nothing.
     /// </remarks>
     /// <param name="creator">The person as their credits have them.</param>
@@ -1069,7 +1069,7 @@ public static class TvdbEntityMapper
         ];
         List<Resource> resources = [.. creator.Resources];
         if (PersonPage(person.ID, person.Slug) is { } page)
-            resources.Add(new() { Type = ResourceType.Metadata, Name = "TheTVDB", Url = page, ID = TvdbUtility.FormatID(person.ID) });
+            resources.Add(new() { Type = ResourceType.Metadata, Name = "TvDB", Url = page, ID = TvdbUtility.FormatID(person.ID) });
         foreach (var remote in person.RemoteIDs)
             if (ToPersonResource(remote) is { } resource)
                 resources.Add(resource);
@@ -1088,11 +1088,11 @@ public static class TvdbEntityMapper
     }
 
     /// <summary>
-    /// A person's page on TheTVDB under their slug,
-    /// <c>https://thetvdb.com/people/412417-mayumi-tanaka</c>. TheTVDB's slugs
+    /// A person's page on TvDB under their slug,
+    /// <c>https://thetvdb.com/people/412417-mayumi-tanaka</c>. TvDB's slugs
     /// for people have the ID in front already; one without it is given it.
     /// </summary>
-    /// <param name="peopleID">TheTVDB person ID.</param>
+    /// <param name="peopleID">TvDB person ID.</param>
     /// <param name="slug">The person's slug, when known.</param>
     /// <returns>The page, or <see langword="null"/> without a slug.</returns>
     public static string? PersonPage(int peopleID, string? slug)
@@ -1139,7 +1139,7 @@ public static class TvdbEntityMapper
     }
 
     /// <summary>
-    /// A person's gender, from TheTVDB's number for it.
+    /// A person's gender, from TvDB's number for it.
     /// </summary>
     /// <param name="gender">1 for male, 2 for female, 3 for what <c>/genders</c> calls other.</param>
     /// <returns>The gender, <see cref="PersonGender.Unknown"/> for any other number.</returns>
@@ -1153,7 +1153,7 @@ public static class TvdbEntityMapper
         };
 
     /// <summary>
-    /// Parses a date TheTVDB may know only part of: <c>yyyy-MM-dd</c>,
+    /// Parses a date TvDB may know only part of: <c>yyyy-MM-dd</c>,
     /// <c>yyyy-MM</c> or <c>yyyy</c>, possibly with a time after it, and with
     /// an unknown part written as zeroes.
     /// </summary>
@@ -1301,7 +1301,7 @@ public static class TvdbEntityMapper
     /// date is the full date where known, else the year.
     /// </remarks>
     /// <param name="result">The hit.</param>
-    /// <param name="seriesID">The hit's TheTVDB series ID.</param>
+    /// <param name="seriesID">The hit's TvDB series ID.</param>
     /// <returns>The search result.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="result"/> is <see langword="null"/>.</exception>
     public static MetadataSeriesSearchResult ToSearchResult(TvdbSearchResult result, int seriesID)
@@ -1332,7 +1332,7 @@ public static class TvdbEntityMapper
             FirstAiredAt = ParseDate(result.FirstAirTime) is { } firstAired
                 ? new PartialDateOnly(firstAired)
                 : int.TryParse(result.Year, NumberStyles.Integer, CultureInfo.InvariantCulture, out var year) && year is > 0 and < 10000 ? new PartialDateOnly(year) : null,
-            // TheTVDB's search answers series and movies alike and says nothing
+            // TvDB's search answers series and movies alike and says nothing
             // about the kind of release beyond that, so anything reaching here
             // is television as far as this plugin can tell.
             Type = AnimeType.TV,
@@ -1340,7 +1340,7 @@ public static class TvdbEntityMapper
     }
 
     /// <summary>
-    /// The bare TheTVDB id of a search hit, which comes back either bare in
+    /// The bare TvDB id of a search hit, which comes back either bare in
     /// <c>tvdb_id</c> or prefixed in <c>id</c> (<c>series-71663</c>).
     /// </summary>
     /// <param name="result">The search hit.</param>
@@ -1476,7 +1476,7 @@ public static class TvdbEntityMapper
             .Select(episode => (episode.SeasonNumber!.Value, episode.EpisodeNumber, episode.AirDate, string.IsNullOrWhiteSpace(episode.Title) ? null : episode.Title)));
     }
 
-    // Season zero holds TheTVDB's specials, which never line up with an
+    // Season zero holds TvDB's specials, which never line up with an
     // anime's regular episodes.
     private static IReadOnlyList<MetadataSearchResultSeason> SearchSeasons(IEnumerable<(int SeasonNumber, int EpisodeNumber, DateOnly? AiredAt, string? Title)> episodes)
         => [
@@ -1508,7 +1508,7 @@ public static class TvdbEntityMapper
     #region Helpers
 
     /// <summary>
-    /// Parses a TheTVDB date, which is <c>yyyy-MM-dd</c> when present and
+    /// Parses a TvDB date, which is <c>yyyy-MM-dd</c> when present and
     /// either absent or an empty string when not.
     /// </summary>
     /// <param name="value">The raw value.</param>
@@ -1521,7 +1521,7 @@ public static class TvdbEntityMapper
     private static TitleStub Title(string value, string? languageCode, TitleType type)
         => new()
         {
-            Source = TvdbSources.Tvdb,
+            Source = MetadataSource.Tvdb,
             Language = TvdbUtility.ToTitleLanguage(languageCode),
             LanguageCode = TvdbUtility.ToLanguageCode(languageCode) ?? "unk",
             Value = value.Trim(),
@@ -1531,7 +1531,7 @@ public static class TvdbEntityMapper
     private static TextStub Text(string value, string? languageCode)
         => new()
         {
-            Source = TvdbSources.Tvdb,
+            Source = MetadataSource.Tvdb,
             Language = TvdbUtility.ToTitleLanguage(languageCode),
             LanguageCode = TvdbUtility.ToLanguageCode(languageCode) ?? "unk",
             Value = value.Trim(),

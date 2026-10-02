@@ -62,7 +62,7 @@ public class TvdbPeopleServiceTests
     }
 
     [Fact]
-    public async Task APersonTheTvdbDoesNotHave_KeepsWhatTheCreditsSayAndIsRecordedAsMissing()
+    public async Task APersonTvDBDoesNotHave_KeepsWhatTheCreditsSayAndIsRecordedAsMissing()
     {
         using var harness = new ServiceHarness(http: OnePieceWithPeople());
 

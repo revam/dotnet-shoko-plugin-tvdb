@@ -16,11 +16,19 @@ public static class TvdbSources
 {
     static TvdbSources()
     {
-        Tvdb = MetadataSource.Register("TheTVDB", "tvdb", ["thetvdb"], description: "The television and film database at thetvdb.com.");
+        Source = MetadataSource.Register("TvDB", "tvdb", ["thetvdb"], description: "The television and film database at thetvdb.com.");
     }
 
     /// <summary>
-    /// TheTVDB, as <c>tvdb</c>.
+    /// The registered source, behind the extension member.
     /// </summary>
-    public static MetadataSource Tvdb { get; }
+    private static MetadataSource Source { get; }
+
+    extension(MetadataSource)
+    {
+        /// <summary>
+        /// TvDB, as <c>tvdb</c>.
+        /// </summary>
+        public static MetadataSource Tvdb => Source;
+    }
 }

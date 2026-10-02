@@ -271,7 +271,7 @@ public class TvdbRefreshServiceTests
     }
 
     [Fact]
-    public async Task AShowTheTVDBDoesNotHave_IsLeftAsItWasStored()
+    public async Task AShowTvDBDoesNotHave_IsLeftAsItWasStored()
     {
         using var harness = new ServiceHarness(http: new RoutingHttpMessageHandler().Route("login", Fixture.Read("login-success.json")));
 
@@ -288,8 +288,8 @@ public class TvdbRefreshServiceTests
 
         var exception = await Assert.ThrowsAsync<MetadataProviderNotConfiguredException>(() => harness.Refresh());
 
-        Assert.Same(TvdbSources.Tvdb, exception.MetadataSource);
-        Assert.Equal("No TheTVDB API key is configured.", exception.Message);
+        Assert.Same(MetadataSource.Tvdb, exception.MetadataSource);
+        Assert.Equal("No TvDB API key is configured.", exception.Message);
         Assert.Null(exception.RetryAfter);
         Assert.Empty(harness.Http.Requests);
     }
@@ -304,7 +304,7 @@ public class TvdbRefreshServiceTests
         Assert.True(exception.IsAuthenticationFailure);
         var status = harness.Get<TvdbMetadataProvider>().PauseStatus;
         Assert.True(status.IsPaused);
-        Assert.Equal("TheTVDB refused the API key or subscriber PIN.", status.Reason);
+        Assert.Equal("TvDB refused the API key or subscriber PIN.", status.Reason);
         Assert.NotNull(status.ResumesAt);
     }
 

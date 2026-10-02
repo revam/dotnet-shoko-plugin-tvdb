@@ -20,10 +20,10 @@ namespace Shoko.Plugin.Tvdb.Services;
 /// The core's people store stamps a person as updated whenever a refresh
 /// writes them, which is every refresh that writes the credits, so its stamp
 /// cannot say when a record was fetched. The plugin's own record says that
-/// instead. TheTVDB's own <c>lastUpdated</c> is kept with it, but comparing
+/// instead. TvDB's own <c>lastUpdated</c> is kept with it, but comparing
 /// against it would need the record fetched first, so it does not decide.
 /// </remarks>
-/// <param name="apiClient">The TheTVDB client.</param>
+/// <param name="apiClient">The TvDB client.</param>
 /// <param name="store">The plugin's store.</param>
 /// <param name="configurationProvider">The plugin's configuration.</param>
 /// <param name="logger">The logger.</param>
@@ -46,12 +46,12 @@ public sealed class TvdbPeopleService(
     /// <remarks>
     /// Each person is fetched at most once, and no more than the settings'
     /// limit per call: the never fetched first, in the order given, then the
-    /// stalest. A person TheTVDB does not have is recorded as such. A fetch
+    /// stalest. A person TvDB does not have is recorded as such. A fetch
     /// that fails keeps what was stored and never fails the call; one that
-    /// says TheTVDB will not take more work, such as a refused key, a rate
+    /// says TvDB will not take more work, such as a refused key, a rate
     /// limit or a server error, also stops the fetching for this call.
     /// </remarks>
-    /// <param name="peopleIDs">TheTVDB person IDs, in credit order.</param>
+    /// <param name="peopleIDs">TvDB person IDs, in credit order.</param>
     /// <param name="cancellationToken">Cancels the work.</param>
     /// <returns>The records the plugin has, by person ID; a person with none is left out.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="peopleIDs"/> is <see langword="null"/>.</exception>
@@ -78,7 +78,7 @@ public sealed class TvdbPeopleService(
         var limit = Math.Max(1, configuration.PersonDetailsLimit);
         if (due.Count > limit)
         {
-            logger.LogInformation("{Due} people are due a fetch from TheTVDB; fetching {Limit} now and the rest on a later refresh.", due.Count, limit);
+            logger.LogInformation("{Due} people are due a fetch from TvDB; fetching {Limit} now and the rest on a later refresh.", due.Count, limit);
             due = due[..limit];
         }
 
@@ -96,12 +96,12 @@ public sealed class TvdbPeopleService(
             }
             catch (TvdbApiException ex) when (IsForThisPersonOnly(ex))
             {
-                logger.LogWarning(ex, "Unable to fetch TheTVDB person {PeopleID}; keeping what their credits say.", id);
+                logger.LogWarning(ex, "Unable to fetch TvDB person {PeopleID}; keeping what their credits say.", id);
                 continue;
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Unable to fetch TheTVDB person {PeopleID}; keeping what their credits say and fetching no more people this refresh.", id);
+                logger.LogWarning(ex, "Unable to fetch TvDB person {PeopleID}; keeping what their credits say and fetching no more people this refresh.", id);
                 break;
             }
 
@@ -114,7 +114,7 @@ public sealed class TvdbPeopleService(
         return people;
     }
 
-    // A failure about the one record, rather than about TheTVDB taking work
+    // A failure about the one record, rather than about TvDB taking work
     // at all: a client error other than a refusal or a rate limit, or a body
     // that could not be read.
     private static bool IsForThisPersonOnly(TvdbApiException ex)

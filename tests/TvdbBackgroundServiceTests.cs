@@ -26,8 +26,10 @@ public sealed class TvdbBackgroundServiceTests : IDisposable
     {
         using var harness = new ServiceHarness();
         harness.CrossReferences.AddSeries(1, 81797);
+        // An expression tree can't read an extension property, so take it first.
+        var tvdb = MetadataSource.Tvdb;
         harness.RefreshService
-            .Setup(service => service.RefreshAllLinked(TvdbSources.Tvdb, false, It.IsAny<MetadataRefreshOptions?>(), MetadataEntityType.Series, null, It.IsAny<CancellationToken>()))
+            .Setup(service => service.RefreshAllLinked(tvdb, false, It.IsAny<MetadataRefreshOptions?>(), MetadataEntityType.Series, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
 
         Assert.Equal(1, await harness.Get<TvdbBackgroundService>().RefreshIfNothingStored(TestContext.Current.CancellationToken));

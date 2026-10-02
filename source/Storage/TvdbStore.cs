@@ -14,7 +14,7 @@ namespace Shoko.Plugin.Tvdb.Storage;
 /// <summary>
 /// Everything the plugin writes: the shows, their seasons and episodes, tags,
 /// studios, networks and people in the core's typed stores, and the little
-/// only TheTVDB has in the plugin's own database.
+/// only TvDB has in the plugin's own database.
 /// </summary>
 /// <remarks>
 /// Every call opens a context of its own. Writes are serialized, so two
@@ -75,7 +75,7 @@ public sealed class TvdbStore
     /// <summary>
     /// A stored show, as the core reads it back.
     /// </summary>
-    /// <param name="seriesID">TheTVDB series ID.</param>
+    /// <param name="seriesID">TvDB series ID.</param>
     /// <returns>The series, or <see langword="null"/> when it is not stored.</returns>
     public ISeries? GetSeries(int seriesID)
         => seriesID <= 0 ? null : Series.GetSeries(TvdbUtility.SeriesGuid(seriesID));
@@ -83,12 +83,12 @@ public sealed class TvdbStore
     /// <summary>
     /// The global orderings the plugin stored for a show.
     /// </summary>
-    /// <param name="seriesID">TheTVDB series ID.</param>
+    /// <param name="seriesID">TvDB series ID.</param>
     /// <returns>The orderings.</returns>
     public IReadOnlyList<IOrdering> GetOrderings(int seriesID)
     {
         var series = TvdbUtility.SeriesGuid(seriesID);
-        return [.. Orderings.GetStoredOrderings(TvdbSources.Tvdb).Where(ordering => ordering.SeriesID == series)];
+        return [.. Orderings.GetStoredOrderings(MetadataSource.Tvdb).Where(ordering => ordering.SeriesID == series)];
     }
 
     #endregion
@@ -98,7 +98,7 @@ public sealed class TvdbStore
     /// <summary>
     /// What the plugin keeps of one show besides the core's stores.
     /// </summary>
-    /// <param name="seriesID">TheTVDB series ID.</param>
+    /// <param name="seriesID">TvDB series ID.</param>
     /// <returns>The record, or <see langword="null"/> when there is none.</returns>
     public TvdbStoredSeries? GetShow(int seriesID)
     {
@@ -143,7 +143,7 @@ public sealed class TvdbStore
     /// Forgets what the plugin keeps of a show. The core's stores are the
     /// core's to purge.
     /// </summary>
-    /// <param name="seriesID">TheTVDB series ID.</param>
+    /// <param name="seriesID">TvDB series ID.</param>
     /// <returns>Whether there was anything to forget.</returns>
     public bool RemoveShow(int seriesID)
     {
@@ -173,7 +173,7 @@ public sealed class TvdbStore
     }
 
     /// <summary>
-    /// The portrait of a creator or a character, when TheTVDB had one.
+    /// The portrait of a creator or a character, when TvDB had one.
     /// </summary>
     /// <param name="id">The creator or character.</param>
     /// <returns>The image's resource ID, or <see langword="null"/>.</returns>
@@ -246,7 +246,7 @@ public sealed class TvdbStore
     /// <summary>
     /// What the plugin keeps of a person's own record.
     /// </summary>
-    /// <param name="peopleID">TheTVDB person ID.</param>
+    /// <param name="peopleID">TvDB person ID.</param>
     /// <returns>The record, or <see langword="null"/> when it was never fetched.</returns>
     public TvdbStoredPerson? GetPerson(int peopleID)
     {
@@ -302,7 +302,7 @@ public sealed class TvdbStore
     private HashSet<string> CreditedKeys()
     {
         var credited = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var series in Series.GetAllSeries(TvdbSources.Tvdb))
+        foreach (var series in Series.GetAllSeries(MetadataSource.Tvdb))
         {
             foreach (var cast in People.GetCast(series.ID))
             {

@@ -14,13 +14,13 @@ public class TvdbUtilityTests
     [Fact]
     public void TheSource_IsTvdbAndReadsBackFromTheOldSpellings()
     {
-        Assert.Equal("tvdb", TvdbSources.Tvdb.Value);
-        Assert.Equal("TheTVDB", TvdbSources.Tvdb.Name);
-        Assert.Equal("The television and film database at thetvdb.com.", TvdbSources.Tvdb.Description);
+        Assert.Equal("tvdb", MetadataSource.Tvdb.Value);
+        Assert.Equal("TvDB", MetadataSource.Tvdb.Name);
+        Assert.Equal("The television and film database at thetvdb.com.", MetadataSource.Tvdb.Description);
         Assert.True(MetadataSource.TryGet("TvDB", out var old));
-        Assert.Same(TvdbSources.Tvdb, old);
+        Assert.Same(MetadataSource.Tvdb, old);
         Assert.True(MetadataSource.TryGet("thetvdb", out var alias));
-        Assert.Same(TvdbSources.Tvdb, alias);
+        Assert.Same(MetadataSource.Tvdb, alias);
     }
 
     [Fact]
@@ -71,7 +71,7 @@ public class TvdbUtilityTests
     [InlineData("zho", TitleLanguage.Chinese)]
     [InlineData("zhtw", TitleLanguage.ChineseTraditional)]
     [InlineData("xxx", TitleLanguage.Unknown)]
-    public void TheTvdbsOwnLanguageCodes_AreReadAsTheLanguagesTheyStandFor(string code, TitleLanguage expected)
+    public void TvDBsOwnLanguageCodes_AreReadAsTheLanguagesTheyStandFor(string code, TitleLanguage expected)
         => Assert.Equal(expected, TvdbUtility.ToTitleLanguage(code));
 
     [Theory]

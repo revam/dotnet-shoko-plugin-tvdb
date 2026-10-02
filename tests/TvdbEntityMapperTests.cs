@@ -9,7 +9,7 @@ using Xunit;
 namespace Shoko.Plugin.Tvdb.Tests;
 
 /// <summary>
-/// What the mapper makes of a TheTVDB response: which fields survive, which are
+/// What the mapper makes of a TvDB response: which fields survive, which are
 /// derived, and which are deliberately dropped.
 /// </summary>
 public class TvdbEntityMapperTests
@@ -127,7 +127,7 @@ public class TvdbEntityMapperTests
         Assert.Equal("ワンピース", main.Value);
         Assert.Equal("ja", main.LanguageCode);
         Assert.Equal(TitleLanguage.Japanese, main.Language);
-        Assert.Equal(TvdbSources.Tvdb, main.Source);
+        Assert.Equal(MetadataSource.Tvdb, main.Source);
     }
 
     [Fact]
@@ -189,7 +189,7 @@ public class TvdbEntityMapperTests
         var overviews = MapOnePiece().Overviews;
 
         Assert.Equal(["ja", "en"], overviews.Select(overview => overview.LanguageCode));
-        Assert.All(overviews, overview => Assert.Equal(TvdbSources.Tvdb, overview.Source));
+        Assert.All(overviews, overview => Assert.Equal(MetadataSource.Tvdb, overview.Source));
     }
 
     [Fact]
@@ -197,7 +197,7 @@ public class TvdbEntityMapperTests
     {
         var resources = MapOnePiece().Resources;
 
-        Assert.Equal(("TheTVDB", "https://thetvdb.com/series/one-piece", "81797"), (resources[0].Name, resources[0].Url, resources[0].ID));
+        Assert.Equal(("TvDB", "https://thetvdb.com/series/one-piece", "81797"), (resources[0].Name, resources[0].Url, resources[0].ID));
         Assert.Contains(resources, resource => resource is { Type: ResourceType.CrossReference, Name: "IMDb", ID: "tt0388629", Url: "https://www.imdb.com/title/tt0388629/" });
         Assert.Contains(resources, resource => resource is { Type: ResourceType.CrossReference, Name: "TMDB", ID: "37854" });
         Assert.Contains(resources, resource => resource is { Type: ResourceType.Website, Url: "https://www.toei-anim.co.jp/tv/onep/", ID: null });
@@ -207,7 +207,7 @@ public class TvdbEntityMapperTests
     }
 
     [Fact]
-    public void Series_NamesItselfOnTheOtherMetadataSourcesTheTVDBLists()
+    public void Series_NamesItselfOnTheOtherMetadataSourcesTvDBLists()
     {
         var ids = MapOnePiece().CrossSourceIDs;
 
@@ -252,7 +252,7 @@ public class TvdbEntityMapperTests
     [InlineData(16, "IMDB", "nm0849028", null)]
     [InlineData(15, "TheMovieDB.com", "65510", null)]
     [InlineData(3, "TMS (Zap2It)", "EP02273408", null)]
-    public void AShowsIDElsewhere_IsReadByTheTvdbsNumberForTheSite(int? type, string sourceName, string id, string? expected)
+    public void AShowsIDElsewhere_IsReadByTvDBsNumberForTheSite(int? type, string sourceName, string id, string? expected)
         => Assert.Equal(expected, TvdbEntityMapper.ToResource(new() { ID = id, Type = type, SourceName = sourceName })?.Url);
 
     [Theory]
@@ -339,7 +339,7 @@ public class TvdbEntityMapperTests
         Assert.Equal(EpisodeType.Episode, episode.Type);
         Assert.Equal(new DateOnly(1999, 10, 20), episode.AirDate);
         Assert.Equal(TimeSpan.FromMinutes(25), episode.Runtime);
-        Assert.Equal(("TheTVDB", "https://thetvdb.com/series/one-piece/episodes/361887", "361887"), (episode.Resources[0].Name, episode.Resources[0].Url, episode.Resources[0].ID));
+        Assert.Equal(("TvDB", "https://thetvdb.com/series/one-piece/episodes/361887", "361887"), (episode.Resources[0].Name, episode.Resources[0].Url, episode.Resources[0].ID));
     }
 
     [Fact]
@@ -387,11 +387,11 @@ public class TvdbEntityMapperTests
     [InlineData(0, EpisodeType.Special)]
     [InlineData(1, EpisodeType.Episode)]
     [InlineData(7, EpisodeType.Episode)]
-    public void EpisodeType_ComesFromTheSeasonNumberBecauseTheTVDBHasNoSuchField(int seasonNumber, EpisodeType expected)
+    public void EpisodeType_ComesFromTheSeasonNumberBecauseTvDBHasNoSuchField(int seasonNumber, EpisodeType expected)
         => Assert.Equal(expected, TvdbEntityMapper.ToEpisodeType(seasonNumber));
 
     [Fact]
-    public void ASpecial_KeepsWhereTheTVDBPlacesIt()
+    public void ASpecial_KeepsWhereTvDBPlacesIt()
     {
         var special = ReadEpisodes("series-81797-episodes-page1.json").Single(episode => episode.ID is 619671);
 
@@ -505,7 +505,7 @@ public class TvdbEntityMapperTests
     [Fact]
     public void ACompanysKind_IsReadFromWhicheverOfItsFieldsItHas()
     {
-        // TheTVDB's records carry both, but the plugin does not count on it.
+        // TvDB's records carry both, but the plugin does not count on it.
         var series = new TvdbSeriesExtended
         {
             Companies =
@@ -580,7 +580,7 @@ public class TvdbEntityMapperTests
 
         var luffy = Assert.Single(people.Characters[TvdbUtility.CharacterGuid(65111900)].Resources);
         Assert.Equal(ResourceType.Metadata, luffy.Type);
-        Assert.Equal("TheTVDB", luffy.Name);
+        Assert.Equal("TvDB", luffy.Name);
         Assert.Equal("65111900", luffy.ID);
         Assert.Equal("https://thetvdb.com/series/one-piece/people/65111900", luffy.Url);
         Assert.Equal("https://thetvdb.com/series/one-piece/people/7002", Assert.Single(people.Characters[TvdbUtility.CharacterGuid(7002)].Resources).Url);
@@ -589,7 +589,7 @@ public class TvdbEntityMapperTests
     [Fact]
     public void People_GiveACharacterItsAliasesEachOncePerLanguage()
     {
-        // No credit of One Piece has aliases on TheTVDB, so Luffy is given
+        // No credit of One Piece has aliases on TvDB, so Luffy is given
         // some here.
         var series = ReadSeries();
         series.Characters![0].Aliases =
@@ -648,7 +648,7 @@ public class TvdbEntityMapperTests
     #region Stored Show
 
     [Fact]
-    public void TheStoredShow_KeepsWhatOnlyTheTVDBHas()
+    public void TheStoredShow_KeepsWhatOnlyTvDBHas()
     {
         var show = TvdbEntityMapper.ToStoredSeries(ReadSeries(), ReadDefaultEpisodes(), ["dvd"], _fetchedAt);
 
@@ -697,13 +697,13 @@ public class TvdbEntityMapperTests
         var result = TvdbEntityMapper.ToSearchResult(hit, 81797);
 
         Assert.Equal("tvdb://series/81797", result.ID.ToString());
-        Assert.Equal(TvdbSources.Tvdb, result.Source);
+        Assert.Equal(MetadataSource.Tvdb, result.Source);
         Assert.Equal("One Piece", result.Title);
         Assert.Equal("ja", result.OriginalLanguageCode);
         Assert.Equal(new PartialDateOnly(new DateOnly(1999, 10, 20)), result.FirstAiredAt);
         Assert.Equal("https://artworks.thetvdb.com/banners/series/81797/posters/5eec847d52a04.jpg", result.PosterUrl);
         Assert.StartsWith("The adventures of Monkey D. Luffy", result.Overview);
-        // TheTVDB sends no genres on a show's hit.
+        // TvDB sends no genres on a show's hit.
         Assert.Empty(result.Genres);
     }
 

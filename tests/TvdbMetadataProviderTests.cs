@@ -30,9 +30,9 @@ public class TvdbMetadataProviderTests
         using var harness = new ServiceHarness();
         var provider = harness.Get<TvdbMetadataProvider>();
 
-        Assert.Same(TvdbSources.Tvdb, provider.Source);
+        Assert.Same(MetadataSource.Tvdb, provider.Source);
         Assert.DoesNotContain(provider.Source, (MetadataSource[])[MetadataSource.AniDB, MetadataSource.TMDB, MetadataSource.Shoko, MetadataSource.User]);
-        Assert.Equal("TheTVDB", provider.Name);
+        Assert.Equal("TvDB", provider.Name);
         Assert.Equal(4, provider.MaxConcurrentJobs);
         Assert.True(((IMetadataProvider)provider).AutoLinkByDefault);
         Assert.True(provider.IsConfigured);
@@ -46,7 +46,7 @@ public class TvdbMetadataProviderTests
         var provider = (IMetadataProvider)harness.Get<TvdbMetadataProvider>();
 
         Assert.False(provider.IsConfigured);
-        Assert.Equal("No TheTVDB API key is configured.", provider.NotConfiguredReason);
+        Assert.Equal("No TvDB API key is configured.", provider.NotConfiguredReason);
     }
 
     [Fact]
@@ -323,7 +323,9 @@ public class TvdbMetadataProviderTests
         // The core links what is taken; the provider only asks it for hints
         // and writes nothing.
         Assert.Empty(harness.CrossReferences.GetSeriesLinks(1));
-        harness.LinkingService.Verify(service => service.GetCrossSourceHints(TvdbSources.Tvdb, 1), Times.Once());
+        // An expression tree can't read an extension property, so take it first.
+        var tvdb = MetadataSource.Tvdb;
+        harness.LinkingService.Verify(service => service.GetCrossSourceHints(tvdb, 1), Times.Once());
         harness.LinkingService.VerifyNoOtherCalls();
     }
 
@@ -385,7 +387,7 @@ public class TvdbMetadataProviderTests
     }
 
     [Fact]
-    public async Task AutoLinking_WhileTheTVDBFails_SaysItCannotBeReached()
+    public async Task AutoLinking_WhileTvDBFails_SaysItCannotBeReached()
     {
         using var harness = new ServiceHarness(http: new RoutingHttpMessageHandler()
             .Route("login", Fixture.Read("login-success.json"))
@@ -394,7 +396,7 @@ public class TvdbMetadataProviderTests
 
         var exception = await Assert.ThrowsAsync<MetadataProviderUnavailableException>(() => harness.Get<TvdbMetadataProvider>().FindAutoLinks(1, TestContext.Current.CancellationToken));
 
-        Assert.Same(TvdbSources.Tvdb, exception.MetadataSource);
+        Assert.Same(MetadataSource.Tvdb, exception.MetadataSource);
         Assert.IsType<TvdbApiException>(exception.InnerException);
     }
 
@@ -409,7 +411,7 @@ public class TvdbMetadataProviderTests
     }
 
     [Fact]
-    public async Task AutoLinking_WithoutAnApiKey_NeverReachesTheTVDB()
+    public async Task AutoLinking_WithoutAnApiKey_NeverReachesTvDB()
     {
         using var harness = new ServiceHarness(new() { ApiKey = null });
         harness.AddAnime(1, 2, "One Piece");

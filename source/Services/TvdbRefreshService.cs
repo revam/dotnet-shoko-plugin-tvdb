@@ -18,7 +18,7 @@ using Shoko.Plugin.Tvdb.Storage;
 namespace Shoko.Plugin.Tvdb.Services;
 
 /// <summary>
-/// The half of the plugin that fetches a show from TheTVDB and writes it
+/// The half of the plugin that fetches a show from TvDB and writes it
 /// into the core's stores.
 /// </summary>
 /// <remarks>
@@ -26,7 +26,7 @@ namespace Shoko.Plugin.Tvdb.Services;
 /// decided the show is due and holds its lock, so nothing here checks
 /// freshness or locks anything.
 /// </remarks>
-/// <param name="apiClient">The TheTVDB client.</param>
+/// <param name="apiClient">The TvDB client.</param>
 /// <param name="store">The plugin's store.</param>
 /// <param name="linkingService">Matches the linked anime's episodes again.</param>
 /// <param name="peopleService">Fetches the people's own records.</param>
@@ -54,19 +54,19 @@ public sealed class TvdbRefreshService(
     /// anime's episodes. The people credited are written with what their own
     /// records add, fetching the ones missing or stale when the settings
     /// allow; a person whose record could not be fetched keeps what the
-    /// credits say, and never fails the refresh. A show TheTVDB no longer has is left as it was
-    /// stored, and so is one TheTVDB lists no episodes for while some are
+    /// credits say, and never fails the refresh. A show TvDB no longer has is left as it was
+    /// stored, and so is one TvDB lists no episodes for while some are
     /// stored, which is more likely a hiccup than a show that lost them all:
     /// the refresh fails instead, so the core tries again later.
     /// </remarks>
-    /// <param name="seriesID">TheTVDB series ID.</param>
+    /// <param name="seriesID">TvDB series ID.</param>
     /// <param name="options">What kind of refresh it is.</param>
     /// <param name="cancellationToken">Cancels the work.</param>
-    /// <returns>Whether TheTVDB had the show.</returns>
+    /// <returns>Whether TvDB had the show.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="options"/> is <see langword="null"/>.</exception>
     /// <exception cref="MetadataProviderNotConfiguredException">No API key is configured.</exception>
     /// <exception cref="TvdbApiException">
-    /// TheTVDB refused the key, failed, answered with something unexpected,
+    /// TvDB refused the key, failed, answered with something unexpected,
     /// or listed no episodes for a show with episodes stored.
     /// </exception>
     public async Task<bool> RefreshSeries(int seriesID, MetadataRefreshOptions options, CancellationToken cancellationToken = default)
@@ -77,13 +77,13 @@ public sealed class TvdbRefreshService(
             return false;
 
         if (!apiClient.HasApiKey)
-            throw new MetadataProviderNotConfiguredException(TvdbSources.Tvdb, TvdbApiClient.NoApiKeyReason);
+            throw new MetadataProviderNotConfiguredException(MetadataSource.Tvdb, TvdbApiClient.NoApiKeyReason);
 
-        logger.LogInformation("Refreshing TheTVDB series {SeriesID}.", seriesID);
+        logger.LogInformation("Refreshing TvDB series {SeriesID}.", seriesID);
         var configuration = configurationProvider.Load();
         if (await apiClient.GetSeries(seriesID, cancellationToken).ConfigureAwait(false) is not { } remote)
         {
-            logger.LogWarning("TheTVDB has no series with ID {SeriesID}. Keeping what is stored.", seriesID);
+            logger.LogWarning("TvDB has no series with ID {SeriesID}. Keeping what is stored.", seriesID);
             return false;
         }
 
@@ -101,7 +101,7 @@ public sealed class TvdbRefreshService(
         {
             throw new TvdbApiException(
                 HttpStatusCode.NotFound,
-                $"TheTVDB listed no episodes for series {seriesID.ToString(CultureInfo.InvariantCulture)}, which has {existingEpisodes.Count.ToString(CultureInfo.InvariantCulture)} stored. Keeping what is stored."
+                $"TvDB listed no episodes for series {seriesID.ToString(CultureInfo.InvariantCulture)}, which has {existingEpisodes.Count.ToString(CultureInfo.InvariantCulture)} stored. Keeping what is stored."
             );
         }
 
@@ -166,7 +166,7 @@ public sealed class TvdbRefreshService(
             await linkingService.MatchLinkedEpisodes(seriesID, cancellationToken).ConfigureAwait(false);
 
         logger.LogInformation(
-            "Refreshed TheTVDB series {SeriesID} ({Title}): {Changes} changes to the series and its {Seasons} seasons and {Episodes} episodes.",
+            "Refreshed TvDB series {SeriesID} ({Title}): {Changes} changes to the series and its {Seasons} seasons and {Episodes} episodes.",
             seriesID,
             remote.Name,
             changes,
@@ -224,13 +224,13 @@ public sealed class TvdbRefreshService(
             {
                 // One season type the core will not take is no reason to fail
                 // the refresh; whatever was stored for it stays.
-                logger.LogWarning(ex, "Unable to store the {SeasonType} order of TheTVDB series {SeriesID}.", seasonType, series.ID);
+                logger.LogWarning(ex, "Unable to store the {SeasonType} order of TvDB series {SeriesID}.", seasonType, series.ID);
             }
         }
 
         foreach (var ordering in store.GetOrderings(series.ID).Where(ordering => !kept.Contains(ordering.ID)))
         {
-            logger.LogInformation("Removing ordering {OrderingID}, which TheTVDB no longer has.", ordering.ID);
+            logger.LogInformation("Removing ordering {OrderingID}, which TvDB no longer has.", ordering.ID);
             store.Orderings.RemoveOrdering(ordering.ID);
         }
 

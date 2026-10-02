@@ -5,7 +5,7 @@ using Shoko.Abstractions.Config;
 namespace Shoko.Plugin.Tvdb;
 
 /// <summary>
-/// Configuration for the TheTVDB metadata plugin.
+/// Configuration for the TvDB metadata plugin.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -23,28 +23,28 @@ namespace Shoko.Plugin.Tvdb;
 ///   switch of the plugin's own would only be a way for the two to disagree.
 /// </para>
 /// </remarks>
-[Display(Name = "TheTVDB")]
+[Display(Name = "TvDB")]
 public class TvdbConfiguration : IConfiguration
 {
     #region Credentials
 
     /// <summary>
-    /// A TheTVDB v4 project key, sent as <c>apikey</c> to <c>POST /v4/login</c>,
+    /// A TvDB v4 project key, sent as <c>apikey</c> to <c>POST /v4/login</c>,
     /// for a build from source or a fork. An official build ships a licensed
     /// key and needs nothing here; one set here wins over it.
     /// </summary>
     [DataType(DataType.Password)]
-    [Display(Name = "API Key", Description = "Leave empty on an official build, which ships its own key. For a build from source or a fork: the TheTVDB project key registered for it at thetvdb.com/api-information.")]
+    [Display(Name = "API Key", Description = "Leave empty on an official build, which ships its own key. For a build from source or a fork: the TvDB project key registered for it at thetvdb.com/api-information.")]
     public string? ApiKey { get; set; }
 
     /// <summary>
-    /// A TheTVDB subscriber PIN, sent as <c>pin</c> alongside the API key.
+    /// A TvDB subscriber PIN, sent as <c>pin</c> alongside the API key.
     /// Only a user-supported key needs one, since it authenticates as the
     /// subscriber whose PIN comes with it; a licensed key, as official builds
     /// ship, needs none.
     /// </summary>
     [DataType(DataType.Password)]
-    [Display(Name = "Subscriber PIN", Description = "Optional. Only needed with a user-supported API key; leave empty on an official build. The PIN is on your TheTVDB account's dashboard.")]
+    [Display(Name = "Subscriber PIN", Description = "Optional. Only needed with a user-supported API key; leave empty on an official build. The PIN is on your TvDB account's dashboard.")]
     public string? SubscriberPin { get; set; }
 
     #endregion
@@ -53,7 +53,7 @@ public class TvdbConfiguration : IConfiguration
 
     /// <summary>
     /// The language codes to fetch translated titles and overviews for, as
-    /// TheTVDB v4 writes them: ISO 639-2/T (three letter) codes, but for its
+    /// TvDB v4 writes them: ISO 639-2/T (three letter) codes, but for its
     /// own <c>pt</c> (Brazilian Portuguese) and <c>zhtw</c> (Taiwan's
     /// Chinese).
     /// </summary>
@@ -63,7 +63,7 @@ public class TvdbConfiguration : IConfiguration
     /// show's episodes, the show's own language aside. It is a list the user
     /// keeps short rather than a checkbox per language.
     /// </remarks>
-    [Display(Name = "Translation Languages", Description = "TheTVDB language codes to fetch translations for, e.g. eng, jpn, deu. TheTVDB writes Brazilian Portuguese as pt (Portugal's is por) and Taiwan's Chinese as zhtw.")]
+    [Display(Name = "Translation Languages", Description = "TvDB language codes to fetch translations for, e.g. eng, jpn, deu. TvDB writes Brazilian Portuguese as pt (Portugal's is por) and Taiwan's Chinese as zhtw.")]
     public string[] TranslationLanguages { get; set; } = ["eng", "jpn"];
 
     /// <summary>
@@ -77,10 +77,10 @@ public class TvdbConfiguration : IConfiguration
     public int SearchResultLimit { get; set; } = 10;
 
     /// <summary>
-    /// Whether TheTVDB episodes already linked to another AniDB anime are left
+    /// Whether TvDB episodes already linked to another AniDB anime are left
     /// out when episodes are matched automatically.
     /// </summary>
-    [Display(Name = "Consider Existing Other Links", Description = "Leave out TheTVDB episodes another anime is already linked to when matching episodes automatically.")]
+    [Display(Name = "Consider Existing Other Links", Description = "Leave out TvDB episodes another anime is already linked to when matching episodes automatically.")]
     public bool ConsiderExistingOtherLinks { get; set; }
 
     #endregion
@@ -93,11 +93,11 @@ public class TvdbConfiguration : IConfiguration
     /// asked for with its own choice follows that instead.
     /// </summary>
     /// <remarks>
-    /// The show's own seasons are always the season type TheTVDB uses for it
+    /// The show's own seasons are always the season type TvDB uses for it
     /// by default. Each other season type costs one request per page of its
     /// episodes.
     /// </remarks>
-    [Display(Name = "Download Alternate Orderings", Description = "Store the other TheTVDB season types of a show, such as its DVD or absolute order, as orderings.")]
+    [Display(Name = "Download Alternate Orderings", Description = "Store the other TvDB season types of a show, such as its DVD or absolute order, as orderings.")]
     [DefaultValue(true)]
     public bool AutoDownloadAlternateOrderings { get; set; } = true;
 

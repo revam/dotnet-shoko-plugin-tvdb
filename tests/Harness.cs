@@ -26,7 +26,7 @@ namespace Shoko.Plugin.Tvdb.Tests;
 /// <summary>
 /// An <see cref="HttpMessageHandler"/> that answers each request by its path
 /// and query under <c>/v4/</c>, recording what it was asked for. A path with
-/// no answer gets TheTVDB's 404.
+/// no answer gets TvDB's 404.
 /// </summary>
 internal sealed class RoutingHttpMessageHandler : HttpMessageHandler
 {
@@ -68,7 +68,7 @@ internal sealed class RoutingHttpMessageHandler : HttpMessageHandler
 
 /// <summary>
 /// The plugin's services wired together over fakes of the core's stores and
-/// mocks of its services, with a routing HTTP handler in place of TheTVDB.
+/// mocks of its services, with a routing HTTP handler in place of TvDB.
 /// </summary>
 internal sealed class ServiceHarness : IDisposable
 {
@@ -174,7 +174,7 @@ internal sealed class ServiceHarness : IDisposable
     /// Refreshes One Piece through the provider, as the core's refresh job would.
     /// </summary>
     public Task Refresh(MetadataRefreshOptions? options = null)
-        => Get<TvdbMetadataProvider>().RefreshSeries(new MetadataGuid(TvdbSources.Tvdb, MetadataEntityType.Series, "81797"), options ?? new MetadataRefreshOptions(), TestContext.Current.CancellationToken);
+        => Get<TvdbMetadataProvider>().RefreshSeries(new MetadataGuid(MetadataSource.Tvdb, MetadataEntityType.Series, "81797"), options ?? new MetadataRefreshOptions(), TestContext.Current.CancellationToken);
 
     /// <summary>
     /// Adds an AniDB anime with some normal episodes, with a Shoko series over it.
@@ -229,7 +229,7 @@ internal sealed class ServiceHarness : IDisposable
 
     /// <summary>
     /// Makes the matching engine judge the shows it is handed by the ratings
-    /// given for their TheTVDB IDs, keeping the order it was handed them in
+    /// given for their TvDB IDs, keeping the order it was handed them in
     /// and taking the first unless nothing about it agreed, recording what it
     /// was handed.
     /// </summary>

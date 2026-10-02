@@ -7,13 +7,13 @@ namespace Shoko.Plugin.Tvdb;
 internal static class Constants
 {
     /// <summary>
-    /// The licensed TheTVDB v4 project key official builds ship with,
+    /// The licensed TvDB v4 project key official builds ship with,
     /// substituted by CI from the <c>TVDB_PROJECT_KEY</c> secret. For a build
     /// from source the placeholder stays put, and the plugin then needs an API
     /// key from the settings before it will fetch anything.
     /// </summary>
     /// <remarks>
-    /// TheTVDB issues keys per project, not to individual users. A licensed
+    /// TvDB issues keys per project, not to individual users. A licensed
     /// key authenticates on its own, so an official build needs neither a key
     /// nor a subscriber PIN from its user; a PIN only matters for a
     /// user-supported key, which authenticates as the subscriber it comes

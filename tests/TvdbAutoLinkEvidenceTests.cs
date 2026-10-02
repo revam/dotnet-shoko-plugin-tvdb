@@ -21,7 +21,7 @@ namespace Shoko.Plugin.Tvdb.Tests;
 /// </summary>
 /// <remarks>
 /// The search hits and episode listings made up here are hand-written in
-/// TheTVDB's shapes, for shows the fixtures do not have.
+/// TvDB's shapes, for shows the fixtures do not have.
 /// </remarks>
 public class TvdbAutoLinkEvidenceTests
 {
@@ -91,7 +91,7 @@ public class TvdbAutoLinkEvidenceTests
     }
 
     [Fact]
-    public async Task AutoLinking_SendsAStoredShowWithEverySeason_WithoutAskingTheTVDB()
+    public async Task AutoLinking_SendsAStoredShowWithEverySeason_WithoutAskingTvDB()
     {
         using var harness = new ServiceHarness();
         harness.Http.Route("search?query=One%20Piece&type=series&limit=10", Fixture.Read("search-one-piece.json"));
@@ -141,7 +141,7 @@ public class TvdbAutoLinkEvidenceTests
 
         Assert.Equal(MatchRejectionReason.TitleMismatch, candidates[0].Rejection?.Reason);
         var details = candidates[0].Rejection!.Details!;
-        Assert.StartsWith("Searched for \"One Piece\". Rated DateAndTitleKindaMatches. TheTVDB's search spans every kind of show", details, StringComparison.Ordinal);
+        Assert.StartsWith("Searched for \"One Piece\". Rated DateAndTitleKindaMatches. TvDB's search spans every kind of show", details, StringComparison.Ordinal);
         Assert.Contains("line up conclusively", details, StringComparison.Ordinal);
         Assert.EndsWith("1 of 2 dated episodes aired the same day.", details, StringComparison.Ordinal);
     }
@@ -234,7 +234,9 @@ public class TvdbAutoLinkEvidenceTests
         // Judged as a hint, from what is stored.
         Assert.Equal([_onePiece], Assert.Single(calls).Options!.HintedIDs);
         Assert.DoesNotContain(harness.Http.Paths, path => path.StartsWith("series/", StringComparison.Ordinal));
-        harness.LinkingService.Verify(service => service.GetCrossSourceHints(TvdbSources.Tvdb, 1), Times.Once());
+        // An expression tree can't read an extension property, so take it first.
+        var tvdb = MetadataSource.Tvdb;
+        harness.LinkingService.Verify(service => service.GetCrossSourceHints(tvdb, 1), Times.Once());
     }
 
     [Fact]
@@ -277,7 +279,7 @@ public class TvdbAutoLinkEvidenceTests
             new MetadataAutoLinkRejection
             {
                 Reason = MatchRejectionReason.Restricted,
-                Details = $"tmdb://episode/1 and 1 more, linked to the anime, name TheTVDB series 81797. It is restricted.",
+                Details = $"tmdb://episode/1 and 1 more, linked to the anime, name TvDB series 81797. It is restricted.",
             },
             hint.Rejection
         );
@@ -332,7 +334,7 @@ public class TvdbAutoLinkEvidenceTests
         using var harness = new ServiceHarness();
         harness.Http.Route("search?query=Something%20Else&type=series&limit=10", SearchHits());
         harness.AddAnime(1, 2, "Something Else");
-        harness.CrossSourceHints.Add(new() { ID = new(TvdbSources.Tvdb, MetadataEntityType.Movie, "12"), AnidbAnimeID = 1, NamedBy = [_tmdbShow] });
+        harness.CrossSourceHints.Add(new() { ID = new(MetadataSource.Tvdb, MetadataEntityType.Movie, "12"), AnidbAnimeID = 1, NamedBy = [_tmdbShow] });
         harness.CrossSourceHints.Add(new() { ID = _tmdbShow, AnidbAnimeID = 1, NamedBy = [_onePiece] });
         Judge(harness, _ => new(MatchRating.TitleMatches));
 

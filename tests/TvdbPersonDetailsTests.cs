@@ -26,7 +26,7 @@ public class TvdbPersonDetailsTests
         {
             ID = TvdbUtility.CreatorGuid(peopleID),
             Name = name,
-            Resources = [new() { Type = ResourceType.Metadata, Name = "TheTVDB", Url = $"https://thetvdb.com/dereferrer/people/{id}", ID = id }],
+            Resources = [new() { Type = ResourceType.Metadata, Name = "TvDB", Url = $"https://thetvdb.com/dereferrer/people/{id}", ID = id }],
         };
     }
 
@@ -70,7 +70,7 @@ public class TvdbPersonDetailsTests
     [Fact]
     public void TheBiography_IsInTheFirstConfiguredLanguageThatHasOne()
     {
-        // TheTVDB's English biography for her is blank, so English is passed
+        // TvDB's English biography for her is blank, so English is passed
         // over for the first that has one.
         Assert.StartsWith("Mayumi Tanaka (15 de enero de 1955)", Map(412417, "Mayumi Tanaka", ["spa", "jpn"]).Overview);
         Assert.StartsWith("田中 真弓は", Map(412417, "Mayumi Tanaka", ["fra"]).Overview);
@@ -118,7 +118,7 @@ public class TvdbPersonDetailsTests
     }
 
     [Fact]
-    public void APersonTheTvdbDoesNotHave_KeepsWhatTheCreditsSay()
+    public void APersonTvDBDoesNotHave_KeepsWhatTheCreditsSay()
     {
         var credited = Credited(604, "Eiichiro Oda");
 
@@ -192,7 +192,7 @@ public class TvdbPersonDetailsTests
     [InlineData(19, "TV Maze", "1505", null)]
     [InlineData(14, "EIDR", "10.5240/0000-0000-0000-0000-0000-X", null)]
     [InlineData(99, null, "12345", null)]
-    public void APersonsIDElsewhere_IsReadByTheTvdbsNumberForTheSite(int? type, string? sourceName, string id, string? expected)
+    public void APersonsIDElsewhere_IsReadByTvDBsNumberForTheSite(int? type, string? sourceName, string id, string? expected)
         => Assert.Equal(expected, TvdbEntityMapper.ToPersonResource(new() { ID = id, Type = type, SourceName = sourceName })?.Url);
 
     [Theory]
@@ -229,6 +229,6 @@ public class TvdbPersonDetailsTests
     [InlineData(2, PersonGender.Female)]
     [InlineData(3, PersonGender.NonBinary)]
     [InlineData(9, PersonGender.Unknown)]
-    public void TheGender_IsReadFromTheTvdbsNumber(int? gender, PersonGender expected)
+    public void TheGender_IsReadFromTvDBsNumber(int? gender, PersonGender expected)
         => Assert.Equal(expected, TvdbEntityMapper.ToPersonGender(gender));
 }

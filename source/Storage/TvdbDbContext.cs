@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Shoko.Plugin.Tvdb.Storage;
 
 /// <summary>
-/// The plugin's own database: what only TheTVDB has, one table per kind of
+/// The plugin's own database: what only TvDB has, one table per kind of
 /// record. The server configures it and applies its migrations while it
 /// starts.
 /// </summary>

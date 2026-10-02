@@ -5,7 +5,7 @@ namespace Shoko.Plugin.Tvdb.Storage;
 
 /// <summary>
 /// What the plugin keeps of a show besides the core's stores: what only
-/// TheTVDB has, and where its images are.
+/// TvDB has, and where its images are.
 /// </summary>
 /// <remarks>
 /// Kept as one row per show in the <c>Shows</c> table of the plugin's own
@@ -14,13 +14,13 @@ namespace Shoko.Plugin.Tvdb.Storage;
 /// </remarks>
 public sealed class TvdbStoredSeries
 {
-    /// <summary>TheTVDB series ID.</summary>
+    /// <summary>TvDB series ID.</summary>
     public int ID { get; set; }
 
     /// <summary>The show's URL slug.</summary>
     public string? Slug { get; set; }
 
-    /// <summary>TheTVDB's name for the show's status, e.g. <c>Continuing</c>.</summary>
+    /// <summary>TvDB's name for the show's status, e.g. <c>Continuing</c>.</summary>
     public string? Status { get; set; }
 
     /// <summary>The season type the show's own seasons are in, e.g. <c>official</c>.</summary>
@@ -35,10 +35,10 @@ public sealed class TvdbStoredSeries
     /// <summary>The show's and its seasons' artwork.</summary>
     public List<TvdbStoredArtwork> Artworks { get; set; } = [];
 
-    /// <summary>The default poster of each season, by TheTVDB season ID.</summary>
+    /// <summary>The default poster of each season, by TvDB season ID.</summary>
     public Dictionary<int, string> SeasonPosters { get; set; } = [];
 
-    /// <summary>The thumbnail of each episode, by TheTVDB episode ID.</summary>
+    /// <summary>The thumbnail of each episode, by TvDB episode ID.</summary>
     public Dictionary<int, string> EpisodeThumbnails { get; set; } = [];
 
     /// <summary>When the show was last fetched.</summary>
@@ -48,16 +48,16 @@ public sealed class TvdbStoredSeries
 /// <summary>One piece of a show's or a season's artwork.</summary>
 public sealed class TvdbStoredArtwork
 {
-    /// <summary>TheTVDB artwork ID.</summary>
+    /// <summary>TvDB artwork ID.</summary>
     public int ID { get; set; }
 
-    /// <summary>TheTVDB's number for the kind of artwork.</summary>
+    /// <summary>TvDB's number for the kind of artwork.</summary>
     public int Type { get; set; }
 
     /// <summary>The image, as a resource ID of the image template.</summary>
     public string Path { get; set; } = string.Empty;
 
-    /// <summary>TheTVDB's three-letter code of the language of any text in it.</summary>
+    /// <summary>TvDB's three-letter code of the language of any text in it.</summary>
     public string? Language { get; set; }
 
     /// <summary>The width in pixels.</summary>
@@ -87,7 +87,7 @@ public sealed class TvdbStoredPortrait
 }
 
 /// <summary>
-/// What the plugin keeps of a person's own TheTVDB record: the details the
+/// What the plugin keeps of a person's own TvDB record: the details the
 /// credits on a show do not carry, and when they were fetched.
 /// </summary>
 /// <remarks>
@@ -95,16 +95,16 @@ public sealed class TvdbStoredPortrait
 /// and stamps each person as updated when it is, so its stamp cannot say
 /// when the details were last fetched. This record can, and it is also what
 /// the details are written from again on a refresh that does not fetch them.
-/// The dates are kept as TheTVDB wrote them, so a later build can read them
+/// The dates are kept as TvDB wrote them, so a later build can read them
 /// better without fetching again.
 /// </remarks>
 public sealed class TvdbStoredPerson
 {
-    /// <summary>TheTVDB person ID.</summary>
+    /// <summary>TvDB person ID.</summary>
     public int ID { get; set; }
 
     /// <summary>
-    /// Whether TheTVDB had the record. A person it did not have is kept too,
+    /// Whether TvDB had the record. A person it did not have is kept too,
     /// so they are not asked for again until the record is stale.
     /// </summary>
     public bool Found { get; set; }
@@ -118,13 +118,13 @@ public sealed class TvdbStoredPerson
     /// <summary>The person's photo, as a resource ID of the image template.</summary>
     public string? Image { get; set; }
 
-    /// <summary>When the person was born, as TheTVDB wrote it.</summary>
+    /// <summary>When the person was born, as TvDB wrote it.</summary>
     public string? Birth { get; set; }
 
-    /// <summary>When the person died, as TheTVDB wrote it.</summary>
+    /// <summary>When the person died, as TvDB wrote it.</summary>
     public string? Death { get; set; }
 
-    /// <summary>TheTVDB's number for the person's gender.</summary>
+    /// <summary>TvDB's number for the person's gender.</summary>
     public int? Gender { get; set; }
 
     /// <summary>The person's other names and translated names.</summary>
@@ -136,7 +136,7 @@ public sealed class TvdbStoredPerson
     /// <summary>The person's IDs on other sites.</summary>
     public List<TvdbStoredRemoteID> RemoteIDs { get; set; } = [];
 
-    /// <summary>When TheTVDB last changed the record, as it wrote it.</summary>
+    /// <summary>When TvDB last changed the record, as it wrote it.</summary>
     public string? LastUpdated { get; set; }
 
     /// <summary>When the record was last fetched, in UTC.</summary>
@@ -146,7 +146,7 @@ public sealed class TvdbStoredPerson
 /// <summary>A piece of text in one language.</summary>
 public sealed class TvdbStoredText
 {
-    /// <summary>TheTVDB's three-letter code of the language, when known.</summary>
+    /// <summary>TvDB's three-letter code of the language, when known.</summary>
     public string? Language { get; set; }
 
     /// <summary>The text.</summary>
@@ -159,7 +159,7 @@ public sealed class TvdbStoredRemoteID
     /// <summary>The ID, or for a website its URL.</summary>
     public string ID { get; set; } = string.Empty;
 
-    /// <summary>TheTVDB's number for the kind of site.</summary>
+    /// <summary>TvDB's number for the kind of site.</summary>
     public int? Type { get; set; }
 
     /// <summary>The site's name, e.g. <c>IMDB</c>.</summary>

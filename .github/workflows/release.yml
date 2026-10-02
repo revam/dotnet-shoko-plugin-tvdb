@@ -105,8 +105,8 @@ jobs:
           # an empty one just leaves the notes off the release entry.
           printf '%s' "${RELEASE_BODY}" > "${RUNNER_TEMP}/release-notes.md"
 
-      # Official builds ship the licensed project key TheTVDB issued for this
-      # plugin. TheTVDB issues keys per project rather than per user, and a
+      # Official builds ship the licensed project key TvDB issued for this
+      # plugin. TvDB issues keys per project rather than per user, and a
       # licensed key authenticates on its own, so a user of an official build
       # needs neither a key nor a subscriber PIN. The key is a secret rather
       # than a value in the tree, so an unofficial build of this repository

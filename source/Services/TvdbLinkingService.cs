@@ -18,7 +18,7 @@ using Shoko.Plugin.Tvdb.Storage;
 namespace Shoko.Plugin.Tvdb.Services;
 
 /// <summary>
-/// Manages the links between AniDB and TheTVDB. The links are the core's,
+/// Manages the links between AniDB and TvDB. The links are the core's,
 /// kept in its cross-reference store and written through its
 /// <see cref="IMetadataLinkingService"/>; this decides what to write.
 /// </summary>
@@ -48,22 +48,22 @@ public sealed class TvdbLinkingService(
     #region Reading
 
     /// <summary>
-    /// The TheTVDB shows an AniDB anime is linked to.
+    /// The TvDB shows an AniDB anime is linked to.
     /// </summary>
     /// <param name="anidbAnimeID">The AniDB anime ID.</param>
-    /// <returns>TheTVDB series IDs, each once, in link order.</returns>
+    /// <returns>TvDB series IDs, each once, in link order.</returns>
     public IReadOnlyList<int> GetLinkedSeriesIDs(int anidbAnimeID)
         => anidbAnimeID <= 0
             ? []
-            : [.. crossReferences.GetSeriesLinks(anidbAnimeID, TvdbSources.Tvdb)
+            : [.. crossReferences.GetSeriesLinks(anidbAnimeID, MetadataSource.Tvdb)
                 .Select(link => TvdbUtility.TryGetID(link.ProviderID, MetadataEntityType.Series, out var id) ? id : 0)
                 .Where(id => id > 0)
                 .Distinct()];
 
     /// <summary>
-    /// The AniDB anime linked to a TheTVDB show as a whole.
+    /// The AniDB anime linked to a TvDB show as a whole.
     /// </summary>
-    /// <param name="seriesID">TheTVDB series ID.</param>
+    /// <param name="seriesID">TvDB series ID.</param>
     /// <returns>The AniDB anime IDs, each once.</returns>
     public IReadOnlyList<int> GetLinkedAnidbAnimeIDs(int seriesID)
         => seriesID <= 0
@@ -79,7 +79,7 @@ public sealed class TvdbLinkingService(
     #region Series Links
 
     /// <summary>
-    /// Removes every TheTVDB link an AniDB anime has, at every level, and
+    /// Removes every TvDB link an AniDB anime has, at every level, and
     /// stops the anime being linked automatically again.
     /// </summary>
     /// <param name="anidbAnimeID">The AniDB anime ID.</param>
@@ -87,26 +87,26 @@ public sealed class TvdbLinkingService(
     /// <param name="cancellationToken">Cancels the work.</param>
     /// <returns>How many links were removed.</returns>
     public Task<int> RemoveAllLinks(int anidbAnimeID, bool purge = false, CancellationToken cancellationToken = default)
-        => linkingService.RemoveLinksForAnime(TvdbSources.Tvdb, anidbAnimeID, purge: purge, disableAutoLinking: true, cancellationToken: cancellationToken);
+        => linkingService.RemoveLinksForAnime(MetadataSource.Tvdb, anidbAnimeID, purge: purge, disableAutoLinking: true, cancellationToken: cancellationToken);
 
     #endregion
 
     #region Matching
 
     /// <summary>
-    /// Works out which TheTVDB episodes an AniDB anime's episodes line up
+    /// Works out which TvDB episodes an AniDB anime's episodes line up
     /// with, without writing anything.
     /// </summary>
     /// <param name="anime">The AniDB anime.</param>
     /// <param name="anidbEpisodes">The episodes to match, already narrowed to the ones in scope.</param>
-    /// <param name="seriesID">TheTVDB series ID to match into.</param>
+    /// <param name="seriesID">TvDB series ID to match into.</param>
     /// <param name="seasonID">
     /// One season of the show, or one group of an ordering of it, to match
     /// within; <see langword="null"/> for the whole show.
     /// </param>
     /// <param name="existing">The links to honour, or <see langword="null"/> to match everything afresh.</param>
     /// <param name="considerOtherLinks">
-    /// Whether to leave out TheTVDB episodes another AniDB anime already
+    /// Whether to leave out TvDB episodes another AniDB anime already
     /// claims; <see langword="null"/> follows the settings.
     /// </param>
     /// <returns>
@@ -137,7 +137,7 @@ public sealed class TvdbLinkingService(
         {
             // A season of the show or a group of one of its orderings; the
             // core reads both back by the same kind of identifier.
-            if (seasonID.Source != TvdbSources.Tvdb || metadataService.GetSeason(seasonID) is not { } season || season.SeriesID != series.ID)
+            if (seasonID.Source != MetadataSource.Tvdb || metadataService.GetSeason(seasonID) is not { } season || season.SeriesID != series.ID)
                 return [];
 
             candidates = season.Episodes;
@@ -163,7 +163,7 @@ public sealed class TvdbLinkingService(
     /// A failure is logged and swallowed: the show is stored by then, and a
     /// matching that could not run is no reason to fail its refresh.
     /// </remarks>
-    /// <param name="seriesID">TheTVDB series ID.</param>
+    /// <param name="seriesID">TvDB series ID.</param>
     /// <param name="cancellationToken">Cancels the work.</param>
     /// <returns>How many anime were matched.</returns>
     public async Task<int> MatchLinkedEpisodes(int seriesID, CancellationToken cancellationToken = default)
@@ -184,7 +184,7 @@ public sealed class TvdbLinkingService(
     /// not run.
     /// </summary>
     /// <param name="anidbAnimeID">The AniDB anime ID.</param>
-    /// <param name="seriesID">TheTVDB series ID.</param>
+    /// <param name="seriesID">TvDB series ID.</param>
     /// <param name="cancellationToken">Cancels the work.</param>
     /// <returns>Whether the matching ran.</returns>
     private async Task<bool> TryMatchAndSave(int anidbAnimeID, int seriesID, CancellationToken cancellationToken)
@@ -198,12 +198,12 @@ public sealed class TvdbLinkingService(
                 save: true,
                 cancellationToken: cancellationToken
             ).ConfigureAwait(false);
-            logger.LogDebug("Matched {Count} TheTVDB episode links for AniDB anime {AnidbID} against TheTVDB series {SeriesID}.", links.Count, anidbAnimeID, seriesID);
+            logger.LogDebug("Matched {Count} TvDB episode links for AniDB anime {AnidbID} against TvDB series {SeriesID}.", links.Count, anidbAnimeID, seriesID);
             return true;
         }
         catch (Exception ex) when (ex is NotSupportedException or InvalidOperationException or ArgumentException)
         {
-            logger.LogDebug(ex, "Unable to match the episodes of AniDB anime {AnidbID} against TheTVDB series {SeriesID}.", anidbAnimeID, seriesID);
+            logger.LogDebug(ex, "Unable to match the episodes of AniDB anime {AnidbID} against TvDB series {SeriesID}.", anidbAnimeID, seriesID);
             return false;
         }
     }

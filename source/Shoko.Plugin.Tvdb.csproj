@@ -4,7 +4,7 @@
         <OutputType>Library</OutputType>
         <LangVersion>latest</LangVersion>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <Title>Shoko TheTVDB Metadata</Title>
+        <Title>Shoko TvDB Metadata</Title>
         <Authors>revam</Authors>
         <Version>1.0.0</Version>
         <Configurations>Debug;Release</Configurations>

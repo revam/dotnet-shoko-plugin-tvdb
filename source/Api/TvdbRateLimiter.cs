@@ -7,12 +7,12 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace Shoko.Plugin.Tvdb.Api;
 
 /// <summary>
-/// Token bucket rate limiter for TheTVDB calls, and the pause the plugin
-/// reports while TheTVDB will not take work. Thread-safe.
+/// Token bucket rate limiter for TvDB calls, and the pause the plugin
+/// reports while TvDB will not take work. Thread-safe.
 /// </summary>
 /// <remarks>
 /// <para>
-///   TheTVDB publishes no request-per-second figure for v4; its terms say only
+///   TvDB publishes no request-per-second figure for v4; its terms say only
 ///   that excessive use may be throttled, and the API answers HTTP 429 when it
 ///   decides you are (<see cref="TvdbApiClient"/> honours <c>Retry-After</c>).
 ///   The defaults here, a burst of five refilling at two per second, are
@@ -20,7 +20,7 @@ namespace Shoko.Plugin.Tvdb.Api;
 /// </para>
 /// <para>
 ///   The pause does not hold requests back itself. The client sets it when
-///   TheTVDB rate limits it, fails or refuses the key, and the provider hands
+///   TvDB rate limits it, fails or refuses the key, and the provider hands
 ///   it to the core, which holds the plugin's jobs back until it runs out.
 /// </para>
 /// </remarks>
@@ -115,7 +115,7 @@ public sealed class TvdbRateLimiter : IDisposable
     public event EventHandler? PauseStateChanged;
 
     /// <summary>
-    /// Whether TheTVDB is not to be given work right now.
+    /// Whether TvDB is not to be given work right now.
     /// </summary>
     public bool IsPaused
     {
@@ -127,7 +127,7 @@ public sealed class TvdbRateLimiter : IDisposable
     }
 
     /// <summary>
-    /// Why TheTVDB is not to be given work, while <see cref="IsPaused"/>.
+    /// Why TvDB is not to be given work, while <see cref="IsPaused"/>.
     /// </summary>
     public string? PauseReason
     {
@@ -179,7 +179,7 @@ public sealed class TvdbRateLimiter : IDisposable
             _pauseTimer = _timeProvider.CreateTimer(_ => Expire(), null, pausedFor, Timeout.InfiniteTimeSpan);
         }
 
-        _logger.LogInformation("{Reason} All TheTVDB jobs paused for {Duration}. They will resume automatically.", reason, pausedFor);
+        _logger.LogInformation("{Reason} All TvDB jobs paused for {Duration}. They will resume automatically.", reason, pausedFor);
         PauseStateChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -199,7 +199,7 @@ public sealed class TvdbRateLimiter : IDisposable
             _pauseTimer = null;
         }
 
-        _logger.LogInformation("TheTVDB pause lifted. Queued TheTVDB jobs will now resume.");
+        _logger.LogInformation("TvDB pause lifted. Queued TvDB jobs will now resume.");
         PauseStateChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -224,7 +224,7 @@ public sealed class TvdbRateLimiter : IDisposable
             _pauseTimer = null;
         }
 
-        _logger.LogInformation("TheTVDB pause expired. Queued TheTVDB jobs will now resume.");
+        _logger.LogInformation("TvDB pause expired. Queued TvDB jobs will now resume.");
         PauseStateChanged?.Invoke(this, EventArgs.Empty);
     }
 

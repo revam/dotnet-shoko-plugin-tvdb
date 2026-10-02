@@ -2,8 +2,8 @@
   "$schema": "https://raw.githubusercontent.com/ShokoAnime/ShokoServer/master/Shoko.BuildTools/manifest.schema.json",
   "id": "12126642-8c32-455f-aca1-e1a2f7b35a8c",
   "type": "package",
-  "name": "TheTVDB Metadata",
-  "overview": "Reference implementation of Shoko's metadata provider contract, supplying TheTVDB v4 series, season and episode metadata for the `tvdb` metadata source. This is a stub manifest, not the published one. If you are reading it as a repository feed, you are on the wrong branch: the published identity and releases live on this repository's `metadata` branch, at `manifest.json`. CI pulls that file over this one before it builds anything. This copy exists so a local build has an id to match against.",
+  "name": "TvDB",
+  "overview": "Reference implementation of Shoko's metadata provider contract, supplying TvDB v4 series, season and episode metadata for the `tvdb` metadata source. This is a stub manifest, not the published one. If you are reading it as a repository feed, you are on the wrong branch: the published identity and releases live on this repository's `metadata` branch, at `manifest.json`. CI pulls that file over this one before it builds anything. This copy exists so a local build has an id to match against.",
   "authors": "revam",
   "releases": []
 }

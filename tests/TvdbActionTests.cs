@@ -40,11 +40,11 @@ public class TvdbActionTests
 
         var refusal = await new UnlinkTvdbSeriesAction(provider, harness.ProviderManager.Object, harness.Get<TvdbLinkingService>()).Validate(TestContext.Current.CancellationToken);
 
-        Assert.Equal("The TheTVDB metadata provider is switched off.", refusal?.Reason);
+        Assert.Equal("The TvDB metadata provider is switched off.", refusal?.Reason);
     }
 
     [Fact]
-    public async Task WhileTheProviderIsNotConfigured_OnlyTheActionsReachingTheTVDBAreRefused()
+    public async Task WhileTheProviderIsNotConfigured_OnlyTheActionsReachingTvDBAreRefused()
     {
         using var harness = new ServiceHarness(new() { ApiKey = null });
         var provider = harness.Get<TvdbMetadataProvider>();
@@ -53,12 +53,12 @@ public class TvdbActionTests
         var refresh = await new RefreshTvdbSeriesAction(provider, harness.ProviderManager.Object, harness.RefreshService.Object).Validate(TestContext.Current.CancellationToken);
         var unlink = await new UnlinkTvdbSeriesAction(provider, harness.ProviderManager.Object, harness.Get<TvdbLinkingService>()).Validate(TestContext.Current.CancellationToken);
 
-        Assert.Equal("No TheTVDB API key is configured.", refresh?.Reason);
+        Assert.Equal("No TvDB API key is configured.", refresh?.Reason);
         Assert.Null(unlink);
     }
 
     [Fact]
-    public async Task WhileTheProviderIsPaused_OnlyTheActionsReachingTheTVDBAreRefused()
+    public async Task WhileTheProviderIsPaused_OnlyTheActionsReachingTvDBAreRefused()
     {
         using var harness = new ServiceHarness();
         var provider = harness.Get<TvdbMetadataProvider>();

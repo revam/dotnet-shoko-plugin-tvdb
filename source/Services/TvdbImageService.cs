@@ -12,7 +12,7 @@ using Shoko.Plugin.Tvdb.Storage;
 namespace Shoko.Plugin.Tvdb.Services;
 
 /// <summary>
-/// Hands the core TheTVDB's images and keeps its default template URL
+/// Hands the core TvDB's images and keeps its default template URL
 /// registered.
 /// </summary>
 /// <remarks>
@@ -30,7 +30,7 @@ public sealed class TvdbImageService(IImageManager imageManager, TvdbStore store
     #region Template
 
     /// <summary>
-    /// Registers TheTVDB's default template URL with the core, once.
+    /// Registers TvDB's default template URL with the core, once.
     /// </summary>
     /// <remarks>
     /// The core keeps a registration in memory only and lets the user set their
@@ -41,7 +41,7 @@ public sealed class TvdbImageService(IImageManager imageManager, TvdbStore store
         if (_registered)
             return;
 
-        imageManager.RegisterTemplateUrl(TvdbSources.Tvdb, TvdbImages.TemplateUrl);
+        imageManager.RegisterTemplateUrl(MetadataSource.Tvdb, TvdbImages.TemplateUrl);
         _registered = true;
     }
 
@@ -50,7 +50,7 @@ public sealed class TvdbImageService(IImageManager imageManager, TvdbStore store
     #region Images
 
     /// <summary>
-    /// The images TheTVDB has for one of its entities.
+    /// The images TvDB has for one of its entities.
     /// </summary>
     /// <param name="entityID">The entity.</param>
     /// <returns>
@@ -62,7 +62,7 @@ public sealed class TvdbImageService(IImageManager imageManager, TvdbStore store
     {
         ArgumentNullException.ThrowIfNull(entityID);
 
-        if (entityID.Source != TvdbSources.Tvdb)
+        if (entityID.Source != MetadataSource.Tvdb)
             return null;
 
         RegisterTemplateUrl();
@@ -97,7 +97,7 @@ public sealed class TvdbImageService(IImageManager imageManager, TvdbStore store
     private static List<ImageCandidate> SeasonImages(TvdbStoredSeries show, int seasonID)
         => Candidates(show.Artworks.Where(artwork => artwork.SeasonID == seasonID), show.SeasonPosters.GetValueOrDefault(seasonID));
 
-    // TheTVDB's artwork in its own order, with the entity's own poster added
+    // TvDB's artwork in its own order, with the entity's own poster added
     // first when it is not among the rest. The poster is pinned as the
     // default through the store data instead.
     private static List<ImageCandidate> Candidates(IEnumerable<TvdbStoredArtwork> artworks, string? poster)

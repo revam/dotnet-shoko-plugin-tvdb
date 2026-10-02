@@ -5,13 +5,13 @@ using Shoko.Abstractions.Metadata.Enums;
 namespace Shoko.Plugin.Tvdb.Mapping;
 
 /// <summary>
-/// Where TheTVDB's images live, and how an image's URL becomes a resource ID
+/// Where TvDB's images live, and how an image's URL becomes a resource ID
 /// of the image template.
 /// </summary>
 public static class TvdbImages
 {
     /// <summary>
-    /// The default template URL for TheTVDB's images. Every image TheTVDB
+    /// The default template URL for TvDB's images. Every image TvDB
     /// serves is under <c>/banners/</c> on its artwork host, and the rest of
     /// the path is the resource ID.
     /// </summary>
@@ -27,11 +27,11 @@ public static class TvdbImages
     private const string MissingImagePrefix = "images/missing/";
 
     /// <summary>
-    /// The resource ID of an image TheTVDB gave by URL or by path.
+    /// The resource ID of an image TvDB gave by URL or by path.
     /// </summary>
     /// <remarks>
-    /// TheTVDB answers either a full URL on its artwork host or a path under
-    /// <c>/banners/</c>. Anything on another host, TheTVDB's placeholders for
+    /// TvDB answers either a full URL on its artwork host or a path under
+    /// <c>/banners/</c>. Anything on another host, TvDB's placeholders for
     /// a missing image, and a path longer than the image table holds are
     /// dropped rather than truncated, since a truncated ID downloads nothing.
     /// </remarks>
@@ -93,9 +93,9 @@ public static class TvdbImages
         => string.IsNullOrEmpty(resourceID) ? null : new() { [ImageEntityType.Primary] = resourceID };
 
     /// <summary>
-    /// What a kind of TheTVDB artwork is for its show or season.
+    /// What a kind of TvDB artwork is for its show or season.
     /// </summary>
-    /// <param name="artworkType">TheTVDB's number for the kind of artwork.</param>
+    /// <param name="artworkType">TvDB's number for the kind of artwork.</param>
     /// <returns>The image type, or <see cref="ImageEntityType.None"/> for a kind the plugin does not offer.</returns>
     public static ImageEntityType ToImageType(int artworkType)
         => artworkType switch
@@ -108,10 +108,10 @@ public static class TvdbImages
         };
 
     /// <summary>
-    /// Whether a kind of TheTVDB artwork belongs to a season rather than the
+    /// Whether a kind of TvDB artwork belongs to a season rather than the
     /// show.
     /// </summary>
-    /// <param name="artworkType">TheTVDB's number for the kind of artwork.</param>
+    /// <param name="artworkType">TvDB's number for the kind of artwork.</param>
     /// <returns><see langword="true"/> for a season banner, poster or background.</returns>
     public static bool IsSeasonArtwork(int artworkType)
         => artworkType is 6 or 7 or 8;

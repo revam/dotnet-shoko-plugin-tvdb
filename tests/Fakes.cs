@@ -129,11 +129,11 @@ internal sealed class RecordingLogger<T> : ILogger<T>
 }
 
 /// <summary>
-/// Reads the TheTVDB fixtures in <c>tests/Fixtures</c>.
+/// Reads the TvDB fixtures in <c>tests/Fixtures</c>.
 /// </summary>
 /// <remarks>
 /// <strong>Every fixture in that folder is hand-written, not captured.</strong>
-/// TheTVDB v4 requires an API key for all access and none was available when
+/// TvDB v4 requires an API key for all access and none was available when
 /// this plugin was written, so the fixtures reproduce the shapes documented at
 /// <c>thetvdb.github.io/v4-api</c> rather than real responses. They prove the
 /// plugin does what it means to do with those shapes; they cannot prove the
