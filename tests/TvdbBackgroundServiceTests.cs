@@ -27,7 +27,7 @@ public sealed class TvdbBackgroundServiceTests : IDisposable
         using var harness = new ServiceHarness();
         harness.CrossReferences.AddSeries(1, 81797);
         harness.RefreshService
-            .Setup(service => service.RefreshAllLinked(TvdbSources.Tvdb, false, It.IsAny<MetadataRefreshOptions?>(), MetadataEntityType.Series, It.IsAny<CancellationToken>()))
+            .Setup(service => service.RefreshAllLinked(TvdbSources.Tvdb, false, It.IsAny<MetadataRefreshOptions?>(), MetadataEntityType.Series, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
 
         Assert.Equal(1, await harness.Get<TvdbBackgroundService>().RefreshIfNothingStored(TestContext.Current.CancellationToken));
@@ -41,7 +41,7 @@ public sealed class TvdbBackgroundServiceTests : IDisposable
         await harness.Refresh();
 
         Assert.Equal(0, await harness.Get<TvdbBackgroundService>().RefreshIfNothingStored(TestContext.Current.CancellationToken));
-        harness.RefreshService.Verify(service => service.RefreshAllLinked(It.IsAny<MetadataSource>(), It.IsAny<bool>(), It.IsAny<MetadataRefreshOptions?>(), It.IsAny<MetadataEntityType?>(), It.IsAny<CancellationToken>()), Times.Never);
+        harness.RefreshService.Verify(service => service.RefreshAllLinked(It.IsAny<MetadataSource>(), It.IsAny<bool>(), It.IsAny<MetadataRefreshOptions?>(), It.IsAny<MetadataEntityType?>(), It.IsAny<IProgress<decimal>?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]

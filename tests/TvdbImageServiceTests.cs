@@ -21,7 +21,7 @@ public class TvdbImageServiceTests
     }
 
     [Fact]
-    public async Task AShow_OffersItsArtworkWithItsDefaultPosterMarked()
+    public async Task AShow_OffersItsArtworkInTvDBsOrder()
     {
         var (harness, provider) = await Refreshed();
         using var _ = harness;
@@ -31,13 +31,13 @@ public class TvdbImageServiceTests
         Assert.NotNull(images);
         Assert.Equal(
             [
-                ("series/81797/posters/5eec847d52a04.jpg", ImageEntityType.Primary, true),
-                ("v4/series/81797/posters/63ab23cde990b.jpg", ImageEntityType.Primary, false),
-                ("v4/series/81797/backgrounds/616009a8bd688.jpg", ImageEntityType.Backdrop, false),
-                ("graphical/81797-g.jpg", ImageEntityType.Banner, false),
-                ("v4/series/81797/clearlogo/611b6189d88b6.png", ImageEntityType.Logo, false),
+                ("series/81797/posters/5eec847d52a04.jpg", ImageEntityType.Primary),
+                ("v4/series/81797/posters/63ab23cde990b.jpg", ImageEntityType.Primary),
+                ("v4/series/81797/backgrounds/616009a8bd688.jpg", ImageEntityType.Backdrop),
+                ("graphical/81797-g.jpg", ImageEntityType.Banner),
+                ("v4/series/81797/clearlogo/611b6189d88b6.png", ImageEntityType.Logo),
             ],
-            images.Select(image => (image.ResourceID, image.ImageType, image.IsDefault))
+            images.Select(image => (image.ResourceID, image.ImageType))
         );
         Assert.Equal(["ja", null, null, "en", "en"], images.Select(image => image.LanguageCode));
         Assert.Equal((680, 1000), (images[0].Width, images[0].Height));
@@ -63,7 +63,7 @@ public class TvdbImageServiceTests
 
         var images = await provider.GetImages(TvdbUtility.SeasonGuid(31893), TestContext.Current.CancellationToken);
 
-        Assert.Equal([("seasons/81797-1-3.jpg", true), ("seasons/81797-1-2.jpg", false)], images!.Select(image => (image.ResourceID, image.IsDefault)));
+        Assert.Equal(["seasons/81797-1-3.jpg", "seasons/81797-1-2.jpg"], images!.Select(image => image.ResourceID));
         Assert.All(images!, image => Assert.Equal(ImageEntityType.Primary, image.ImageType));
         Assert.Empty((await provider.GetImages(TvdbUtility.SeasonGuid(31895), TestContext.Current.CancellationToken))!);
     }
@@ -76,7 +76,7 @@ public class TvdbImageServiceTests
 
         var image = Assert.Single((await provider.GetImages(TvdbUtility.EpisodeGuid(361887), TestContext.Current.CancellationToken))!);
 
-        Assert.Equal(("v4/episode/361887/screencap/604df7d3ecf3a.jpg", ImageEntityType.Backdrop, true), (image.ResourceID, image.ImageType, image.IsDefault));
+        Assert.Equal(("v4/episode/361887/screencap/604df7d3ecf3a.jpg", ImageEntityType.Backdrop), (image.ResourceID, image.ImageType));
         Assert.Empty((await provider.GetImages(TvdbUtility.EpisodeGuid(361888), TestContext.Current.CancellationToken))!);
     }
 

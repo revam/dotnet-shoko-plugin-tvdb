@@ -173,6 +173,7 @@ public static class TvdbEntityMapper
                     .ThenBy(episode => episode.Number)
                     .Select(episode => ToEpisodeData(series, episode, seasonIDs, translated)),
             ],
+            DefaultImageResourceIDs = TvdbImages.ToDefaultImages(ImageEntityType.Primary, TvdbImages.ToResourceID(series.Image)),
         };
     }
 
@@ -494,6 +495,7 @@ public static class TvdbEntityMapper
                     ID = records.TryGetValue(number, out var record) ? TvdbUtility.SeasonGuid(record.ID) : TvdbUtility.SeasonTypeSeasonGuid(series.ID, seasonType, number),
                     SeasonNumber = number,
                     Titles = SeasonTitles(number, records.GetValueOrDefault(number)?.Name, series.OriginalLanguage),
+                    DefaultImageResourceIDs = TvdbImages.ToDefaultImages(ImageEntityType.Primary, TvdbImages.ToResourceID(records.GetValueOrDefault(number)?.Image)),
                 }),
         ];
     }
@@ -581,6 +583,7 @@ public static class TvdbEntityMapper
                     ID = id,
                 },
             ],
+            DefaultImageResourceIDs = TvdbImages.ToDefaultImages(ImageEntityType.Backdrop, TvdbImages.ToResourceID(episode.Image)),
         };
     }
 
@@ -830,6 +833,7 @@ public static class TvdbEntityMapper
             ID = creatorID,
             Name = credit.PersonName.Trim(),
             Resources = [new() { Type = ResourceType.Metadata, Name = "TheTVDB", Url = $"https://thetvdb.com/dereferrer/people/{id}", ID = id }],
+            DefaultImageResourceIDs = TvdbImages.ToPortraitDefault(TvdbImages.ToResourceID(credit.PersonImage)),
         });
         if (TvdbImages.ToResourceID(credit.PersonImage) is { } photo)
             people.Portraits.TryAdd(creatorID, photo);
@@ -852,6 +856,7 @@ public static class TvdbEntityMapper
                 Resources = CharacterPage(credit, slug) is { } page
                     ? [new() { Type = ResourceType.Metadata, Name = "TheTVDB", Url = page, ID = TvdbUtility.FormatID(credit.ID) }]
                     : [],
+                DefaultImageResourceIDs = TvdbImages.ToPortraitDefault(TvdbImages.ToResourceID(credit.Image)),
             });
             if (TvdbImages.ToResourceID(credit.Image) is { } image)
                 people.Portraits.TryAdd(characterID, image);
@@ -1047,6 +1052,7 @@ public static class TvdbEntityMapper
             BirthDay = ParseFuzzyDate(person.Birth) ?? creator.BirthDay,
             DeathDay = ParseFuzzyDate(person.Death) ?? creator.DeathDay,
             Resources = [.. resources.DistinctBy(resource => resource.Url, StringComparer.Ordinal)],
+            DefaultImageResourceIDs = creator.DefaultImageResourceIDs ?? TvdbImages.ToPortraitDefault(person.Image),
         };
     }
 

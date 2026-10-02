@@ -78,12 +78,12 @@ public sealed class TvdbImageService(IImageManager imageManager, TvdbStore store
                 return null;
 
             return show.EpisodeThumbnails.TryGetValue(episodeID, out var thumbnail)
-                ? [new() { ResourceID = thumbnail, ImageType = ImageEntityType.Backdrop, IsDefault = true }]
+                ? [new() { ResourceID = thumbnail, ImageType = ImageEntityType.Backdrop }]
                 : [];
         }
 
         if (entityID.EntityType == MetadataEntityType.Creator || entityID.EntityType == MetadataEntityType.Character)
-            return store.GetPortrait(entityID) is { } portrait ? [new() { ResourceID = portrait, ImageType = ImageEntityType.Primary, IsDefault = true }] : [];
+            return store.GetPortrait(entityID) is { } portrait ? [new() { ResourceID = portrait, ImageType = ImageEntityType.Primary }] : [];
 
         return null;
     }
@@ -97,8 +97,9 @@ public sealed class TvdbImageService(IImageManager imageManager, TvdbStore store
     private static List<ImageCandidate> SeasonImages(TvdbStoredSeries show, int seasonID)
         => Candidates(show.Artworks.Where(artwork => artwork.SeasonID == seasonID), show.SeasonPosters.GetValueOrDefault(seasonID));
 
-    // TheTVDB's artwork in its own order, with the entity's default poster
-    // marked as the default, or added first when it is not among the rest.
+    // TheTVDB's artwork in its own order, with the entity's own poster added
+    // first when it is not among the rest. The poster is pinned as the
+    // default through the store data instead.
     private static List<ImageCandidate> Candidates(IEnumerable<TvdbStoredArtwork> artworks, string? poster)
     {
         var candidates = artworks
@@ -109,13 +110,12 @@ public sealed class TvdbImageService(IImageManager imageManager, TvdbStore store
                 Width = artwork.Width,
                 Height = artwork.Height,
                 LanguageCode = TvdbUtility.ToImageLanguageCode(artwork.Language),
-                IsDefault = string.Equals(artwork.Path, poster, StringComparison.Ordinal) && TvdbImages.ToImageType(artwork.Type) is ImageEntityType.Primary,
             })
             .Where(candidate => candidate.ImageType is not ImageEntityType.None)
             .DistinctBy(candidate => (candidate.ResourceID, candidate.ImageType))
             .ToList();
-        if (!string.IsNullOrEmpty(poster) && !candidates.Any(candidate => candidate.IsDefault))
-            candidates.Insert(0, new() { ResourceID = poster, ImageType = ImageEntityType.Primary, IsDefault = true });
+        if (!string.IsNullOrEmpty(poster) && !candidates.Any(candidate => candidate.ImageType is ImageEntityType.Primary && string.Equals(candidate.ResourceID, poster, StringComparison.Ordinal)))
+            candidates.Insert(0, new() { ResourceID = poster, ImageType = ImageEntityType.Primary });
 
         return candidates;
     }

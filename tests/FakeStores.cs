@@ -626,6 +626,15 @@ internal sealed class FakeOrderingService(FakeSeriesStore series) : IMetadataOrd
 
     public bool RemoveOrdering(MetadataGuid orderingID) => Orderings.Remove(orderingID);
 
+    public int RemoveOrderings(MetadataSource source, IProgress<decimal>? progress = null, CancellationToken cancellationToken = default)
+    {
+        var removed = Orderings.Keys.Where(id => id.Source == source).ToList();
+        foreach (var id in removed)
+            Orderings.Remove(id);
+
+        return removed.Count;
+    }
+
     public IOrdering CreateLocalOrdering(MetadataLocalOrderingData ordering) => throw new NotSupportedException();
 
     public IOrdering? UpdateLocalOrdering(MetadataGuid orderingID, MetadataLocalOrderingData ordering) => throw new NotSupportedException();

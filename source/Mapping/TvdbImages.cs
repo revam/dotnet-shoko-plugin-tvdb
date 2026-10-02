@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Shoko.Abstractions.Metadata.Enums;
 
 namespace Shoko.Plugin.Tvdb.Mapping;
@@ -68,6 +69,28 @@ public static class TvdbImages
 
         return path;
     }
+
+    /// <summary>
+    /// The default image an entry's record names, of one type, for the store
+    /// to pin.
+    /// </summary>
+    /// <param name="imageType">What the image is for the entry.</param>
+    /// <param name="resourceID">The image's resource ID, or <see langword="null"/> when the record names none.</param>
+    /// <returns>The default by its type, or an empty map when the record names none.</returns>
+    public static Dictionary<ImageEntityType, string> ToDefaultImages(ImageEntityType imageType, string? resourceID)
+        => string.IsNullOrEmpty(resourceID) ? [] : new() { [imageType] = resourceID };
+
+    /// <summary>
+    /// The portrait a credit or record names, as a person's or character's
+    /// default image.
+    /// </summary>
+    /// <param name="resourceID">The portrait's resource ID, or <see langword="null"/>.</param>
+    /// <returns>
+    /// The default, or <see langword="null"/> without a portrait, which keeps
+    /// the stored one as the portrait itself is kept.
+    /// </returns>
+    public static Dictionary<ImageEntityType, string>? ToPortraitDefault(string? resourceID)
+        => string.IsNullOrEmpty(resourceID) ? null : new() { [ImageEntityType.Primary] = resourceID };
 
     /// <summary>
     /// What a kind of TheTVDB artwork is for its show or season.

@@ -44,7 +44,7 @@
              discovery, taken from `manifest.json` one directory up. PrivateAssets
              alone is not enough: without ExcludeAssets the package's own MSBuild
              tasks and satellite assemblies end up in the plugin output. -->
-        <PackageReference Include="Shoko.BuildTools.Targets" Version="0.3.0" PrivateAssets="All" ExcludeAssets="runtime" />
+        <PackageReference Include="Shoko.BuildTools.Targets" Version="0.3.1" PrivateAssets="All" ExcludeAssets="runtime" />
         <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.203" PrivateAssets="All" />
         <PackageReference Include="SmartAnalyzers.MultithreadingAnalyzer" Version="1.1.31" PrivateAssets="All" />
     </ItemGroup>

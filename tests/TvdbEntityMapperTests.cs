@@ -304,6 +304,17 @@ public class TvdbEntityMapperTests
     }
 
     [Fact]
+    public void TheShowSeasonsAndEpisodes_PinTheImagesTheirRecordsName()
+    {
+        var series = MapOnePiece();
+
+        Assert.Equal("series/81797/posters/5eec847d52a04.jpg", series.DefaultImageResourceIDs![ImageEntityType.Primary]);
+        Assert.Equal("seasons/81797-1-3.jpg", Assert.Single(series.Seasons, season => season.ID == TvdbUtility.SeasonGuid(31893)).DefaultImageResourceIDs![ImageEntityType.Primary]);
+        Assert.Empty(Assert.Single(series.Seasons, season => season.ID == TvdbUtility.SeasonGuid(31895)).DefaultImageResourceIDs!);
+        Assert.Equal("v4/episode/361887/screencap/604df7d3ecf3a.jpg", series.Episodes[0].DefaultImageResourceIDs![ImageEntityType.Backdrop]);
+    }
+
+    [Fact]
     public void AnEpisodeInASeasonWithNoRecord_GetsASeasonMadeUpForIt()
     {
         var episodes = ReadDefaultEpisodes();
@@ -516,6 +527,16 @@ public class TvdbEntityMapperTests
         Assert.Equal("person/412417/primary.jpg", people.Portraits[TvdbUtility.CreatorGuid(412417)]);
         Assert.Equal("person/412417/65afe1871bc9d.jpg", people.Portraits[TvdbUtility.CharacterGuid(65111900)]);
         Assert.Equal(2, people.Portraits.Count);
+    }
+
+    [Fact]
+    public void People_PinTheirPortraitsAsTheirDefaults()
+    {
+        var people = TvdbEntityMapper.People(ReadSeries());
+
+        Assert.Equal("person/412417/primary.jpg", people.Creators[TvdbUtility.CreatorGuid(412417)].DefaultImageResourceIDs![ImageEntityType.Primary]);
+        Assert.Equal("person/412417/65afe1871bc9d.jpg", people.Characters[TvdbUtility.CharacterGuid(65111900)].DefaultImageResourceIDs![ImageEntityType.Primary]);
+        Assert.Null(people.Creators[TvdbUtility.CreatorGuid(602)].DefaultImageResourceIDs);
     }
 
     [Fact]
