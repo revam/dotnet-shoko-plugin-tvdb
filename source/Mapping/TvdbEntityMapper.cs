@@ -560,6 +560,7 @@ public static class TvdbEntityMapper
         }
 
         var id = TvdbUtility.FormatID(episode.ID);
+        var placement = SpecialPlacement(DefaultSeasonType(series), episode);
         return new()
         {
             ID = TvdbUtility.EpisodeGuid(episode.ID),
@@ -569,6 +570,9 @@ public static class TvdbEntityMapper
             Type = ToEpisodeType(episode.SeasonNumber),
             Runtime = TimeSpan.FromMinutes(episode.Runtime is > 0 ? episode.Runtime.Value : 0),
             AirDate = ParseDate(episode.Aired),
+            AirsBeforeSeasonNumber = placement?.AirsBeforeSeason,
+            AirsBeforeEpisodeNumber = placement?.AirsBeforeEpisode,
+            AirsAfterSeasonNumber = placement?.AirsAfterSeason,
             Titles = Deduplicate(titles),
             Overviews = Deduplicate(overviews),
             Resources =
@@ -603,6 +607,33 @@ public static class TvdbEntityMapper
     /// <returns>The episode type.</returns>
     public static EpisodeType ToEpisodeType(int seasonNumber)
         => seasonNumber is 0 ? EpisodeType.Special : EpisodeType.Episode;
+
+    /// <summary>
+    /// Where TheTVDB places a special among the show's numbered episodes.
+    /// </summary>
+    /// <remarks>
+    /// TheTVDB places specials in its aired order, so the placement only holds
+    /// when the show's seasons are in that order.
+    /// </remarks>
+    /// <param name="seasonType">The show's default season type.</param>
+    /// <param name="episode">The episode.</param>
+    /// <returns>
+    /// The season and episode it airs before and the season it airs after, or
+    /// <see langword="null"/> in another season type or when it has none.
+    /// </returns>
+    /// <exception cref="ArgumentNullException"><paramref name="seasonType"/> or <paramref name="episode"/> is <see langword="null"/>.</exception>
+    public static (int? AirsBeforeSeason, int? AirsBeforeEpisode, int? AirsAfterSeason)? SpecialPlacement(string seasonType, TvdbEpisode episode)
+    {
+        ArgumentNullException.ThrowIfNull(seasonType);
+        ArgumentNullException.ThrowIfNull(episode);
+
+        if (!string.Equals(seasonType, TvdbUtility.OfficialSeasonType, StringComparison.OrdinalIgnoreCase))
+            return null;
+        if (episode is { AirsBeforeSeason: null, AirsBeforeEpisode: null, AirsAfterSeason: null })
+            return null;
+
+        return (episode.AirsBeforeSeason, episode.AirsBeforeEpisode, episode.AirsAfterSeason);
+    }
 
     #endregion
 

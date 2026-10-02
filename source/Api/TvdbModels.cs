@@ -393,6 +393,26 @@ public sealed class TvdbEpisode
     [JsonPropertyName("absoluteNumber")]
     public int? AbsoluteNumber { get; set; }
 
+    /// <summary>
+    /// For a special, the aired-order season it airs before.
+    /// </summary>
+    [JsonPropertyName("airsBeforeSeason")]
+    public int? AirsBeforeSeason { get; set; }
+
+    /// <summary>
+    /// For a special, the episode it airs before, within
+    /// <see cref="AirsBeforeSeason"/>.
+    /// </summary>
+    [JsonPropertyName("airsBeforeEpisode")]
+    public int? AirsBeforeEpisode { get; set; }
+
+    /// <summary>
+    /// For a special, the aired-order season it airs after, when it comes
+    /// after that season's last episode.
+    /// </summary>
+    [JsonPropertyName("airsAfterSeason")]
+    public int? AirsAfterSeason { get; set; }
+
     /// <summary>The air date, <c>yyyy-MM-dd</c>.</summary>
     [JsonPropertyName("aired")]
     public string? Aired { get; set; }

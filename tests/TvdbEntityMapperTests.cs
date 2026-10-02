@@ -390,6 +390,40 @@ public class TvdbEntityMapperTests
     public void EpisodeType_ComesFromTheSeasonNumberBecauseTheTVDBHasNoSuchField(int seasonNumber, EpisodeType expected)
         => Assert.Equal(expected, TvdbEntityMapper.ToEpisodeType(seasonNumber));
 
+    [Fact]
+    public void ASpecial_KeepsWhereTheTVDBPlacesIt()
+    {
+        var special = ReadEpisodes("series-81797-episodes-page1.json").Single(episode => episode.ID is 619671);
+
+        Assert.Equal((2, 1, (int?)null), (special.AirsBeforeSeason, special.AirsBeforeEpisode, special.AirsAfterSeason));
+    }
+
+    [Theory]
+    [InlineData("official", true)]
+    [InlineData("OFFICIAL", true)]
+    [InlineData("dvd", false)]
+    [InlineData("absolute", false)]
+    public void ASpecialsPlacement_HoldsOnlyInTheAiredOrder(string seasonType, bool placed)
+    {
+        var special = ReadEpisodes("series-81797-episodes-page1.json").Single(episode => episode.ID is 619671);
+
+        (int?, int?, int?)? expected = placed ? (2, 1, null) : null;
+
+        Assert.Equal(expected, TvdbEntityMapper.SpecialPlacement(seasonType, special));
+    }
+
+    [Fact]
+    public void ASpecial_IsStoredWithItsPlacement()
+    {
+        var special = Assert.Single(MapOnePiece().Episodes, episode => episode.ID == TvdbUtility.EpisodeGuid(619671));
+
+        Assert.Equal((2, 1, (int?)null), (special.AirsBeforeSeasonNumber, special.AirsBeforeEpisodeNumber, special.AirsAfterSeasonNumber));
+    }
+
+    [Fact]
+    public void AnEpisodeWithNoPlacement_HasNoneInTheAiredOrderEither()
+        => Assert.Null(TvdbEntityMapper.SpecialPlacement("official", new TvdbEpisode { ID = 1, SeasonNumber = 1, Number = 1 }));
+
     #endregion
 
     #region Orderings
