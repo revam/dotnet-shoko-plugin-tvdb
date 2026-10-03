@@ -9,6 +9,22 @@
   ],
   "releases": [
     {
+      "version": "1.1.0",
+      "tag": "v1.1.0",
+      "released_at": "2026-10-03T16:55:11.3114056Z",
+      "channel": "Stable",
+      "release_notes": "The plugin is now called TvDB. Translated titles and overviews now follow the server\u0027s language orders instead of the plugin\u0027s own Translation Languages setting, which is gone. Two new settings, Download All Titles and Download All Overviews, keep a show\u0027s names or overviews in every language TvDB has; episodes always follow the server\u0027s orders, and a show\u0027s English name and overview are always kept.\n\nShows, episodes, people, characters, studios and networks now link to their pages on TvDB, and people, characters, studios and networks can be refreshed on their own when Shoko asks for one. Where TvDB places a special, before or after a given season or episode, is now stored with the special in the aired order. Seasons no longer store \u0022Season 1\u0022 or \u0022Specials\u0022 as their title; the server shows that name itself for a season TvDB gives no name of its own. The plugin also logs when its jobs are paused for TvDB\u0027s rate limits and when they resume, and it has its own icon and thumbnail.\n\nRebuilt against the abstractions \u00606.0.0-alpha.98\u0060 release.\n\nRequires Shoko Server with abstractions \u00606.0.0-alpha.98\u0060.",
+      "dependencies": [],
+      "archives": [
+        {
+          "runtime": "any",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/revam/dotnet-shoko-plugin-tvdb/releases/download/v1.1.0/TheTVDBMetadata-v1.1.0-any.zip",
+          "checksum": "sha256:7af8f8c40a52fca253e67a3caba064b9db45fd31c9033a04819927d1b274e3ec"
+        }
+      ]
+    },
+    {
       "version": "1.0.0",
       "tag": "v1.0.0",
       "released_at": "2026-09-30T16:23:54.6398574Z",
