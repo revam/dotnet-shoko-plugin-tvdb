@@ -16,7 +16,6 @@ public class TvdbConfigurationTests
     {
         var configuration = new TvdbConfiguration();
 
-        Assert.Equal(["eng", "jpn"], configuration.TranslationLanguages);
         Assert.True(configuration.AutoDownloadAlternateOrderings);
         Assert.True(configuration.AutoDownloadCastAndCrew);
         Assert.True(configuration.AutoDownloadNetworks);

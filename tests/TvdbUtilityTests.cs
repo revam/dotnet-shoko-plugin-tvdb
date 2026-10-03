@@ -75,6 +75,28 @@ public class TvdbUtilityTests
         => Assert.Equal(expected, TvdbUtility.ToTitleLanguage(code));
 
     [Theory]
+    [InlineData(TitleLanguage.German, "deu")]
+    [InlineData(TitleLanguage.EnglishAmerican, "eng")]
+    [InlineData(TitleLanguage.Portuguese, "por")]
+    [InlineData(TitleLanguage.BrazilianPortuguese, "pt")]
+    [InlineData(TitleLanguage.ChineseTraditional, "zhtw")]
+    [InlineData(TitleLanguage.Greek, "ell")]
+    [InlineData(TitleLanguage.Romaji, null)]
+    [InlineData(TitleLanguage.Main, null)]
+    [InlineData(TitleLanguage.Unknown, null)]
+    public void ALanguage_IsAskedForUnderTvDBsCodeOrNotAtAll(TitleLanguage language, string? expected)
+        => Assert.Equal(expected, TvdbUtility.ToTvdbLanguageCode(language));
+
+    [Fact]
+    public void TheOrdersMainEntry_StandsForTheShowsOriginalLanguage()
+    {
+        TitleLanguage[] order = [TitleLanguage.Main, TitleLanguage.Romaji, TitleLanguage.English, TitleLanguage.EnglishBritish];
+
+        Assert.Equal(["kor", "eng"], TvdbUtility.ToTvdbLanguageCodes(order, " KOR "));
+        Assert.Equal(["eng"], TvdbUtility.ToTvdbLanguageCodes(order, null));
+    }
+
+    [Theory]
     [InlineData("jpn", "ja")]
     [InlineData("pt", "pt")]
     [InlineData("zhtw", "zh")]

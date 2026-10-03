@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
@@ -232,6 +233,72 @@ public static class TvdbUtility
     public static string? ToImageLanguageCode(string? code)
         => ToLanguageCode(code)?.Split('-')[0] is { Length: 2 } twoLetter ? twoLetter : null;
 
+    /// <summary>
+    /// The code TvDB writes a title language under, the way back from
+    /// <see cref="ToTitleLanguage"/>.
+    /// </summary>
+    /// <remarks>
+    /// TvDB writes ISO 639-2/T (three letter) codes, but for its own
+    /// <c>pt</c> (Brazilian Portuguese) and <c>zhtw</c> (Taiwan's, so
+    /// traditional, Chinese). A regional language TvDB has no code of its own
+    /// for, such as American English, takes its language's code.
+    /// </remarks>
+    /// <param name="language">The language.</param>
+    /// <returns>
+    /// TvDB's code, or <see langword="null"/> for a language TvDB cannot
+    /// express, such as a transcription or <see cref="TitleLanguage.Main"/>.
+    /// </returns>
+    public static string? ToTvdbLanguageCode(TitleLanguage language)
+        => language switch
+        {
+            TitleLanguage.BrazilianPortuguese => "pt",
+            TitleLanguage.ChineseTraditional => "zhtw",
+            // The core keeps Greek under the old "gr", which is no language code.
+            TitleLanguage.Greek => "ell",
+            TitleLanguage.Main or TitleLanguage.None or TitleLanguage.Unknown => null,
+            _ => ThreeLetterCode(language.GetString()),
+        };
+
+    /// <summary>
+    /// The codes TvDB writes a language order under, each once, for the
+    /// translations of one show.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="TitleLanguage.Main"/> stands for the show's original
+    /// language. A language TvDB cannot express is left out.
+    /// </remarks>
+    /// <param name="order">The languages, best first.</param>
+    /// <param name="originalLanguage">TvDB's code for the show's original language, if there is a show.</param>
+    /// <returns>The lower-case codes, in order.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="order"/> is <see langword="null"/>.</exception>
+    public static IReadOnlyList<string> ToTvdbLanguageCodes(IEnumerable<TitleLanguage> order, string? originalLanguage)
+    {
+        ArgumentNullException.ThrowIfNull(order);
+
+        var original = string.IsNullOrWhiteSpace(originalLanguage) ? null : originalLanguage.Trim().ToLowerInvariant();
+        return [
+            .. order
+                .Select(language => language is TitleLanguage.Main ? original : ToTvdbLanguageCode(language))
+                .OfType<string>()
+                .Distinct(StringComparer.Ordinal),
+        ];
+    }
+
+    // A language's three-letter code, kept only when it reads back as a
+    // language, so a transcription's private tag never becomes one.
+    private static string? ThreeLetterCode(string tag)
+    {
+        try
+        {
+            var code = CultureInfo.GetCultureInfo(tag).ThreeLetterISOLanguageName.ToLowerInvariant();
+            return code.Length is 3 && code.All(char.IsAsciiLetterLower) && ToTitleLanguage(code) is not TitleLanguage.Unknown ? code : null;
+        }
+        catch (CultureNotFoundException)
+        {
+            return null;
+        }
+    }
+
     // TvDB's own codes as the tags the core reads, and the rest trimmed.
     private static string ToIetfTag(string code)
         => code.Trim().ToLowerInvariant() switch
@@ -266,9 +333,9 @@ public static class TvdbUtility
     /// Every country .NET knows, by its three-letter code, read from the
     /// runtime rather than written down here.
     /// </summary>
-    private static readonly Lazy<System.Collections.Generic.Dictionary<string, string>> Countries = new(() =>
+    private static readonly Lazy<Dictionary<string, string>> Countries = new(() =>
     {
-        var countries = new System.Collections.Generic.Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var countries = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var culture in CultureInfo.GetCultures(CultureTypes.SpecificCultures))
         {
             try

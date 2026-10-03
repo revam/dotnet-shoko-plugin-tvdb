@@ -128,14 +128,14 @@ public static class TvdbEntityMapper
     /// keeps.
     /// </summary>
     /// <param name="series">The show as TvDB returned it, with its translations.</param>
-    /// <param name="languages">The three-letter codes of the languages to take the show's translations in.</param>
+    /// <param name="languages">The languages to keep the translations in, or <see langword="null"/> to keep every one given.</param>
     /// <param name="episodes">The show's episodes in its default season type.</param>
     /// <param name="episodeTranslations">The same episodes in other languages, by the three-letter code they were asked for in.</param>
     /// <returns>The series to store.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="series"/> or <paramref name="episodes"/> is <see langword="null"/>.</exception>
     public static MetadataSeriesData ToSeriesData(
         TvdbSeriesExtended series,
-        IReadOnlyList<string>? languages,
+        TvdbTextLanguages? languages,
         IReadOnlyList<TvdbEpisode> episodes,
         IReadOnlyDictionary<string, IReadOnlyList<TvdbEpisode>>? episodeTranslations = null
     )
@@ -152,8 +152,8 @@ public static class TvdbEntityMapper
         return new()
         {
             ID = TvdbUtility.SeriesGuid(series.ID),
-            Titles = SeriesTitles(series, languages),
-            Overviews = SeriesOverviews(series, languages),
+            Titles = SeriesTitles(series, languages?.SeriesTitles),
+            Overviews = SeriesOverviews(series, languages?.SeriesOverviews),
             Type = AnimeType.TV,
             AirDate = ParseDate(series.FirstAired) is { } firstAired ? new PartialDateOnly(firstAired) : null,
             EndDate = status is ReleaseStatus.Finished && ParseDate(series.LastAired) is { } lastAired ? new PartialDateOnly(lastAired) : null,
@@ -171,7 +171,7 @@ public static class TvdbEntityMapper
                     .DistinctBy(episode => episode.ID)
                     .OrderBy(episode => episode.SeasonNumber is 0 ? int.MaxValue : episode.SeasonNumber)
                     .ThenBy(episode => episode.Number)
-                    .Select(episode => ToEpisodeData(series, episode, seasonIDs, translated)),
+                    .Select(episode => ToEpisodeData(series, episode, seasonIDs, translated, languages)),
             ],
             DefaultImageResourceIDs = TvdbImages.ToDefaultImages(ImageEntityType.Primary, TvdbImages.ToResourceID(series.Image)),
         };
@@ -187,7 +187,7 @@ public static class TvdbEntityMapper
     /// title already given in a language is not given again.
     /// </remarks>
     /// <param name="series">The show, with its translations.</param>
-    /// <param name="languages">The three-letter codes of the languages to take translations in, in order.</param>
+    /// <param name="languages">The three-letter codes of the languages to take translations in, in order, or <see langword="null"/> for every one.</param>
     /// <returns>The titles, the main one first.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="series"/> is <see langword="null"/>.</exception>
     public static IReadOnlyList<ITitle> SeriesTitles(TvdbSeriesExtended series, IReadOnlyList<string>? languages)
@@ -217,7 +217,7 @@ public static class TvdbEntityMapper
     /// Maps a show's overview and its translations into overviews.
     /// </summary>
     /// <param name="series">The show, with its translations.</param>
-    /// <param name="languages">The three-letter codes of the languages to take translations in, in order.</param>
+    /// <param name="languages">The three-letter codes of the languages to take translations in, in order, or <see langword="null"/> for every one.</param>
     /// <returns>The overviews, the original one first.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="series"/> is <see langword="null"/>.</exception>
     public static IReadOnlyList<IText> SeriesOverviews(TvdbSeriesExtended series, IReadOnlyList<string>? languages)
@@ -235,11 +235,20 @@ public static class TvdbEntityMapper
     }
 
     // A record's translations in each of the languages asked for, in the
-    // order they were asked for, matched on TvDB's own codes.
+    // order they were asked for, matched on TvDB's own codes; in every
+    // language, in the record's order, when none are named.
     private static IEnumerable<(string Language, List<TvdbTranslation> Translations)> TranslationsIn(IReadOnlyList<TvdbTranslation>? translations, IReadOnlyList<string>? languages)
     {
-        if (translations is not { Count: > 0 } || languages is not { Count: > 0 })
+        if (translations is not { Count: > 0 })
             yield break;
+
+        if (languages is null)
+        {
+            foreach (var group in translations.Where(translation => !string.IsNullOrWhiteSpace(translation.Language)).GroupBy(translation => translation.Language!.Trim().ToLowerInvariant()))
+                yield return (group.Key, group.ToList());
+
+            yield break;
+        }
 
         foreach (var language in languages.Where(language => !string.IsNullOrWhiteSpace(language)).Select(language => language.Trim()).Distinct(StringComparer.OrdinalIgnoreCase))
         {
@@ -248,6 +257,11 @@ public static class TvdbEntityMapper
                 yield return (language, inLanguage);
         }
     }
+
+    // Whether a translation in a language is kept: always when no languages
+    // are named.
+    private static bool Keeps(IReadOnlyList<string>? languages, string language)
+        => languages is null || languages.Contains(language.Trim(), StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// A show's page on TvDB and its IDs on other sites, each with its bare
@@ -530,13 +544,15 @@ public static class TvdbEntityMapper
     /// <param name="episode">The episode.</param>
     /// <param name="seasonIDs">The show's seasons by number.</param>
     /// <param name="translations">The episodes in other languages, by three-letter code and then by episode.</param>
+    /// <param name="languages">The languages to keep the names and overviews in, or <see langword="null"/> to keep every one given.</param>
     /// <returns>The episode to store.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="series"/>, <paramref name="episode"/> or <paramref name="seasonIDs"/> is <see langword="null"/>.</exception>
     public static MetadataEpisodeData ToEpisodeData(
         TvdbSeriesExtended series,
         TvdbEpisode episode,
         IReadOnlyDictionary<int, MetadataGuid> seasonIDs,
-        IReadOnlyDictionary<string, Dictionary<int, TvdbEpisode>>? translations = null
+        IReadOnlyDictionary<string, Dictionary<int, TvdbEpisode>>? translations = null,
+        TvdbTextLanguages? languages = null
     )
     {
         ArgumentNullException.ThrowIfNull(series);
@@ -553,9 +569,9 @@ public static class TvdbEntityMapper
         {
             if (!byEpisode.TryGetValue(episode.ID, out var translated))
                 continue;
-            if (!string.IsNullOrWhiteSpace(translated.Name))
+            if (!string.IsNullOrWhiteSpace(translated.Name) && Keeps(languages?.EpisodeTitles, language))
                 titles.Add(Title(translated.Name, language, TitleType.Official));
-            if (!string.IsNullOrWhiteSpace(translated.Overview))
+            if (!string.IsNullOrWhiteSpace(translated.Overview) && Keeps(languages?.Overviews, language))
                 overviews.Add(Text(translated.Overview, language));
         }
 

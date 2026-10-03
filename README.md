@@ -38,14 +38,15 @@ The core owns the links, the stores and the jobs. The plugin owns the refresh.
 
 `RefreshSeries` fetches `/series/{id}/extended?meta=translations`, which
 carries the show's names and overviews in every language, and the episodes in
-the show's default season type, again in each configured language but the
-show's own. For One Piece (1,242 episodes, 500 to a page) in English,
-Japanese and German that is ten requests: the record, three pages of episodes,
-and three more in each of English and German. It writes:
+the show's default season type, again in each language of the server's
+episode title and description language orders but the show's own. For One
+Piece (1,242 episodes, 500 to a page) with English and German in those orders
+that is ten requests: the record, three pages of episodes, and three more in
+each of English and German. It writes:
 
 | Into | What |
 |---|---|
-| `IMetadataSeriesStore` | The show with its seasons and episodes: titles and overviews in every language fetched, air dates, runtimes, status, original language, popularity, content ratings (one per country, under its two-letter code), resources (TvDB's page, IMDb, TMDB, Wikidata and the rest, each with its bare ID) and the show's IMDb, TMDB and TVmaze IDs as its cross-source IDs (`imdb://series/tt0388629`). An episode has none, TvDB's episode listing carrying no IDs elsewhere. |
+| `IMetadataSeriesStore` | The show with its seasons and episodes: titles and overviews in the languages kept (see [Languages](#languages)), air dates, runtimes, status, original language, popularity, content ratings (one per country, under its two-letter code), resources (TvDB's page, IMDb, TMDB, Wikidata and the rest, each with its bare ID) and the show's IMDb, TMDB and TVmaze IDs as its cross-source IDs (`imdb://series/tt0388629`). An episode has none, TvDB's episode listing carrying no IDs elsewhere. |
 | `IMetadataTagStore` | Genres as `tvdb://tag/genre/<id>` with `TagKind.Genre`, and tag options as `tvdb://tag/<id>` with their category. |
 | `IMetadataStudioStore` | Studios (as animation studios) and production companies, and the networks the show aired on, each with its country. |
 | `IMetadataPeopleStore` | The cast (`SetCast`, one credit per character) and crew (`SetCrew`, TvDB's job name, mapped onto a role type where one fits). Credits for a single episode are left out. A person is written with what their own record adds (see [People](#people)). A character is written with its name, its aliases and its page, which TvDB files among the show's people (`https://thetvdb.com/series/<slug>/people/<id>`) with no dereferrer, so a show without a slug leaves its characters unlinked. |
@@ -75,6 +76,35 @@ the portraits and records of people no stored show credits any more, and the
 slugs of companies no stored show names. The core has
 removed the show's orderings by then, as it does for any purged series.
 
+## Languages
+
+The translations kept follow the server's language orders, the ones
+`IMetadataTextManager.GetLanguageOrder` hands a provider, as the bundled
+TMDb plugin's do:
+
+| Text | Kept in |
+|---|---|
+| The show's names | The series title language order and English, or every language with **Download All Titles** on |
+| The show's overviews | The description language order and English, or every language with **Download All Overviews** on |
+| An episode's names | The episode title language order |
+| An episode's overviews | The description language order |
+| A person's biography | The first in the description language order, then English, then any |
+
+The show's own name and overview, in its original language, are always kept,
+and so are its English ones, whatever the orders say: they cost nothing and
+are what the auto-matching searches. An episode gets no such exception.
+The show's record carries every translation, so the switches cost nothing; an
+episode's translations cost one request per page of episodes per language, so
+they never widen past the orders. The episodes are fetched once per language
+either order names, the show's own aside.
+
+A language is asked for under TvDB's code: ISO 639-2/T (three letters), but
+`pt` for Brazilian Portuguese (`por` is Portugal's) and `zhtw` for Taiwan's,
+traditional, Chinese. A regional language TvDB has no code for, such as
+American English, takes its language's code. The order's main (original
+language) entry stands for the show's original language. A language TvDB
+cannot express, such as romaji, is skipped.
+
 ## People
 
 The credits on a show carry only a person's name and photo. With **Download
@@ -84,8 +114,8 @@ also fetches each credited person's own record,
 
 - their name as the record has it, with the credited name, their aliases and
   their name in every language as other names;
-- one biography as the overview: the first of the **Translation
-  Languages** that has one, then English, then any;
+- one biography as the overview: the first in the server's description
+  language order that has one, then English, then any;
 - their gender, birth and death, where a date TvDB knows only part of
   (`1967`, `1930-04-00`) keeps the parts it knows;
 - their page on TvDB under their slug, after the dereferrer link, and their
@@ -272,9 +302,10 @@ out of the source tree, not out of the hands of anyone holding the DLL.
 |---|---|---|
 | API Key | *(none)* | For a build from source or a fork: its own TvDB project key. Official builds ship one, and a key set here wins over it. |
 | Subscriber PIN | *(none)* | Optional. Only for a user-supported key; leave it empty with a licensed one. |
-| Translation Languages | `eng`, `jpn` | TvDB's language codes to take translations in: three letters, but `pt` for Brazilian Portuguese (`por` is Portugal's) and `zhtw` for Taiwan's Chinese. The show's own come with its record; its episodes cost one request per page of them per language, the show's own language aside. |
 | Search Result Limit | `10` | How many search hits to judge per title when auto-linking. |
 | Consider Existing Other Links | off | Leave out episodes another anime is linked to when matching. |
+| Download All Titles | off | Keep the show's names in every language, not only in the series title language order. Episode names never widen. See [Languages](#languages). |
+| Download All Overviews | off | Keep the show's overviews in every language, not only in the description language order. Episode overviews never widen. |
 | Download Alternate Orderings | on | Store the other season types as orderings. |
 | Download Cast and Crew | on | Store the cast and crew. |
 | Download Networks | on | Store the networks the show aired on. |

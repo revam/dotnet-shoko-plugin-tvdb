@@ -102,7 +102,8 @@ public class TvdbRefreshServiceTests
     [Fact]
     public async Task AQuickRefreshInThreeLanguages_AsksForTheRecordAndTheEpisodePagesOnly()
     {
-        using var harness = new ServiceHarness(new() { ApiKey = "api-key", TranslationLanguages = ["eng", "jpn", "deu"] });
+        using var harness = new ServiceHarness();
+        harness.OverviewOrder.AddRange([TitleLanguage.Japanese, TitleLanguage.German]);
 
         await harness.Refresh(new() { QuickRefresh = true });
 
@@ -118,6 +119,54 @@ public class TvdbRefreshServiceTests
             harness.Http.Paths
         );
         Assert.Contains(harness.Series.Series[_seriesID].Overviews, description => description.LanguageCode == "de");
+    }
+
+    [Fact]
+    public async Task TheShow_KeepsItsNamesAndOverviewsInTheCoresLanguagesAndEnglishOnly()
+    {
+        using var harness = new ServiceHarness();
+        harness.SeriesTitleOrder.Clear();
+        harness.SeriesTitleOrder.AddRange([TitleLanguage.Main, TitleLanguage.German]);
+        harness.OverviewOrder.Clear();
+
+        await harness.Refresh();
+
+        var series = harness.Series.Series[_seriesID];
+        Assert.Contains(series.Titles, title => title is { Type: TitleType.Official, LanguageCode: "de" });
+        Assert.Contains(series.Titles, title => title is { Type: TitleType.Official, LanguageCode: "en" });
+        Assert.DoesNotContain(series.Titles, title => title is { Type: TitleType.Official, LanguageCode: "it" });
+        Assert.Contains(series.Overviews, overview => overview.LanguageCode is "en");
+        Assert.DoesNotContain(series.Overviews, overview => overview.LanguageCode is "de" or "it");
+    }
+
+    [Fact]
+    public async Task TheDownloadAllSwitches_KeepEveryTextOfTheShowButFetchNoMoreEpisodes()
+    {
+        using var all = new ServiceHarness(new() { ApiKey = "api-key", DownloadAllTitles = true, DownloadAllOverviews = true });
+        using var ordered = new ServiceHarness();
+
+        await all.Refresh(new() { QuickRefresh = true });
+        await ordered.Refresh(new() { QuickRefresh = true });
+
+        var series = all.Series.Series[_seriesID];
+        Assert.Contains(series.Titles, title => title is { Type: TitleType.Official, LanguageCode: "it" });
+        Assert.Contains(series.Overviews, overview => overview.LanguageCode is "it");
+        Assert.Equal(ordered.Http.Paths, all.Http.Paths);
+    }
+
+    [Fact]
+    public async Task TheEpisodes_AreFetchedInTheCoresEpisodeTitleAndDescriptionLanguagesOnly()
+    {
+        using var harness = new ServiceHarness();
+        harness.EpisodeTitleOrder.Clear();
+        harness.EpisodeTitleOrder.AddRange([TitleLanguage.Main, TitleLanguage.Romaji, TitleLanguage.German]);
+        harness.OverviewOrder.Clear();
+        harness.OverviewOrder.Add(TitleLanguage.French);
+
+        await harness.Refresh(new() { QuickRefresh = true });
+
+        var translated = harness.Http.Paths.Where(path => path.StartsWith("series/81797/episodes/default/", StringComparison.Ordinal));
+        Assert.Equal(["series/81797/episodes/default/deu?page=0", "series/81797/episodes/default/fra?page=0"], translated);
     }
 
     [Fact]

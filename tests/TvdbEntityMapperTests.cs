@@ -25,10 +25,14 @@ public class TvdbEntityMapperTests
     internal static List<TvdbEpisode> ReadDefaultEpisodes()
         => [.. ReadEpisodes("series-81797-episodes-page0.json"), .. ReadEpisodes("series-81797-episodes-page1.json")];
 
+    // The same languages for every kind of text.
+    private static TvdbTextLanguages Languages(params string[] codes)
+        => new(codes, codes, codes, codes);
+
     private static Shoko.Abstractions.Metadata.Storage.MetadataSeriesData MapOnePiece()
         => TvdbEntityMapper.ToSeriesData(
             ReadSeries(),
-            ["eng", "jpn"],
+            Languages("eng", "jpn"),
             ReadDefaultEpisodes(),
             new Dictionary<string, IReadOnlyList<TvdbEpisode>> { ["eng"] = ReadEpisodes("series-81797-episodes-default-eng.json") }
         );
@@ -157,6 +161,16 @@ public class TvdbEntityMapperTests
         var overviews = TvdbEntityMapper.SeriesOverviews(ReadSeries(), ["deu", "eng"]);
 
         Assert.Equal(["ja", "de", "en"], overviews.Select(overview => overview.LanguageCode));
+    }
+
+    [Fact]
+    public void Series_TakesEveryTranslationWhenNoLanguagesAreNamed()
+    {
+        var series = ReadSeries();
+        var languages = series.Translations!.OverviewTranslations!.Select(translation => TvdbUtility.ToLanguageCode(translation.Language)!).ToHashSet();
+
+        Assert.Equal(languages, TvdbEntityMapper.SeriesOverviews(series, null).Select(overview => overview.LanguageCode).ToHashSet());
+        Assert.Contains(TvdbEntityMapper.SeriesTitles(series, null), title => title is { Type: TitleType.Official, LanguageCode: "de" });
     }
 
     [Fact]
@@ -367,6 +381,20 @@ public class TvdbEntityMapperTests
             Assert.Null(title.CountryCode);
         });
         Assert.Contains(series.Episodes[0].Titles, title => title.LanguageCode is "en");
+    }
+
+    [Fact]
+    public void AnEpisodesTranslation_KeepsItsNameAndOverviewOnlyInTheirOwnLanguages()
+    {
+        var episode = TvdbEntityMapper.ToSeriesData(
+            ReadSeries(),
+            new([], [], [], ["eng"]),
+            ReadDefaultEpisodes(),
+            new Dictionary<string, IReadOnlyList<TvdbEpisode>> { ["eng"] = ReadEpisodes("series-81797-episodes-default-eng.json") }
+        ).Episodes[0];
+
+        Assert.DoesNotContain(episode.Titles, title => title.LanguageCode is "en");
+        Assert.Contains(episode.Overviews, overview => overview.LanguageCode is "en");
     }
 
     [Fact]

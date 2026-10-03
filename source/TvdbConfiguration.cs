@@ -52,21 +52,6 @@ public class TvdbConfiguration : IConfiguration
     #region Behaviour
 
     /// <summary>
-    /// The language codes to fetch translated titles and overviews for, as
-    /// TvDB v4 writes them: ISO 639-2/T (three letter) codes, but for its
-    /// own <c>pt</c> (Brazilian Portuguese) and <c>zhtw</c> (Taiwan's
-    /// Chinese).
-    /// </summary>
-    /// <remarks>
-    /// The show's record carries its names and overviews in every language,
-    /// so a language costs nothing there, but one request per page of the
-    /// show's episodes, the show's own language aside. It is a list the user
-    /// keeps short rather than a checkbox per language.
-    /// </remarks>
-    [Display(Name = "Translation Languages", Description = "TvDB language codes to fetch translations for, e.g. eng, jpn, deu. TvDB writes Brazilian Portuguese as pt (Portugal's is por) and Taiwan's Chinese as zhtw.")]
-    public string[] TranslationLanguages { get; set; } = ["eng", "jpn"];
-
-    /// <summary>
     /// How many search results to consider per title when auto-linking a
     /// series. Only the best one is linked; the rest are handed back turned
     /// down, with why.
@@ -86,6 +71,30 @@ public class TvdbConfiguration : IConfiguration
     #endregion
 
     #region Downloads
+
+    /// <summary>
+    /// Whether to store a show's names in every language its record carries,
+    /// rather than only in the core's series title language order.
+    /// </summary>
+    /// <remarks>
+    /// The record carries them all, so this costs no request. An episode's
+    /// names always follow the core's episode title language order, since
+    /// each language costs one request per page of the show's episodes.
+    /// </remarks>
+    [Display(Name = "Download All Titles", Description = "Store a show's names in every language TvDB has, not only in the server's series title language order. Episode names always follow the episode title language order.")]
+    public bool DownloadAllTitles { get; set; }
+
+    /// <summary>
+    /// Whether to store a show's overviews in every language its record
+    /// carries, rather than only in the core's description language order.
+    /// </summary>
+    /// <remarks>
+    /// The record carries them all, so this costs no request. An episode's
+    /// overviews always follow the core's description language order, since
+    /// each language costs one request per page of the show's episodes.
+    /// </remarks>
+    [Display(Name = "Download All Overviews", Description = "Store a show's overviews in every language TvDB has, not only in the server's description language order. Episode overviews always follow that order.")]
+    public bool DownloadAllOverviews { get; set; }
 
     /// <summary>
     /// Whether to store a show's other season types, such as its DVD or

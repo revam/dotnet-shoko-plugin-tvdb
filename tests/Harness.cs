@@ -93,6 +93,9 @@ internal sealed class ServiceHarness : IDisposable
             .Returns(() => CrossSourceHints);
         MetadataService.Setup(service => service.GetSeason(It.IsAny<MetadataGuid>())).Returns((MetadataGuid id) => Series.GetSeason(id));
         SystemService.SetupGet(service => service.IsStarted).Returns(true);
+        TextManager
+            .Setup(manager => manager.GetLanguageOrder(It.IsAny<TextKind>(), It.IsAny<MetadataEntityType?>()))
+            .Returns((TextKind kind, MetadataEntityType? entityType) => kind is TextKind.Overview ? OverviewOrder : entityType == MetadataEntityType.Episode ? EpisodeTitleOrder : SeriesTitleOrder);
 
         var collection = new ServiceCollection();
         collection.AddLogging();
@@ -108,6 +111,7 @@ internal sealed class ServiceHarness : IDisposable
         collection.AddSingleton(ImageManager.Object);
         collection.AddSingleton(RefreshService.Object);
         collection.AddSingleton(SystemService.Object);
+        collection.AddSingleton(TextManager.Object);
         collection.AddSingleton(ApplicationPaths.Object);
         collection.AddSingleton(new TvdbApiClient(new HttpClient(Http) { BaseAddress = new Uri("https://api4.thetvdb.com/v4/") }, RateLimiter, ConfigurationProvider, NullLogger<TvdbApiClient>.Instance));
         collection.AddSingleton<TvdbImageService>();
@@ -165,6 +169,17 @@ internal sealed class ServiceHarness : IDisposable
     public Mock<IMetadataRefreshService> RefreshService { get; } = new();
 
     public Mock<ISystemService> SystemService { get; } = new();
+
+    public Mock<IMetadataTextManager> TextManager { get; } = new();
+
+    /// <summary>The core's series title language order.</summary>
+    public List<TitleLanguage> SeriesTitleOrder { get; } = [TitleLanguage.Main, TitleLanguage.English];
+
+    /// <summary>The core's episode title language order.</summary>
+    public List<TitleLanguage> EpisodeTitleOrder { get; } = [TitleLanguage.English];
+
+    /// <summary>The core's description language order.</summary>
+    public List<TitleLanguage> OverviewOrder { get; } = [TitleLanguage.English];
 
     public Mock<IApplicationPaths> ApplicationPaths { get; } = new();
 

@@ -8,7 +8,9 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Shoko.Abstractions.Config;
 using Shoko.Abstractions.Metadata;
+using Shoko.Abstractions.Metadata.Enums;
 using Shoko.Abstractions.Metadata.Providers;
+using Shoko.Abstractions.Metadata.Services;
 using Shoko.Abstractions.Metadata.Storage;
 using Shoko.Plugin.Tvdb.Api;
 using Shoko.Plugin.Tvdb.Mapping;
@@ -30,6 +32,7 @@ namespace Shoko.Plugin.Tvdb.Services;
 /// <param name="store">The plugin's store.</param>
 /// <param name="linkingService">Matches the linked anime's episodes again.</param>
 /// <param name="peopleService">Fetches the people's own records.</param>
+/// <param name="textManager">The core's text manager, whose language order picks the translations kept.</param>
 /// <param name="configurationProvider">The plugin's configuration.</param>
 /// <param name="logger">The logger.</param>
 public sealed class TvdbRefreshService(
@@ -37,6 +40,7 @@ public sealed class TvdbRefreshService(
     TvdbStore store,
     TvdbLinkingService linkingService,
     TvdbPeopleService peopleService,
+    IMetadataTextManager textManager,
     ConfigurationProvider<TvdbConfiguration> configurationProvider,
     ILogger<TvdbRefreshService> logger
 )
@@ -88,9 +92,10 @@ public sealed class TvdbRefreshService(
         }
 
         // The show's record carries its names and overviews in every
-        // language; its episodes are fetched in each language asked for but
-        // the show's own, their names already being in it.
-        var languages = Languages(configuration);
+        // language; its episodes are fetched in each language the core's
+        // episode title and description orders name but the show's own,
+        // their names already being in it.
+        var languages = TvdbTextLanguages.From(configuration, textManager, remote.OriginalLanguage);
         var existingEpisodes = store.GetSeries(seriesID)?.Episodes.Select(episode => episode.ID).ToHashSet() ?? [];
         var episodes = await apiClient.GetEpisodes(seriesID, "default", cancellationToken).ConfigureAwait(false);
         if (episodes.Count is 0 && existingEpisodes.Count > 0)
@@ -102,7 +107,7 @@ public sealed class TvdbRefreshService(
         }
 
         var episodeTranslations = new Dictionary<string, IReadOnlyList<TvdbEpisode>>(StringComparer.Ordinal);
-        foreach (var language in languages.Where(language => !string.Equals(language, remote.OriginalLanguage?.Trim(), StringComparison.OrdinalIgnoreCase)))
+        foreach (var language in languages.EpisodeLanguages.Where(language => !string.Equals(language, remote.OriginalLanguage?.Trim(), StringComparison.OrdinalIgnoreCase)))
         {
             var translated = await apiClient.GetTranslatedEpisodes(seriesID, "default", language, cancellationToken).ConfigureAwait(false);
             if (translated.Count > 0)
@@ -137,7 +142,7 @@ public sealed class TvdbRefreshService(
             foreach (var (creatorID, creator) in people.Creators)
             {
                 var person = TvdbUtility.TryGetID(creatorID, MetadataEntityType.Creator, out var peopleID) ? details.GetValueOrDefault(peopleID) : null;
-                creators.Add(TvdbEntityMapper.WithPersonDetails(creator, person, languages));
+                creators.Add(TvdbEntityMapper.WithPersonDetails(creator, person, languages.Overviews));
                 if (person?.Image is { Length: > 0 } image)
                     people.Portraits.TryAdd(creatorID, image);
             }
@@ -232,7 +237,7 @@ public sealed class TvdbRefreshService(
         var person = TvdbEntityMapper.ToStoredPerson(remote, now);
         person.ID = peopleID;
         store.SavePerson(person);
-        var creator = TvdbEntityMapper.ToCreatorData(person, Languages(configurationProvider.Load()));
+        var creator = TvdbEntityMapper.ToCreatorData(person, TvdbUtility.ToTvdbLanguageCodes(textManager.GetLanguageOrder(TextKind.Overview), null));
         store.People.SaveCreators([creator]);
         if (person.Image is { Length: > 0 } image)
             store.SavePortraits([new(creator.ID, image)]);
@@ -288,18 +293,6 @@ public sealed class TvdbRefreshService(
 
         return true;
     }
-
-    /// <summary>
-    /// The languages to take translations in, as TvDB's lower-case codes,
-    /// each once.
-    /// </summary>
-    /// <param name="configuration">The plugin's configuration.</param>
-    /// <returns>The codes, in the order given.</returns>
-    private static List<string> Languages(TvdbConfiguration configuration)
-        => [.. (configuration.TranslationLanguages ?? [])
-            .Where(language => !string.IsNullOrWhiteSpace(language))
-            .Select(language => language.Trim().ToLowerInvariant())
-            .Distinct(StringComparer.Ordinal)];
 
     private static IEnumerable<int> PeopleIDs(TvdbPeople people)
         => people.Creators.Keys
