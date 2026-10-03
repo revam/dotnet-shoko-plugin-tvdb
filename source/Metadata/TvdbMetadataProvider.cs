@@ -116,6 +116,9 @@ public sealed class TvdbMetadataProvider : IMetadataSeriesLinkingProvider, IMeta
     /// <inheritdoc/>
     public MetadataSource Source => MetadataSource.Tvdb;
 
+    /// <inheritdoc/>
+    public string? EmbeddedIconResourceName => Plugin.IconResourceName;
+
     /// <summary>
     /// Four of each job at once. Every request is paced by the rate limiter
     /// whatever runs it, so this only keeps a library-wide refresh from

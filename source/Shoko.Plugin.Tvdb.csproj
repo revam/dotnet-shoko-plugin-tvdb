@@ -40,6 +40,13 @@
     </ItemGroup>
 
     <ItemGroup>
+        <!-- The plugin's thumbnail and icon, read by the server through the
+             plugin. The icon is also the source's icon. -->
+        <EmbeddedResource Include="Assets\thumbnail.svg" LogicalName="Shoko.Plugin.Tvdb.Assets.thumbnail.svg" />
+        <EmbeddedResource Include="Assets\icon.svg" LogicalName="Shoko.Plugin.Tvdb.Assets.icon.svg" />
+    </ItemGroup>
+
+    <ItemGroup>
         <!-- Injects the embedded plugin identity metadata the server reads during
              discovery, taken from `manifest.json` one directory up. PrivateAssets
              alone is not enough: without ExcludeAssets the package's own MSBuild

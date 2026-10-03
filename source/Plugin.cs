@@ -26,6 +26,17 @@ namespace Shoko.Plugin.Tvdb;
 /// </remarks>
 public class Plugin : IPlugin, IPluginServiceRegistration
 {
+    /// <summary>
+    /// The embedded resource of the plugin's thumbnail.
+    /// </summary>
+    internal const string ThumbnailResourceName = "Shoko.Plugin.Tvdb.Assets.thumbnail.svg";
+
+    /// <summary>
+    /// The embedded resource of the plugin's icon, which is the source's icon
+    /// too.
+    /// </summary>
+    internal const string IconResourceName = "Shoko.Plugin.Tvdb.Assets.icon.svg";
+
     /// <inheritdoc/>
     public Guid ID { get; private init; } = new("12126642-8c32-455f-aca1-e1a2f7b35a8c");
 
@@ -40,6 +51,12 @@ public class Plugin : IPlugin, IPluginServiceRegistration
         orderings. Official builds ship a licensed TvDB key and need no setup; a build
         from source needs its own project key in the settings.
     """;
+
+    /// <inheritdoc/>
+    public string? EmbeddedThumbnailResourceName => ThumbnailResourceName;
+
+    /// <inheritdoc/>
+    public string? EmbeddedIconResourceName => IconResourceName;
 
     /// <inheritdoc/>
     public static void RegisterServices(IServiceCollection serviceCollection, IApplicationPaths applicationPaths)

@@ -41,6 +41,14 @@ public class TvdbMetadataProviderTests
     }
 
     [Fact]
+    public void TheSourceIconIsThePluginIcon()
+    {
+        using var harness = new ServiceHarness();
+
+        Assert.Equal(new Plugin().EmbeddedIconResourceName, harness.Get<TvdbMetadataProvider>().EmbeddedIconResourceName);
+    }
+
+    [Fact]
     public void WithoutAnApiKey_ItIsNotConfiguredAndSaysWhy()
     {
         using var harness = new ServiceHarness(new() { ApiKey = null });
