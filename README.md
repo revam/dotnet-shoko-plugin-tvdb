@@ -47,10 +47,10 @@ and three more in each of English and German. It writes:
 |---|---|
 | `IMetadataSeriesStore` | The show with its seasons and episodes: titles and overviews in every language fetched, air dates, runtimes, status, original language, popularity, content ratings (one per country, under its two-letter code), resources (TvDB's page, IMDb, TMDB, Wikidata and the rest, each with its bare ID) and the show's IMDb, TMDB and TVmaze IDs as its cross-source IDs (`imdb://series/tt0388629`). An episode has none, TvDB's episode listing carrying no IDs elsewhere. |
 | `IMetadataTagStore` | Genres as `tvdb://tag/genre/<id>` with `TagKind.Genre`, and tag options as `tvdb://tag/<id>` with their category. |
-| `IMetadataStudioStore` | Studios (as animation studios) and production companies, and the networks the show aired on. |
+| `IMetadataStudioStore` | Studios (as animation studios) and production companies, and the networks the show aired on, each with its country. |
 | `IMetadataPeopleStore` | The cast (`SetCast`, one credit per character) and crew (`SetCrew`, TvDB's job name, mapped onto a role type where one fits). Credits for a single episode are left out. A person is written with what their own record adds (see [People](#people)). A character is written with its name, its aliases and its page, which TvDB files among the show's people (`https://thetvdb.com/series/<slug>/people/<id>`) with no dereferrer, so a show without a slug leaves its characters unlinked. |
 | `IMetadataOrderingService` | Each other season type the show has (DVD, absolute, alternate, regional and so on) as a global ordering, `tvdb://ordering/<series>-<type>`, one group per season, `tvdb://season/<series>-<type>-<number>`. An ordering is removed once the show no longer has its season type. |
-| The plugin's own database | What only TvDB has (see [Its own database](#its-own-database)): the slug, status, season types and where the images are (`Shows`), the portraits of people and characters (`Portraits`), and what each person's own record said and when it was fetched (`People`). |
+| The plugin's own database | What only TvDB has (see [Its own database](#its-own-database)): the slug, status, season types and where the images are (`Shows`), the portraits of people and characters (`Portraits`), what each person's own record said and when it was fetched (`People`), and the slugs of the companies, for their pages (`Companies`). |
 
 The show's own seasons are the season type TvDB uses for it by default. A
 season TvDB lists no record for is made up as
@@ -71,7 +71,8 @@ none for a show with episodes stored. The core then keeps the last refresh
 time and tries again.
 
 `CleanUp`, called after the core purges a show, forgets the show's record,
-and the portraits and records of people no stored show credits any more. The core has
+the portraits and records of people no stored show credits any more, and the
+slugs of companies no stored show names. The core has
 removed the show's orderings by then, as it does for any purged series.
 
 ## People
@@ -110,6 +111,23 @@ Left out, as the core's people store has no place for them: the birthplace,
 the biographies in the other languages, the awards, races, tag options and
 score, and the person's other roles. No original name is set either, since
 the record does not say which language is the person's own.
+
+## One entry at a time
+
+The provider also refreshes a single person, character, studio or network when
+the core asks (`IMetadataEntityProvider`): its `creator`, `character`,
+`studio` and `network` kinds, turned on and off per kind like the rest. A
+person comes from `/people/{id}/extended?meta=translations` and is kept in
+`People` like the ones a show's refresh fetches, so the next refresh writes
+them with it; a character from `/characters/{id}`, its page under the stored
+show's slug; a company from `/companies/{id}`, written as the studio or the
+network asked for, with its slug kept for its page
+(`https://thetvdb.com/companies/<slug>`). A show's refresh keeps the slugs of
+its companies too.
+
+An entry is asked for again 30 days after it was last written, as a show's
+refresh writes its people from their credits and fetches their own records
+only as far as the settings allow.
 
 ## Images
 
@@ -197,7 +215,7 @@ applies its migrations while it starts, before `Ready`, copies the file before
 each one, includes it in its backups, and removes it when the plugin is
 uninstalled with its data. The plugin never names a provider.
 
-There are three tables, one per kind of record, keyed by TvDB's ID (the
+There are four tables, one per kind of record, keyed by TvDB's ID (the
 portraits by `creator/<id>` or `character/<id>`). Scalars are columns; the
 artwork, names, biographies and remote IDs are JSON columns mapped as complex
 collections, and the season posters and episode thumbnails are JSON objects

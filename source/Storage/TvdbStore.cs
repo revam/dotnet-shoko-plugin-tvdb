@@ -26,6 +26,14 @@ public sealed class TvdbStore
 
     private readonly Lock _writeLock = new();
 
+    private readonly Lock _companyLock = new();
+
+    /// <summary>
+    /// The companies' slugs by ID, read in full on first use, as the core
+    /// asks for a page once per row of a list.
+    /// </summary>
+    private Dictionary<int, string>? _companySlugs;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="TvdbStore"/> class.
     /// </summary>
@@ -317,6 +325,115 @@ public sealed class TvdbStore
         }
 
         return credited;
+    }
+
+    #endregion
+
+    #region Companies
+
+    /// <summary>
+    /// The slug of a company, a studio's or a network's alike.
+    /// </summary>
+    /// <param name="companyID">TvDB company ID.</param>
+    /// <returns>The slug, or <see langword="null"/> when none is kept.</returns>
+    public string? GetCompanySlug(int companyID)
+    {
+        if (companyID <= 0)
+            return null;
+
+        lock (_companyLock)
+        {
+            if (_companySlugs is null)
+            {
+                using var context = _contexts.CreateDbContext();
+                _companySlugs = context.Companies.AsNoTracking().ToDictionary(company => company.ID, company => company.Slug);
+            }
+
+            return _companySlugs.GetValueOrDefault(companyID);
+        }
+    }
+
+    /// <summary>
+    /// Stores the slugs of companies, replacing the ones stored for them
+    /// before.
+    /// </summary>
+    /// <param name="companies">The companies.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="companies"/> is <see langword="null"/>.</exception>
+    public void SaveCompanies(IEnumerable<TvdbStoredCompany> companies)
+    {
+        ArgumentNullException.ThrowIfNull(companies);
+
+        var slugs = new Dictionary<int, string>();
+        foreach (var company in companies)
+        {
+            if (company.ID > 0 && !string.IsNullOrEmpty(company.Slug))
+                slugs[company.ID] = company.Slug;
+        }
+
+        if (slugs.Count == 0)
+            return;
+
+        lock (_writeLock)
+        {
+            using var context = _contexts.CreateDbContext();
+            var ids = slugs.Keys.ToList();
+            var pending = new Dictionary<int, string>(slugs);
+            foreach (var existing in context.Companies.Where(company => ids.Contains(company.ID)))
+            {
+                existing.Slug = pending[existing.ID];
+                pending.Remove(existing.ID);
+            }
+
+            context.Companies.AddRange(pending.Select(pair => new TvdbStoredCompany { ID = pair.Key, Slug = pair.Value }));
+            context.SaveChanges();
+        }
+
+        lock (_companyLock)
+        {
+            if (_companySlugs is not null)
+            {
+                foreach (var (id, slug) in slugs)
+                    _companySlugs[id] = slug;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Forgets the slugs of the companies no stored show names as a studio
+    /// or a network any more, as <see cref="RemoveUncreditedPortraits"/>
+    /// does the portraits.
+    /// </summary>
+    /// <returns>How many slugs were forgotten.</returns>
+    public int RemoveUnusedCompanies()
+    {
+        var used = new HashSet<int>();
+        foreach (var series in Series.GetAllSeries(MetadataSource.Tvdb))
+        {
+            foreach (var studio in Studios.GetStudios(series.ID))
+            {
+                if (TvdbUtility.TryGetID(studio.ID, MetadataEntityType.Studio, out var companyID))
+                    used.Add(companyID);
+            }
+
+            foreach (var network in Studios.GetNetworks(series.ID))
+            {
+                if (TvdbUtility.TryGetID(network.ID, MetadataEntityType.Network, out var companyID))
+                    used.Add(companyID);
+            }
+        }
+
+        int removed;
+        lock (_writeLock)
+        {
+            using var context = _contexts.CreateDbContext();
+            var gone = context.Companies.Select(company => company.ID).AsEnumerable().Where(id => !used.Contains(id)).ToList();
+            removed = gone.Count == 0 ? 0 : context.Companies.Where(company => gone.Contains(company.ID)).ExecuteDelete();
+        }
+
+        lock (_companyLock)
+            _companySlugs = null;
+
+        return removed;
     }
 
     #endregion

@@ -75,7 +75,7 @@ public class TvdbMetadataProviderTests
     {
         var methods = typeof(TvdbMetadataProvider).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
 
-        Assert.DoesNotContain(methods, method => method.Name.StartsWith("Get", StringComparison.Ordinal) && method.Name is not nameof(TvdbMetadataProvider.GetImages) and not nameof(TvdbMetadataProvider.GetSiteUrl));
+        Assert.DoesNotContain(methods, method => method.Name.StartsWith("Get", StringComparison.Ordinal) && method.Name is not nameof(TvdbMetadataProvider.GetImages));
     }
 
     #endregion
@@ -157,6 +157,7 @@ public class TvdbMetadataProviderTests
         using var harness = new ServiceHarness();
         await harness.Refresh();
         Assert.NotNull(harness.Store.GetPortrait(TvdbUtility.CreatorGuid(412417)));
+        Assert.Equal("toei-animation", harness.Store.GetCompanySlug(43210));
         harness.Series.RemoveSeries(_seriesID);
         harness.People.RemoveCast(_seriesID);
         harness.People.RemoveCrew(_seriesID);
@@ -170,6 +171,7 @@ public class TvdbMetadataProviderTests
         // nothing credits them, so their portraits go now.
         Assert.NotNull(harness.People.GetCreator(TvdbUtility.CreatorGuid(412417)));
         Assert.Null(harness.Store.GetPortrait(TvdbUtility.CreatorGuid(412417)));
+        Assert.Null(harness.Store.GetCompanySlug(43210));
     }
 
     [Fact]
@@ -429,13 +431,14 @@ public class TvdbMetadataProviderTests
     public void GetSiteUrl_PrefersTheStoredPage_ThenTheDereferrer()
     {
         using var harness = new ServiceHarness();
-        var provider = harness.Get<TvdbMetadataProvider>();
+        IMetadataSeriesProvider provider = harness.Get<TvdbMetadataProvider>();
         var stored = new Entry(_seriesID, [new() { Type = ResourceType.Metadata, Name = "TvDB", Url = "https://thetvdb.com/series/one-piece", ID = "81797" }]);
 
         Assert.Equal("https://thetvdb.com/series/one-piece", provider.GetSiteUrl(stored));
         Assert.Equal("https://thetvdb.com/dereferrer/series/81797", provider.GetSiteUrl(new Entry(_seriesID, [])));
         Assert.Equal("https://thetvdb.com/dereferrer/episode/362102", provider.GetSiteUrl(new Entry(TvdbUtility.EpisodeGuid(362102), [])));
         Assert.Null(provider.GetSiteUrl(new Entry(TvdbUtility.SeasonGuid(28707), [])));
+        Assert.Null(provider.GetSiteUrl(new Entry(TvdbUtility.CreatorGuid(412417), [])));
         Assert.Null(provider.GetSiteUrl(new Entry(new MetadataGuid(MetadataSource.TMDB, MetadataEntityType.Series, "37854"), [])));
     }
 
@@ -443,7 +446,7 @@ public class TvdbMetadataProviderTests
     public void GetSiteUrl_GivesAPersonTheirSluggedPage_ThenTheDereferrer()
     {
         using var harness = new ServiceHarness();
-        var provider = harness.Get<TvdbMetadataProvider>();
+        IMetadataEntityProvider provider = harness.Get<TvdbMetadataProvider>();
         var personID = TvdbUtility.CreatorGuid(412417);
         var stored = new Entry(personID,
         [
@@ -459,7 +462,7 @@ public class TvdbMetadataProviderTests
     public void GetSiteUrl_GivesACharacterOnlyItsStoredPage()
     {
         using var harness = new ServiceHarness();
-        var provider = harness.Get<TvdbMetadataProvider>();
+        IMetadataEntityProvider provider = harness.Get<TvdbMetadataProvider>();
         var characterID = TvdbUtility.CharacterGuid(6200000);
         var stored = new Entry(characterID, [new() { Type = ResourceType.Metadata, Name = "TvDB", Url = "https://thetvdb.com/series/one-piece/people/6200000", ID = "6200000" }]);
 
@@ -468,13 +471,99 @@ public class TvdbMetadataProviderTests
     }
 
     [Fact]
-    public void GetSiteUrl_GivesNoPageForStudiosOrNetworks()
+    public async Task GetSiteUrl_GivesStudiosAndNetworksThePageOfTheirSlug_OnlyOnceOneIsKept()
+    {
+        using var harness = new ServiceHarness();
+        IMetadataEntityProvider provider = harness.Get<TvdbMetadataProvider>();
+        Assert.Null(provider.GetSiteUrl(new Entry(TvdbUtility.StudioGuid(43210), [])));
+
+        await harness.Refresh();
+
+        Assert.Equal("https://thetvdb.com/companies/toei-animation", provider.GetSiteUrl(new Entry(TvdbUtility.StudioGuid(43210), [])));
+        Assert.Equal("https://thetvdb.com/companies/fuji-tv", provider.GetSiteUrl(new Entry(TvdbUtility.NetworkGuid(111), [])));
+        Assert.Null(provider.GetSiteUrl(new Entry(TvdbUtility.StudioGuid(1234), [])));
+        Assert.Null(provider.GetSiteUrl(new Entry(_seriesID, [])));
+    }
+
+    #endregion
+
+    #region People, Characters & Companies
+
+    [Fact]
+    public async Task RefreshEntity_WritesAPersonFromTheirOwnRecord_AndKeepsTheRecordForTheNextShowRefresh()
+    {
+        using var harness = new ServiceHarness(http: RoutingHttpMessageHandler.OnePiece()
+            .Route("people/412417/extended?meta=translations", Fixture.Read("people-412417-extended.json")));
+        var creatorID = TvdbUtility.CreatorGuid(412417);
+
+        Assert.True(await harness.Get<TvdbMetadataProvider>().RefreshEntity(creatorID, TestContext.Current.CancellationToken));
+
+        var creator = harness.People.GetCreator(creatorID);
+        Assert.Equal("Mayumi Tanaka", creator?.Name);
+        Assert.Equal(new FuzzyDateOnly(1955, 1, 15), creator?.BirthDay);
+        Assert.Contains("https://thetvdb.com/people/412417-mayumi-tanaka", ((IWithResources)creator!).Resources.Select(resource => resource.Url));
+        Assert.True(harness.Store.GetPerson(412417)?.Found);
+        Assert.Equal("person/412417/primary.jpg", harness.Store.GetPortrait(creatorID));
+    }
+
+    [Fact]
+    public async Task RefreshEntity_WritesACharacter_WithItsPageUnderTheStoredShow()
+    {
+        using var harness = new ServiceHarness(http: RoutingHttpMessageHandler.OnePiece().Route("characters/65111900", """
+            { "status": "success", "data": { "id": 65111900, "name": "Monkey D. Luffy", "peopleId": 412417, "seriesId": 81797, "type": 3,
+              "image": "https://artworks.thetvdb.com/banners/person/412417/65afe1871bc9d.jpg", "url": "https://thetvdb.com/people/412417-mayumi-tanaka",
+              "peopleType": "Actor", "personName": "Mayumi Tanaka" } }
+            """));
+        await harness.Refresh(new() { DownloadCrewAndCast = false });
+        var characterID = TvdbUtility.CharacterGuid(65111900);
+
+        Assert.True(await harness.Get<TvdbMetadataProvider>().RefreshEntity(characterID, TestContext.Current.CancellationToken));
+
+        var character = harness.People.GetCharacter(characterID);
+        Assert.Equal("Monkey D. Luffy", character?.Name);
+        Assert.Equal(["https://thetvdb.com/series/one-piece/people/65111900"], ((IWithResources)character!).Resources.Select(resource => resource.Url));
+        Assert.Equal("person/412417/65afe1871bc9d.jpg", harness.Store.GetPortrait(characterID));
+    }
+
+    [Fact]
+    public async Task RefreshEntity_WritesACompanyAsTheStudioOrNetworkAskedFor_AndKeepsItsSlug()
+    {
+        const string Toei = """{ "status": "success", "data": { "id": 43210, "name": "Toei Animation", "slug": "toei-animation", "country": "jpn", "primaryCompanyType": 2 } }""";
+        using var harness = new ServiceHarness(http: RoutingHttpMessageHandler.OnePiece().Route("companies/43210", Toei));
+        var provider = harness.Get<TvdbMetadataProvider>();
+
+        Assert.True(await provider.RefreshEntity(TvdbUtility.StudioGuid(43210), TestContext.Current.CancellationToken));
+        Assert.True(await provider.RefreshEntity(TvdbUtility.NetworkGuid(43210), TestContext.Current.CancellationToken));
+
+        var studio = harness.Studios.GetStudio(TvdbUtility.StudioGuid(43210));
+        Assert.Equal(("Toei Animation", "JP"), (studio?.Name, studio?.CountryOfOrigin));
+        Assert.Equal("Toei Animation", harness.Studios.GetNetwork(TvdbUtility.NetworkGuid(43210))?.Name);
+        Assert.Equal("toei-animation", harness.Store.GetCompanySlug(43210));
+    }
+
+    [Fact]
+    public async Task RefreshEntity_IsFalse_ForAnEntryTvdbDoesNotHave_OrOneNotItsOwn()
     {
         using var harness = new ServiceHarness();
         var provider = harness.Get<TvdbMetadataProvider>();
 
-        Assert.Null(provider.GetSiteUrl(new Entry(TvdbUtility.StudioGuid(1234), [])));
-        Assert.Null(provider.GetSiteUrl(new Entry(TvdbUtility.NetworkGuid(1234), [])));
+        Assert.False(await provider.RefreshEntity(TvdbUtility.CreatorGuid(999), TestContext.Current.CancellationToken));
+        Assert.False(await provider.RefreshEntity(TvdbUtility.CharacterGuid(999), TestContext.Current.CancellationToken));
+        Assert.False(await provider.RefreshEntity(TvdbUtility.StudioGuid(999), TestContext.Current.CancellationToken));
+        Assert.False(await provider.RefreshEntity(TvdbUtility.SeriesGuid(999), TestContext.Current.CancellationToken));
+        Assert.False(await provider.RefreshEntity(new MetadataGuid(MetadataSource.TMDB, MetadataEntityType.Creator, "999"), TestContext.Current.CancellationToken));
+
+        Assert.Equal(["people/999/extended?meta=translations", "characters/999", "companies/999"], harness.Http.Paths.Where(path => path is not "login"));
+        // A person TvDB does not have is recorded, so a show's refresh does not ask again.
+        Assert.False(harness.Store.GetPerson(999)?.Found);
+    }
+
+    [Fact]
+    public async Task RefreshEntity_WithoutAnApiKey_IsNotConfigured()
+    {
+        using var harness = new ServiceHarness(new() { ApiKey = null });
+
+        await Assert.ThrowsAsync<MetadataProviderNotConfiguredException>(() => harness.Get<TvdbMetadataProvider>().RefreshEntity(TvdbUtility.CreatorGuid(412417), TestContext.Current.CancellationToken));
     }
 
     /// <summary>

@@ -43,8 +43,12 @@ namespace Shoko.Plugin.Tvdb.Metadata;
 ///   rate limits the plugin or failed, it says it is paused, and the core
 ///   holds its jobs back.
 /// </para>
+/// <para>
+///   It also refreshes TvDB's people, characters and companies one at a
+///   time, a company as a studio or a network by how a show named it.
+/// </para>
 /// </remarks>
-public sealed class TvdbMetadataProvider : IMetadataSeriesLinkingProvider, IMetadataAutoLinkingProvider, IMetadataImageProvider, IPausableMetadataProvider, IMetadataProvider<TvdbConfiguration>, IDisposable
+public sealed class TvdbMetadataProvider : IMetadataSeriesLinkingProvider, IMetadataAutoLinkingProvider, IMetadataImageProvider, IMetadataEntityProvider, IPausableMetadataProvider, IMetadataProvider<TvdbConfiguration>, IDisposable
 {
     private readonly TvdbRefreshService _refreshService;
 
@@ -140,8 +144,9 @@ public sealed class TvdbMetadataProvider : IMetadataSeriesLinkingProvider, IMeta
 
     /// <summary>
     /// Forgets what the plugin keeps of a purged show besides the core's
-    /// stores: its record and the portraits of people no stored show
-    /// credits any more. The core removes the show's orderings itself.
+    /// stores: its record, and the portraits, records and slugs of the
+    /// people and companies no stored show names any more. The core
+    /// removes the show's orderings itself.
     /// </summary>
     /// <param name="entryID">The purged show.</param>
     /// <param name="cancellationToken">Unused; the work is local.</param>
@@ -158,6 +163,7 @@ public sealed class TvdbMetadataProvider : IMetadataSeriesLinkingProvider, IMeta
         _store.RemoveShow(seriesID);
         _store.RemoveUncreditedPortraits();
         _store.RemoveUncreditedPeople();
+        _store.RemoveUnusedCompanies();
         return Task.CompletedTask;
     }
 
@@ -166,14 +172,12 @@ public sealed class TvdbMetadataProvider : IMetadataSeriesLinkingProvider, IMeta
     #region Site URLs
 
     /// <summary>
-    /// The page of a TvDB show, episode, person or character: the one stored
-    /// with the entry, which goes by a slug, else one made from its ID. A
-    /// character has no page without a stored one, nor have seasons, studios
-    /// and networks.
+    /// The page of a TvDB show or episode: the one stored with the entry,
+    /// which goes by a slug, else one made from its ID. Seasons have none.
     /// </summary>
     /// <param name="entry">The entry, of the TvDB source.</param>
     /// <returns>The URL, or <see langword="null"/> when the entry has no page.</returns>
-    public string? GetSiteUrl(IMetadata entry)
+    string? IMetadataSeriesProvider.GetSiteUrl(IMetadata entry)
     {
         ArgumentNullException.ThrowIfNull(entry);
 
@@ -181,10 +185,30 @@ public sealed class TvdbMetadataProvider : IMetadataSeriesLinkingProvider, IMeta
             return StoredSiteUrl(entry) ?? TvdbUtility.SeriesUrl(seriesID, null);
         if (TvdbUtility.TryGetID(entry.ID, MetadataEntityType.Episode, out var episodeID))
             return StoredSiteUrl(entry) ?? TvdbUtility.EpisodeUrl(episodeID, null);
+
+        return null;
+    }
+
+    /// <summary>
+    /// The page of a TvDB person, character, studio or network. A person's
+    /// or character's is the one stored with the entry, else for a person one
+    /// made from the ID; a company's goes by the slug the plugin keeps. A
+    /// character or company has no page without them.
+    /// </summary>
+    /// <param name="entry">The entry, of the TvDB source.</param>
+    /// <returns>The URL, or <see langword="null"/> when the entry has no page.</returns>
+    string? IMetadataEntityProvider.GetSiteUrl(IMetadata entry)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+
         if (TvdbUtility.TryGetID(entry.ID, MetadataEntityType.Creator, out var peopleID))
             return StoredSiteUrl(entry) ?? TvdbUtility.PersonUrl(peopleID);
         if (entry.ID.Source == MetadataSource.Tvdb && entry.ID.EntityType == MetadataEntityType.Character)
             return StoredSiteUrl(entry);
+        if (TvdbUtility.TryGetID(entry.ID, MetadataEntityType.Studio, out var studioID))
+            return TvdbUtility.CompanyUrl(_store.GetCompanySlug(studioID));
+        if (TvdbUtility.TryGetID(entry.ID, MetadataEntityType.Network, out var networkID))
+            return TvdbUtility.CompanyUrl(_store.GetCompanySlug(networkID));
 
         return null;
     }
@@ -270,6 +294,42 @@ public sealed class TvdbMetadataProvider : IMetadataSeriesLinkingProvider, IMeta
 
         await _refreshService.RefreshSeries(tvdbSeriesID, options, cancellationToken).ConfigureAwait(false);
     }
+
+    #endregion
+
+    #region People, Characters & Companies
+
+    /// <summary>
+    /// TvDB's people, characters and companies, a company being a studio or
+    /// a network by how a show named it.
+    /// </summary>
+    public MetadataEntityScope EntityScope { get; } = MetadataEntityScope.ForSource(
+        MetadataSource.Tvdb,
+        MetadataEntityType.Creator,
+        MetadataEntityType.Character,
+        MetadataEntityType.Studio,
+        MetadataEntityType.Network
+    );
+
+    /// <summary>
+    /// As long as the people service keeps a person's own record: a show's
+    /// refresh writes its people from their credits, and fetches their own
+    /// records only as far as the settings allow.
+    /// </summary>
+    public TimeSpan? EntityStaleAfter => TvdbPeopleService.StaleAfter;
+
+    /// <summary>
+    /// Fetches one person, character, studio or network from TvDB and
+    /// writes it into the stores.
+    /// </summary>
+    /// <param name="entityID">The entry, of a kind in <see cref="EntityScope"/>.</param>
+    /// <param name="cancellationToken">Cancels the work.</param>
+    /// <returns>Whether TvDB had the entry.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="entityID"/> is <see langword="null"/>.</exception>
+    /// <exception cref="MetadataProviderNotConfiguredException">No API key is configured.</exception>
+    /// <exception cref="TvdbApiException">TvDB refused the key, failed or answered with something unexpected.</exception>
+    public Task<bool> RefreshEntity(MetadataGuid entityID, CancellationToken cancellationToken = default)
+        => _refreshService.RefreshEntity(entityID, cancellationToken);
 
     #endregion
 

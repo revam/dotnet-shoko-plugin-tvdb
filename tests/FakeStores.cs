@@ -73,6 +73,8 @@ internal sealed class FakeStudio(MetadataStudioData data, StudioType type) : ISt
 
     public string? OriginalName => data.OriginalName;
 
+    public string? CountryOfOrigin => data.CountryOfOrigin;
+
     public StudioType StudioType { get; } = type;
 
     public IEnumerable<IMovie> MovieWorks => [];

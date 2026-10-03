@@ -36,6 +36,9 @@ public class TvdbDbContext(DbContextOptions<TvdbDbContext> options) : DbContext(
     /// <summary>What the plugin keeps of each person's own record.</summary>
     public DbSet<TvdbStoredPerson> People => Set<TvdbStoredPerson>();
 
+    /// <summary>The slugs of the companies, studios and networks alike.</summary>
+    public DbSet<TvdbStoredCompany> Companies => Set<TvdbStoredCompany>();
+
     /// <inheritdoc/>
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
@@ -72,6 +75,13 @@ public class TvdbDbContext(DbContextOptions<TvdbDbContext> options) : DbContext(
             person.ComplexCollection(row => row.Names, text => text.ToJson());
             person.ComplexCollection(row => row.Biographies, text => text.ToJson());
             person.ComplexCollection(row => row.RemoteIDs, remoteID => remoteID.ToJson());
+        });
+
+        modelBuilder.Entity<TvdbStoredCompany>(company =>
+        {
+            company.ToTable("Companies");
+            company.HasKey(row => row.ID);
+            company.Property(row => row.ID).ValueGeneratedNever();
         });
     }
 

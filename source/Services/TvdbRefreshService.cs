@@ -90,11 +90,7 @@ public sealed class TvdbRefreshService(
         // The show's record carries its names and overviews in every
         // language; its episodes are fetched in each language asked for but
         // the show's own, their names already being in it.
-        var languages = (configuration.TranslationLanguages ?? [])
-            .Where(language => !string.IsNullOrWhiteSpace(language))
-            .Select(language => language.Trim().ToLowerInvariant())
-            .Distinct(StringComparer.Ordinal)
-            .ToList();
+        var languages = Languages(configuration);
         var existingEpisodes = store.GetSeries(seriesID)?.Episodes.Select(episode => episode.ID).ToHashSet() ?? [];
         var episodes = await apiClient.GetEpisodes(seriesID, "default", cancellationToken).ConfigureAwait(false);
         if (episodes.Count is 0 && existingEpisodes.Count > 0)
@@ -125,6 +121,7 @@ public sealed class TvdbRefreshService(
         var (studios, entryStudios) = TvdbEntityMapper.Studios(remote);
         store.Studios.SaveStudios(studios);
         store.Studios.SetStudios(seriesGuid, entryStudios);
+        store.SaveCompanies(TvdbEntityMapper.Companies(remote));
         if (options.DownloadNetworks ?? configuration.AutoDownloadNetworks)
         {
             var networks = TvdbEntityMapper.Networks(remote);
@@ -175,6 +172,134 @@ public sealed class TvdbRefreshService(
         );
         return true;
     }
+
+    /// <summary>
+    /// Fetches one person, character, studio or network on its own and
+    /// writes it into the stores.
+    /// </summary>
+    /// <remarks>
+    /// A person's own record is kept as the people service keeps it, so a
+    /// show's refresh writes them with it again; one TvDB does not have is
+    /// recorded as such. A character's page needs its show's slug, which is
+    /// the stored show's. A company's slug is kept for its page.
+    /// </remarks>
+    /// <param name="entityID">The creator, character, studio or network, on the TvDB source.</param>
+    /// <param name="cancellationToken">Cancels the work.</param>
+    /// <returns>Whether TvDB had the entry; any other ID is not had.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="entityID"/> is <see langword="null"/>.</exception>
+    /// <exception cref="MetadataProviderNotConfiguredException">No API key is configured.</exception>
+    /// <exception cref="TvdbApiException">TvDB refused the key, failed or answered with something unexpected.</exception>
+    public async Task<bool> RefreshEntity(MetadataGuid entityID, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(entityID);
+
+        if (!apiClient.HasApiKey)
+            throw new MetadataProviderNotConfiguredException(MetadataSource.Tvdb, TvdbApiClient.NoApiKeyReason);
+
+        bool found;
+        if (TvdbUtility.TryGetID(entityID, MetadataEntityType.Creator, out var peopleID))
+            found = await RefreshPerson(peopleID, cancellationToken).ConfigureAwait(false);
+        else if (entityID.Source == MetadataSource.Tvdb && entityID.EntityType == MetadataEntityType.Character && entityID.TryGetNumericID<long>(out var characterID) && characterID > 0)
+            found = await RefreshCharacter(characterID, cancellationToken).ConfigureAwait(false);
+        else if (TvdbUtility.TryGetID(entityID, MetadataEntityType.Studio, out var studioID))
+            found = await RefreshCompany(studioID, network: false, cancellationToken).ConfigureAwait(false);
+        else if (TvdbUtility.TryGetID(entityID, MetadataEntityType.Network, out var networkID))
+            found = await RefreshCompany(networkID, network: true, cancellationToken).ConfigureAwait(false);
+        else
+            return false;
+
+        if (found)
+            logger.LogDebug("Refreshed TvDB entry {EntityID}.", entityID);
+
+        return found;
+    }
+
+    /// <summary>
+    /// Fetches a person's own record, keeps it and writes the person.
+    /// </summary>
+    /// <param name="peopleID">TvDB person ID.</param>
+    /// <param name="cancellationToken">Cancels the work.</param>
+    /// <returns>Whether TvDB had the person.</returns>
+    private async Task<bool> RefreshPerson(int peopleID, CancellationToken cancellationToken)
+    {
+        var now = DateTime.UtcNow;
+        if (await apiClient.GetPerson(peopleID, cancellationToken).ConfigureAwait(false) is not { } remote)
+        {
+            store.SavePerson(TvdbEntityMapper.MissingPerson(peopleID, now));
+            return false;
+        }
+
+        var person = TvdbEntityMapper.ToStoredPerson(remote, now);
+        person.ID = peopleID;
+        store.SavePerson(person);
+        var creator = TvdbEntityMapper.ToCreatorData(person, Languages(configurationProvider.Load()));
+        store.People.SaveCreators([creator]);
+        if (person.Image is { Length: > 0 } image)
+            store.SavePortraits([new(creator.ID, image)]);
+
+        return true;
+    }
+
+    /// <summary>
+    /// Fetches a character's record and writes the character.
+    /// </summary>
+    /// <param name="characterID">TvDB character ID.</param>
+    /// <param name="cancellationToken">Cancels the work.</param>
+    /// <returns>Whether TvDB had the character, with a name.</returns>
+    private async Task<bool> RefreshCharacter(long characterID, CancellationToken cancellationToken)
+    {
+        if (await apiClient.GetCharacter(characterID, cancellationToken).ConfigureAwait(false) is not { } remote)
+            return false;
+
+        // The record answers for the ID asked for, whatever it says.
+        remote.ID = characterID;
+        var slug = remote.SeriesID is { } seriesID ? store.GetShow(seriesID)?.Slug : null;
+        if (TvdbEntityMapper.ToCharacterData(remote, slug) is not { } character)
+            return false;
+
+        store.People.SaveCharacters([character]);
+        if (TvdbImages.ToResourceID(remote.Image) is { } image)
+            store.SavePortraits([new(character.ID, image)]);
+
+        return true;
+    }
+
+    /// <summary>
+    /// Fetches a company's record, keeps its slug and writes it as a studio
+    /// or a network.
+    /// </summary>
+    /// <param name="companyID">TvDB company ID.</param>
+    /// <param name="network">Whether to write it as a network rather than a studio.</param>
+    /// <param name="cancellationToken">Cancels the work.</param>
+    /// <returns>Whether TvDB had the company, with a name.</returns>
+    private async Task<bool> RefreshCompany(int companyID, bool network, CancellationToken cancellationToken)
+    {
+        if (await apiClient.GetCompany(companyID, cancellationToken).ConfigureAwait(false) is not { } remote || string.IsNullOrWhiteSpace(remote.Name))
+            return false;
+
+        remote.ID = companyID;
+        if (TvdbEntityMapper.ToStoredCompany(remote) is { } company)
+            store.SaveCompanies([company]);
+
+        if (network)
+            store.Studios.SaveNetworks([TvdbEntityMapper.ToNetworkData(remote)]);
+        else
+            store.Studios.SaveStudios([TvdbEntityMapper.ToStudioData(remote)]);
+
+        return true;
+    }
+
+    /// <summary>
+    /// The languages to take translations in, as TvDB's lower-case codes,
+    /// each once.
+    /// </summary>
+    /// <param name="configuration">The plugin's configuration.</param>
+    /// <returns>The codes, in the order given.</returns>
+    private static List<string> Languages(TvdbConfiguration configuration)
+        => [.. (configuration.TranslationLanguages ?? [])
+            .Where(language => !string.IsNullOrWhiteSpace(language))
+            .Select(language => language.Trim().ToLowerInvariant())
+            .Distinct(StringComparer.Ordinal)];
 
     private static IEnumerable<int> PeopleIDs(TvdbPeople people)
         => people.Creators.Keys

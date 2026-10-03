@@ -203,6 +203,38 @@ public sealed class TvdbApiClient(
         => Get<TvdbPersonExtended>($"people/{peopleID.ToString(CultureInfo.InvariantCulture)}/extended?meta=translations", cancellationToken);
 
     /// <summary>
+    /// Gets a character's own record: the credit of the role on its show.
+    /// </summary>
+    /// <param name="characterID">TvDB character ID.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>
+    /// The character, or <see langword="null"/> when TvDB does not know the
+    /// ID or no API key is configured.
+    /// </returns>
+    /// <exception cref="TvdbApiException">
+    /// Thrown when TvDB answers with anything other than success or
+    /// "not found", or refused the key.
+    /// </exception>
+    public Task<TvdbCharacter?> GetCharacter(long characterID, CancellationToken cancellationToken = default)
+        => Get<TvdbCharacter>($"characters/{characterID.ToString(CultureInfo.InvariantCulture)}", cancellationToken);
+
+    /// <summary>
+    /// Gets a company's own record, a studio's or a network's alike.
+    /// </summary>
+    /// <param name="companyID">TvDB company ID.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>
+    /// The company, or <see langword="null"/> when TvDB does not know the ID
+    /// or no API key is configured.
+    /// </returns>
+    /// <exception cref="TvdbApiException">
+    /// Thrown when TvDB answers with anything other than success or
+    /// "not found", or refused the key.
+    /// </exception>
+    public Task<TvdbCompany?> GetCompany(int companyID, CancellationToken cancellationToken = default)
+        => Get<TvdbCompany>($"companies/{companyID.ToString(CultureInfo.InvariantCulture)}", cancellationToken);
+
+    /// <summary>
     /// Gets an episode's translated name and overview in one language.
     /// </summary>
     /// <param name="episodeID">TvDB episode id.</param>

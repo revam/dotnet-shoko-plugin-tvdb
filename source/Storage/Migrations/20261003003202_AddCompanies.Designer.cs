@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Shoko.Plugin.Tvdb.Storage;
 
@@ -11,9 +12,11 @@ using Shoko.Plugin.Tvdb.Storage;
 namespace Shoko.Plugin.Tvdb.Storage.Migrations
 {
     [DbContext(typeof(TvdbDbContext))]
-    partial class TvdbDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261003003202_AddCompanies")]
+    partial class AddCompanies
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.12");

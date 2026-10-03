@@ -736,7 +736,7 @@ public static class TvdbEntityMapper
             .ToList();
         return
         (
-            [.. companies.Select(pair => new MetadataStudioData { ID = TvdbUtility.StudioGuid(pair.Company.ID), Name = pair.Company.Name!.Trim() })],
+            [.. companies.Select(pair => ToStudioData(pair.Company))],
             [.. companies.Select(pair => new MetadataEntryStudioData { StudioID = TvdbUtility.StudioGuid(pair.Company.ID), Type = pair.Type })]
         );
     }
@@ -759,8 +759,62 @@ public static class TvdbEntityMapper
                 .Where(company => company is { ID: > 0 } && !string.IsNullOrWhiteSpace(company.Name))
                 .Select(company => company!)
                 .DistinctBy(company => company.ID)
-                .Select(company => new MetadataNetworkData { ID = TvdbUtility.NetworkGuid(company.ID), Name = company.Name!.Trim() }),
+                .Select(ToNetworkData),
         ];
+    }
+
+    /// <summary>
+    /// A company as a studio: its name and country.
+    /// </summary>
+    /// <param name="company">The company.</param>
+    /// <returns>The studio to store.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="company"/> is <see langword="null"/>.</exception>
+    public static MetadataStudioData ToStudioData(TvdbCompany company)
+    {
+        ArgumentNullException.ThrowIfNull(company);
+
+        return new() { ID = TvdbUtility.StudioGuid(company.ID), Name = company.Name?.Trim() ?? string.Empty, CountryOfOrigin = TvdbUtility.ToCountryCode(company.Country) };
+    }
+
+    /// <summary>
+    /// A company as a network: its name and country.
+    /// </summary>
+    /// <param name="company">The company.</param>
+    /// <returns>The network to store.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="company"/> is <see langword="null"/>.</exception>
+    public static MetadataNetworkData ToNetworkData(TvdbCompany company)
+    {
+        ArgumentNullException.ThrowIfNull(company);
+
+        return new() { ID = TvdbUtility.NetworkGuid(company.ID), Name = company.Name?.Trim() ?? string.Empty, CountryOfOrigin = TvdbUtility.ToCountryCode(company.Country) };
+    }
+
+    /// <summary>
+    /// What the plugin keeps of the companies on a show, which is their
+    /// slugs: every company credited and both networks, each once.
+    /// </summary>
+    /// <param name="series">The show.</param>
+    /// <returns>The companies with a slug.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="series"/> is <see langword="null"/>.</exception>
+    public static IReadOnlyList<TvdbStoredCompany> Companies(TvdbSeriesExtended series)
+    {
+        ArgumentNullException.ThrowIfNull(series);
+
+        IEnumerable<TvdbCompany?> companies = [series.OriginalNetwork, series.LatestNetwork, .. series.Companies ?? []];
+        return [.. companies.Select(company => company is null ? null : ToStoredCompany(company)).OfType<TvdbStoredCompany>().DistinctBy(company => company.ID)];
+    }
+
+    /// <summary>
+    /// What the plugin keeps of a company, which is its slug.
+    /// </summary>
+    /// <param name="company">The company.</param>
+    /// <returns>The record, or <see langword="null"/> for a company without an ID or a slug.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="company"/> is <see langword="null"/>.</exception>
+    public static TvdbStoredCompany? ToStoredCompany(TvdbCompany company)
+    {
+        ArgumentNullException.ThrowIfNull(company);
+
+        return company.ID > 0 && !string.IsNullOrWhiteSpace(company.Slug) ? new() { ID = company.ID, Slug = company.Slug.Trim() } : null;
     }
 
     private static StudioType ToStudioType(TvdbCompany company)
@@ -873,20 +927,10 @@ public static class TvdbEntityMapper
     private static void AddCast(TvdbCharacter credit, MetadataGuid? creatorID, string? slug, TvdbPeople people)
     {
         MetadataGuid? characterID = null;
-        if (credit.ID > 0 && !string.IsNullOrWhiteSpace(credit.Name))
+        if (ToCharacterData(credit, slug) is { } character)
         {
-            characterID = TvdbUtility.CharacterGuid(credit.ID);
-            var name = credit.Name.Trim();
-            people.Characters.TryAdd(characterID, new()
-            {
-                ID = characterID,
-                Name = name,
-                AlternativeNames = CharacterAliases(credit, name),
-                Resources = CharacterPage(credit, slug) is { } page
-                    ? [new() { Type = ResourceType.Metadata, Name = "TvDB", Url = page, ID = TvdbUtility.FormatID(credit.ID) }]
-                    : [],
-                DefaultImageResourceIDs = TvdbImages.ToPortraitDefault(TvdbImages.ToResourceID(credit.Image)),
-            });
+            characterID = character.ID;
+            people.Characters.TryAdd(characterID, character);
             if (TvdbImages.ToResourceID(credit.Image) is { } image)
                 people.Portraits.TryAdd(characterID, image);
         }
@@ -904,6 +948,34 @@ public static class TvdbEntityMapper
             Name = string.IsNullOrWhiteSpace(credit.Name) ? credit.PersonName!.Trim() : credit.Name.Trim(),
             RoleType = credit.IsFeatured ? CastRoleType.MainCharacter : CastRoleType.None,
         });
+    }
+
+    /// <summary>
+    /// The character a role's credit names, as a show's credits or TvDB's
+    /// own <c>/characters/{id}</c> hand it out.
+    /// </summary>
+    /// <param name="credit">The character's credit.</param>
+    /// <param name="slug">The slug of the character's show, when known.</param>
+    /// <returns>The character to store, or <see langword="null"/> for a credit without an ID or a name.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="credit"/> is <see langword="null"/>.</exception>
+    public static MetadataCharacterData? ToCharacterData(TvdbCharacter credit, string? slug)
+    {
+        ArgumentNullException.ThrowIfNull(credit);
+
+        if (credit.ID is not > 0 || string.IsNullOrWhiteSpace(credit.Name))
+            return null;
+
+        var name = credit.Name.Trim();
+        return new()
+        {
+            ID = TvdbUtility.CharacterGuid(credit.ID),
+            Name = name,
+            AlternativeNames = CharacterAliases(credit, name),
+            Resources = CharacterPage(credit, slug) is { } page
+                ? [new() { Type = ResourceType.Metadata, Name = "TvDB", Url = page, ID = TvdbUtility.FormatID(credit.ID) }]
+                : [],
+            DefaultImageResourceIDs = TvdbImages.ToPortraitDefault(TvdbImages.ToResourceID(credit.Image)),
+        };
     }
 
     /// <summary>
@@ -1083,6 +1155,28 @@ public static class TvdbEntityMapper
             Resources = [.. resources.DistinctBy(resource => resource.Url, StringComparer.Ordinal)],
             DefaultImageResourceIDs = creator.DefaultImageResourceIDs ?? TvdbImages.ToPortraitDefault(person.Image),
         };
+    }
+
+    /// <summary>
+    /// A person as their own record has them, with nothing from a credit:
+    /// the name the record gives and the page through the dereferrer, then
+    /// what <see cref="WithPersonDetails"/> adds.
+    /// </summary>
+    /// <param name="person">What the plugin keeps of the person's record, which TvDB had.</param>
+    /// <param name="languages">The three-letter codes to choose the biography by, in order.</param>
+    /// <returns>The person to store.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="person"/> is <see langword="null"/>.</exception>
+    public static MetadataCreatorData ToCreatorData(TvdbStoredPerson person, IReadOnlyList<string>? languages = null)
+    {
+        ArgumentNullException.ThrowIfNull(person);
+
+        var creator = new MetadataCreatorData
+        {
+            ID = TvdbUtility.CreatorGuid(person.ID),
+            Name = person.Name ?? string.Empty,
+            Resources = [new() { Type = ResourceType.Metadata, Name = "TvDB", Url = TvdbUtility.PersonUrl(person.ID), ID = TvdbUtility.FormatID(person.ID) }],
+        };
+        return WithPersonDetails(creator, person, languages);
     }
 
     /// <summary>

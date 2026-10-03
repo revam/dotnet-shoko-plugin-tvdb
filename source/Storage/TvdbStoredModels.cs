@@ -143,6 +143,19 @@ public sealed class TvdbStoredPerson
     public DateTime FetchedAt { get; set; }
 }
 
+/// <summary>
+/// What the plugin keeps of a company, a studio's or a network's alike: the
+/// slug its page goes by, which the core's studio store has no room for.
+/// </summary>
+public sealed class TvdbStoredCompany
+{
+    /// <summary>TvDB company ID.</summary>
+    public int ID { get; set; }
+
+    /// <summary>The company's URL slug.</summary>
+    public string Slug { get; set; } = string.Empty;
+}
+
 /// <summary>A piece of text in one language.</summary>
 public sealed class TvdbStoredText
 {

@@ -288,7 +288,10 @@ public sealed class TvdbSeasonType
     public string? AlternateName { get; set; }
 }
 
-/// <summary>A company credited on a show.</summary>
+/// <summary>
+/// A company credited on a show, or its own record from
+/// <c>/companies/{id}</c>, which has the same shape.
+/// </summary>
 public sealed class TvdbCompany
 {
     /// <summary>TvDB company id.</summary>
@@ -298,6 +301,14 @@ public sealed class TvdbCompany
     /// <summary>The company name.</summary>
     [JsonPropertyName("name")]
     public string? Name { get; set; }
+
+    /// <summary>The company's URL slug, e.g. <c>toei-animation</c>.</summary>
+    [JsonPropertyName("slug")]
+    public string? Slug { get; set; }
+
+    /// <summary>TvDB's three-letter code of the company's country, e.g. <c>jpn</c>.</summary>
+    [JsonPropertyName("country")]
+    public string? Country { get; set; }
 
     /// <summary>What kind of company it is.</summary>
     [JsonPropertyName("companyType")]
@@ -642,6 +653,10 @@ public sealed class TvdbCharacter
     /// <summary>TvDB ID of the person credited.</summary>
     [JsonPropertyName("peopleId")]
     public int? PeopleID { get; set; }
+
+    /// <summary>TvDB ID of the show the credit is on, when it is on a show.</summary>
+    [JsonPropertyName("seriesId")]
+    public int? SeriesID { get; set; }
 
     /// <summary>The person's name.</summary>
     [JsonPropertyName("personName")]

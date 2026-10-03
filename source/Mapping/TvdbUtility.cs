@@ -177,6 +177,15 @@ public static class TvdbUtility
     public static string PersonUrl(int peopleID)
         => $"{SiteUrl}/dereferrer/people/{FormatID(peopleID)}";
 
+    /// <summary>
+    /// A company's page under its slug, a studio's or a network's alike,
+    /// e.g. <c>https://thetvdb.com/companies/toei-animation</c>.
+    /// </summary>
+    /// <param name="slug">The company's slug, or <see langword="null"/>.</param>
+    /// <returns>The URL, or <see langword="null"/> without a slug.</returns>
+    public static string? CompanyUrl(string? slug)
+        => string.IsNullOrWhiteSpace(slug) ? null : $"{SiteUrl}/companies/{Uri.EscapeDataString(slug.Trim())}";
+
     #endregion
 
     #region Languages & Countries
