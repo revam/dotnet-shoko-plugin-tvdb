@@ -329,11 +329,12 @@ are the core's, per source.
 - **No season pages.** The core keeps no resources for a season
   (`MetadataSeasonData` and `ISeason` have none), so a season's page on
   TvDB, `https://thetvdb.com/dereferrer/season/{id}`, has nowhere to go.
-- **No placement of specials.** TvDB says where a special airs among the
-  episodes (`airsBeforeSeason`, `airsBeforeEpisode`, `airsAfterSeason`), but
-  the core's episodes have no field for it, and an ordering reads every
-  episode outside its special group as a regular one, numbered in its group,
-  so a special cannot be placed there either.
+- **Specials are placed in the aired order only.** TvDB says where a special
+  airs among the episodes (`airsBeforeSeason`, `airsBeforeEpisode`,
+  `airsAfterSeason`), in its aired order. The plugin stores that on the
+  episode only when the show's own seasons are in the aired order. The other
+  season types, kept as orderings, place no specials: an ordering reads every
+  episode outside its special group as a regular one, numbered in its group.
 - **No character overviews.** TvDB's character record lists the
   languages it has a name or overview in, but not the text, and no endpoint
   serves it, so fetching each character on its own would add nothing.
