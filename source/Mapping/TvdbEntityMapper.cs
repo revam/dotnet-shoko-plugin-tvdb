@@ -522,16 +522,25 @@ public static class TvdbEntityMapper
     public static string SeasonName(int number)
         => number is 0 ? "Specials" : $"Season {number.ToString(CultureInfo.InvariantCulture)}";
 
-    // A season gets its English name by number as its main title, TvDB's
-    // base record rarely naming one, and its own name besides when it has one.
+    // A season keeps only a name of its own. The core makes up "Season N" or
+    // "Specials" for a season without one, so the generic name is never stored.
     private static IReadOnlyList<ITitle> SeasonTitles(int number, string? name, string? originalLanguage)
     {
-        List<ITitle> titles = [Title(SeasonName(number), "eng", TitleType.Main)];
-        if (!string.IsNullOrWhiteSpace(name))
-            titles.Add(Title(name, originalLanguage, TitleType.Official));
+        if (string.IsNullOrWhiteSpace(name) || IsGenericSeasonName(name, number))
+            return [];
 
-        return Deduplicate(titles);
+        return [Title(name.Trim(), originalLanguage, TitleType.Main)];
     }
+
+    /// <summary>
+    /// Whether a name is a season's generic English name.
+    /// </summary>
+    /// <param name="name">The name.</param>
+    /// <param name="number">The season number.</param>
+    /// <returns><see langword="true"/> for <c>Season N</c>, or <c>Specials</c> for season zero.</returns>
+    public static bool IsGenericSeasonName(string name, int number)
+        => name.Trim().Equals($"Season {number.ToString(CultureInfo.InvariantCulture)}", StringComparison.InvariantCultureIgnoreCase) ||
+            (number is 0 && name.Trim().Equals("Specials", StringComparison.InvariantCultureIgnoreCase));
 
     #endregion
 

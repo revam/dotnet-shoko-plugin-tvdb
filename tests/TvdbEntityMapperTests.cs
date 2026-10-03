@@ -302,19 +302,19 @@ public class TvdbEntityMapperTests
     }
 
     [Fact]
-    public void ASeason_IsNamedByNumberInEnglishAndByItsOwnNameBesides()
+    public void ASeason_KeepsOnlyANameOfItsOwn()
     {
         // The seasons on the show's own record carry no name, so one is
-        // given here to see it used.
+        // given here to see it used, and one is given TvDB's generic name.
         var series = ReadSeries();
         series.Seasons!.Single(season => season.ID is 31893).Name = "East Blue";
+        series.Seasons!.Single(season => season.ID is 31895).Name = "Season 2";
 
         var seasons = TvdbEntityMapper.ToSeriesData(series, null, ReadDefaultEpisodes()).Seasons;
 
-        Assert.Contains(seasons[0].Titles, title => title is { Type: TitleType.Main, Value: "Season 1", LanguageCode: "en" });
-        Assert.Contains(seasons[0].Titles, title => title is { Type: TitleType.Official, Value: "East Blue", LanguageCode: "ja" });
-        Assert.Equal(["Season 2"], MapOnePiece().Seasons[1].Titles.Select(title => title.Value));
-        Assert.Contains(MapOnePiece().Seasons[2].Titles, title => title is { Type: TitleType.Main, Value: "Specials" });
+        Assert.Equal([("East Blue", TitleType.Main, "ja")], seasons[0].Titles.Select(title => (title.Value, title.Type, title.LanguageCode)));
+        Assert.Empty(seasons[1].Titles);
+        Assert.Empty(seasons[2].Titles);
     }
 
     [Fact]
