@@ -77,7 +77,7 @@ public class TvdbRefreshServiceTests
     {
         using var harness = new ServiceHarness();
         await harness.Refresh();
-        harness.Orderings.SaveOrdering(new() { ID = TvdbUtility.OrderingGuid(81797, "alternate"), SeriesID = _seriesID, Name = "Alternate Order" });
+        harness.Orderings.SaveOrdering(new() { ID = TvdbUtility.OrderingGuid(81797, "alternate"), SeriesID = _seriesID });
 
         await harness.Refresh();
 
@@ -308,8 +308,7 @@ public class TvdbRefreshServiceTests
         {
             ID = TvdbUtility.OrderingGuid(81797, "custom"),
             SeriesID = _seriesID,
-            Name = "Custom",
-            Groups = [new() { ID = TvdbUtility.SeasonTypeSeasonGuid(81797, "dvd", 1), Name = "Taken", Episodes = [TvdbUtility.EpisodeGuid(361887)] }],
+            Groups = [new() { ID = TvdbUtility.SeasonTypeSeasonGuid(81797, "dvd", 1), Episodes = [TvdbUtility.EpisodeGuid(361887)] }],
         });
 
         await harness.Refresh();

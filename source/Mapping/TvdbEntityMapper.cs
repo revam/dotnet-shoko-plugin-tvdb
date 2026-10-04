@@ -514,14 +514,6 @@ public static class TvdbEntityMapper
         ];
     }
 
-    /// <summary>
-    /// The English name of a season by its number, as TvDB shows it.
-    /// </summary>
-    /// <param name="number">The season number.</param>
-    /// <returns><c>Specials</c> for season zero, <c>Season N</c> otherwise.</returns>
-    public static string SeasonName(int number)
-        => number is 0 ? "Specials" : $"Season {number.ToString(CultureInfo.InvariantCulture)}";
-
     // A season keeps only a name of its own. The core makes up "Season N" or
     // "Specials" for a season without one, so the generic name is never stored.
     private static IReadOnlyList<ITitle> SeasonTitles(int number, string? name, string? originalLanguage)
@@ -692,7 +684,7 @@ public static class TvdbEntityMapper
             .Select(group => new MetadataOrderingGroupData
             {
                 ID = TvdbUtility.SeasonTypeSeasonGuid(series.ID, seasonType, group.Key),
-                Name = names.GetValueOrDefault(group.Key) ?? SeasonName(group.Key),
+                Titles = SeasonTitles(group.Key, names.GetValueOrDefault(group.Key), series.OriginalLanguage),
                 IsSpecial = group.Key is 0,
                 Episodes = [.. group.OrderBy(episode => episode.Number).Select(episode => TvdbUtility.EpisodeGuid(episode.ID))],
             })
@@ -704,7 +696,7 @@ public static class TvdbEntityMapper
         {
             ID = TvdbUtility.OrderingGuid(series.ID, seasonType),
             SeriesID = TvdbUtility.SeriesGuid(series.ID),
-            Name = SeasonTypeName(series, seasonType),
+            Titles = [Title(SeasonTypeName(series, seasonType), "eng", TitleType.Main)],
             Type = ToOrderingType(seasonType),
             Groups = groups,
         };

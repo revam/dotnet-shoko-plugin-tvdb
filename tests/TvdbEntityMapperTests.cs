@@ -469,10 +469,11 @@ public class TvdbEntityMapperTests
         Assert.NotNull(ordering);
         Assert.Equal("tvdb://ordering/81797-dvd", ordering.ID.ToString());
         Assert.Equal(TvdbUtility.SeriesGuid(81797), ordering.SeriesID);
-        Assert.Equal("DVD Order", ordering.Name);
+        Assert.Equal("DVD Order", Assert.Single(ordering.Titles).Value);
         Assert.Equal(OrderingType.DVD, ordering.Type);
         Assert.Equal(["tvdb://season/81797-dvd-1", "tvdb://season/81797-dvd-2"], ordering.Groups.Select(group => group.ID.ToString()));
-        Assert.Equal(["Volume 1", "Season 2"], ordering.Groups.Select(group => group.Name));
+        // A season without a name of its own gets none; the core names it.
+        Assert.Equal(["Volume 1", null], ordering.Groups.Select(group => group.Titles.SingleOrDefault()?.Value));
         Assert.Equal([TvdbUtility.EpisodeGuid(361888)], ordering.Groups[0].Episodes);
         // The DVD extra is not one of the show's stored episodes, so an
         // ordering of the show cannot hold it.
@@ -503,7 +504,7 @@ public class TvdbEntityMapperTests
         var ordering = TvdbEntityMapper.ToOrderingData(ReadSeries(), "absolute", ReadEpisodes("series-81797-episodes-absolute.json"), new HashSet<int> { 361887, 361888 })!;
 
         Assert.Empty(ordering.Groups.Select(group => group.ID).Intersect(series.Seasons.Select(season => season.ID)));
-        Assert.Equal("Absolute Order", ordering.Name);
+        Assert.Equal("Absolute Order", Assert.Single(ordering.Titles).Value);
     }
 
     #endregion

@@ -2,6 +2,7 @@ using Moq;
 using Shoko.Abstractions.Metadata;
 using Shoko.Abstractions.Metadata.Enums;
 using Shoko.Abstractions.Metadata.Services;
+using Shoko.Abstractions.Metadata.Shoko;
 using Shoko.Abstractions.Metadata.Storage;
 using Shoko.Abstractions.Metadata.Stub;
 
@@ -625,6 +626,8 @@ internal sealed class FakeOrderingService(FakeSeriesStore series) : IMetadataOrd
 
     public IReadOnlyList<IEpisodeOrderingInformation> GetEpisodeOrderings(IEpisode episode) => [];
 
+    public IReadOnlyList<IEpisodePlacement> GetEpisodePlacements(IShokoEpisode episode, MetadataSource? source = null) => [];
+
     public IOrdering SaveOrdering(MetadataOrderingData ordering)
     {
         ArgumentNullException.ThrowIfNull(ordering);
@@ -681,7 +684,7 @@ internal sealed class FakeOrderingService(FakeSeriesStore series) : IMetadataOrd
         var ordering = new Mock<IOrdering>();
         ordering.SetupGet(o => o.ID).Returns(data.ID);
         ordering.SetupGet(o => o.SeriesID).Returns(data.SeriesID);
-        ordering.SetupGet(o => o.Name).Returns(data.Name);
+        ordering.SetupGet(o => o.Title).Returns(data.Titles.FirstOrDefault()?.Value ?? string.Empty);
         ordering.SetupGet(o => o.Type).Returns(data.Type);
         ordering.SetupGet(o => o.SeasonCount).Returns(data.Groups.Count);
         return ordering.Object;
