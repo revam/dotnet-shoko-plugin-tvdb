@@ -60,7 +60,10 @@ TvDB's own numeric season IDs, so an ordering group can never take a stored
 season's ID.
 
 A quick refresh leaves out the cast and crew, the orderings and the matching.
-The networks, the cast and crew and the orderings follow the refresh options,
+The networks are written on every refresh and the cast and crew on every
+other one; whether the people, characters, studios and networks they name are
+fetched on their own is the provider's `creator`, `character`, `studio` and
+`network` kinds, all on by default. The orderings follow the refresh options,
 and the settings where the options leave it open. After a full refresh the
 episodes of every anime linked to the show are matched again, keeping the
 links already there. The core removes the links to an episode TvDB no
@@ -107,9 +110,9 @@ cannot express, such as romaji, is skipped.
 
 ## People
 
-The credits on a show carry only a person's name and photo. With **Download
-Person Details** on (the default), a refresh that writes the cast and crew
-also fetches each credited person's own record,
+The credits on a show carry only a person's name and photo. While the
+provider's `creator` kind is on (the default), a refresh that writes the cast
+and crew also fetches each credited person's own record,
 `/people/{id}/extended?meta=translations`, and writes:
 
 - their name as the record has it, with the credited name, their aliases and
@@ -135,7 +138,8 @@ A person TvDB does not have (404) keeps what the credits say and is not
 asked for again for 30 days. A failed fetch keeps what the credits say, or the
 last record fetched, and never fails the refresh; a refused key, a rate limit
 or a server error also stops the fetching until the next refresh. Turning the
-setting off stops the fetching, but what was fetched before is still written.
+`creator` kind off stops the fetching, but what was fetched before is still
+written.
 
 Left out, as the core's people store has no place for them: the birthplace,
 the biographies in the other languages, the awards, races, tag options and
@@ -157,7 +161,7 @@ its companies too.
 
 An entry is asked for again 30 days after it was last written, as a show's
 refresh writes its people from their credits and fetches their own records
-only as far as the settings allow.
+only up to **Person Details Per Refresh**.
 
 ## Images
 
@@ -307,16 +311,15 @@ out of the source tree, not out of the hands of anyone holding the DLL.
 | Download All Titles | off | Keep the show's names in every language, not only in the series title language order. Episode names never widen. See [Languages](#languages). |
 | Download All Overviews | off | Keep the show's overviews in every language, not only in the description language order. Episode overviews never widen. |
 | Download Alternate Orderings | on | Store the other season types as orderings. |
-| Download Cast and Crew | on | Store the cast and crew. |
-| Download Networks | on | Store the networks the show aired on. |
-| Download Person Details | on | Fetch each credited person's own record. One request per person not fetched in the last 30 days, shared across shows. |
-| Person Details Per Refresh | `50` | The most people one refresh fetches; the rest wait for a later refresh. |
+| Person Details Per Refresh | `50` | The most people one refresh fetches their own records for, while the `creator` kind is on; the rest wait for a later refresh. One request per person not fetched in the last 30 days, shared across shows. |
 
 Whether the provider answers at all is not a setting here. That belongs to
 `IMetadataProviderManager`, which turns a provider on and off per source and per
 entity type; a provider is off when it is first registered, so installing this
 plugin does not on its own change where a title comes from. The image settings
-are the core's, per source.
+are the core's, per source. There is no switch here for the cast and crew,
+people's own records or networks either: a refresh always writes the credits
+and networks, and the provider's kinds decide what is fetched.
 
 ## What it does not do
 

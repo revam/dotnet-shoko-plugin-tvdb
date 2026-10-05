@@ -17,9 +17,6 @@ public class TvdbConfigurationTests
         var configuration = new TvdbConfiguration();
 
         Assert.True(configuration.AutoDownloadAlternateOrderings);
-        Assert.True(configuration.AutoDownloadCastAndCrew);
-        Assert.True(configuration.AutoDownloadNetworks);
-        Assert.True(configuration.AutoDownloadPersonDetails);
         Assert.Equal(50, configuration.PersonDetailsLimit);
         Assert.False(configuration.ConsiderExistingOtherLinks);
         Assert.Equal(10, configuration.SearchResultLimit);

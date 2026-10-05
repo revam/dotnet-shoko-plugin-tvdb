@@ -6,8 +6,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Shoko.Abstractions.Config;
+using Shoko.Abstractions.Metadata;
+using Shoko.Abstractions.Metadata.Services;
 using Shoko.Plugin.Tvdb.Api;
 using Shoko.Plugin.Tvdb.Mapping;
+using Shoko.Plugin.Tvdb.Metadata;
 using Shoko.Plugin.Tvdb.Storage;
 
 namespace Shoko.Plugin.Tvdb.Services;
@@ -25,11 +28,13 @@ namespace Shoko.Plugin.Tvdb.Services;
 /// </remarks>
 /// <param name="apiClient">The TvDB client.</param>
 /// <param name="store">The plugin's store.</param>
+/// <param name="providerManager">The core's provider registry, asked whether the provider's <c>creator</c> kind is on.</param>
 /// <param name="configurationProvider">The plugin's configuration.</param>
 /// <param name="logger">The logger.</param>
 public sealed class TvdbPeopleService(
     TvdbApiClient apiClient,
     TvdbStore store,
+    IMetadataProviderManager providerManager,
     ConfigurationProvider<TvdbConfiguration> configurationProvider,
     ILogger<TvdbPeopleService> logger
 )
@@ -41,7 +46,7 @@ public sealed class TvdbPeopleService(
 
     /// <summary>
     /// The records of the people given, fetching the ones missing or stale
-    /// first when the settings allow.
+    /// first while the provider's <c>creator</c> kind is turned on.
     /// </summary>
     /// <remarks>
     /// Each person is fetched at most once, and no more than the settings'
@@ -66,10 +71,10 @@ public sealed class TvdbPeopleService(
             if (store.GetPerson(id) is { } stored)
                 people[id] = stored;
 
-        var configuration = configurationProvider.Load();
-        if (!configuration.AutoDownloadPersonDetails || !apiClient.HasApiKey)
+        if (!IsCreatorKindOn() || !apiClient.HasApiKey)
             return people;
 
+        var configuration = configurationProvider.Load();
         var now = DateTime.UtcNow;
         var due = ids
             .Where(id => !people.TryGetValue(id, out var stored) || stored.FetchedAt <= now - StaleAfter)
@@ -113,6 +118,11 @@ public sealed class TvdbPeopleService(
 
         return people;
     }
+
+    // Whether the core has the provider fetch TvDB's people, the same switch
+    // its one-at-a-time refreshes of them follow.
+    private bool IsCreatorKindOn()
+        => providerManager.MetadataProviders.Any(info => info.Provider is TvdbMetadataProvider && info.EnabledEntityTypes.Contains(MetadataEntityType.Creator));
 
     // A failure about the one record, rather than about TvDB taking work
     // at all: a client error other than a refusal or a rate limit, or a body

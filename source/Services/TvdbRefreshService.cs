@@ -51,14 +51,16 @@ public sealed class TvdbRefreshService(
     /// </summary>
     /// <remarks>
     /// The show, its seasons, episodes, titles, overviews, tags, genres,
-    /// studios and content ratings are always written. The networks, the cast
-    /// and crew and the other season types as orderings follow the options,
-    /// or the settings where the options leave it open; a quick refresh leaves
-    /// out the cast and crew, the orderings and the matching of the linked
+    /// studios, networks and content ratings are always written, and the cast
+    /// and crew unless the refresh is quick; the core fetches the people,
+    /// characters, studios and networks they name for the kinds turned on.
+    /// The other season types as orderings follow the options, or the
+    /// settings where the options leave it open; a quick refresh leaves out
+    /// the cast and crew, the orderings and the matching of the linked
     /// anime's episodes. The people credited are written with what their own
-    /// records add, fetching the ones missing or stale when the settings
-    /// allow; a person whose record could not be fetched keeps what the
-    /// credits say, and never fails the refresh. A show TvDB no longer has is left as it was
+    /// records add, fetching the ones missing or stale while the
+    /// <c>creator</c> kind is on; a person whose record could not be fetched
+    /// keeps what the credits say, and never fails the refresh. A show TvDB no longer has is left as it was
     /// stored, and so is one TvDB lists no episodes for while some are
     /// stored, which is more likely a hiccup than a show that lost them all:
     /// the refresh fails instead, so the core tries again later.
@@ -127,14 +129,10 @@ public sealed class TvdbRefreshService(
         store.Studios.SaveStudios(studios);
         store.Studios.SetStudios(seriesGuid, entryStudios);
         store.SaveCompanies(TvdbEntityMapper.Companies(remote));
-        if (options.DownloadNetworks ?? configuration.AutoDownloadNetworks)
-        {
-            var networks = TvdbEntityMapper.Networks(remote);
-            store.Studios.SaveNetworks(networks);
-            store.Studios.SetNetworks(seriesGuid, [.. networks.Select(network => network.ID)]);
-        }
-
-        if (!options.QuickRefresh && (options.DownloadCrewAndCast ?? configuration.AutoDownloadCastAndCrew))
+        var networks = TvdbEntityMapper.Networks(remote);
+        store.Studios.SaveNetworks(networks);
+        store.Studios.SetNetworks(seriesGuid, [.. networks.Select(network => network.ID)]);
+        if (!options.QuickRefresh)
         {
             var people = TvdbEntityMapper.People(remote);
             var details = await peopleService.GetPeople(PeopleIDs(people), cancellationToken).ConfigureAwait(false);

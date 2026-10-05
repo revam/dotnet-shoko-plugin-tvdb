@@ -136,14 +136,14 @@ public class TvdbPeopleServiceTests
     }
 
     [Fact]
-    public async Task TheSettingOff_FetchesNobodyButStillWritesWhatWasFetchedBefore()
+    public async Task TheCreatorKindOff_FetchesNobodyButStillWritesWhatWasFetchedBefore()
     {
         using var harness = new ServiceHarness(http: OnePieceWithPeople());
         await harness.Refresh();
         var stale = harness.Store.GetPerson(412417)!;
         stale.FetchedAt = DateTime.UnixEpoch;
         harness.Store.SavePerson(stale);
-        harness.Configuration.AutoDownloadPersonDetails = false;
+        harness.EnabledKinds.Remove(MetadataEntityType.Creator);
         harness.Http.Requests.Clear();
 
         await harness.Refresh();
@@ -153,9 +153,10 @@ public class TvdbPeopleServiceTests
     }
 
     [Fact]
-    public async Task TheSettingOff_FromTheStart_WritesOnlyWhatTheCreditsSay()
+    public async Task TheCreatorKindOff_FromTheStart_WritesOnlyWhatTheCreditsSay()
     {
-        using var harness = new ServiceHarness(new TvdbConfiguration { ApiKey = "api-key", AutoDownloadPersonDetails = false }, OnePieceWithPeople());
+        using var harness = new ServiceHarness(http: OnePieceWithPeople());
+        harness.EnabledKinds.Remove(MetadataEntityType.Creator);
 
         await harness.Refresh();
 

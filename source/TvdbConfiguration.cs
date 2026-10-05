@@ -21,6 +21,10 @@ namespace Shoko.Plugin.Tvdb;
 ///   <see cref="Shoko.Abstractions.Metadata.Services.IMetadataProviderManager"/>
 ///   turns a provider on and off per source and per entity type, and a second
 ///   switch of the plugin's own would only be a way for the two to disagree.
+///   The same goes for the cast and crew, people's own records, studios and
+///   networks: a refresh always writes them, and whether one is fetched is
+///   the provider's <c>creator</c>, <c>character</c>, <c>studio</c> and
+///   <c>network</c> kinds.
 /// </para>
 /// </remarks>
 [Display(Name = "TvDB")]
@@ -111,40 +115,14 @@ public class TvdbConfiguration : IConfiguration
     public bool AutoDownloadAlternateOrderings { get; set; } = true;
 
     /// <summary>
-    /// Whether to store a show's cast and crew. A refresh asked for with its
-    /// own choice follows that instead.
-    /// </summary>
-    [Display(Name = "Download Cast and Crew")]
-    [DefaultValue(true)]
-    public bool AutoDownloadCastAndCrew { get; set; } = true;
-
-    /// <summary>
-    /// Whether to store the networks a show aired on. A refresh asked for with
-    /// its own choice follows that instead.
-    /// </summary>
-    [Display(Name = "Download Networks")]
-    [DefaultValue(true)]
-    public bool AutoDownloadNetworks { get; set; } = true;
-
-    /// <summary>
-    /// Whether to fetch the own record of each person the cast and crew
-    /// credit, for what the credits leave out: their birth and death, gender,
-    /// biography, other names and IDs elsewhere.
-    /// </summary>
-    /// <remarks>
-    /// One request per person, only for one never fetched or fetched more
-    /// than 30 days ago, and shared across every show they are credited on.
-    /// Turned off, what was fetched before is still written.
-    /// </remarks>
-    [Display(Name = "Download Person Details", Description = "Fetch each credited person's own record for their birth and death dates, gender, biography, other names and IDs elsewhere. Costs one request per person not fetched in the last 30 days, shared across every show they are in.")]
-    [DefaultValue(true)]
-    public bool AutoDownloadPersonDetails { get; set; } = true;
-
-    /// <summary>
     /// The most people whose own records one refresh fetches, so a show with
     /// hundreds of credits does not send hundreds of requests at once. The
     /// rest are fetched on later refreshes.
     /// </summary>
+    /// <remarks>
+    /// The records are fetched only while the provider's <c>creator</c> kind
+    /// is turned on.
+    /// </remarks>
     [Display(Name = "Person Details Per Refresh", Description = "The most people whose details one refresh fetches. The rest are fetched on later refreshes.")]
     [Range(1, 1000)]
     [DefaultValue(50)]

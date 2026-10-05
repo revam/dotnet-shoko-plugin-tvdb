@@ -317,7 +317,7 @@ public sealed class TvdbMetadataProvider : IMetadataSeriesLinkingProvider, IMeta
     /// <summary>
     /// As long as the people service keeps a person's own record: a show's
     /// refresh writes its people from their credits, and fetches their own
-    /// records only as far as the settings allow.
+    /// records only up to the per-refresh limit.
     /// </summary>
     public TimeSpan? EntityStaleAfter => TvdbPeopleService.StaleAfter;
 

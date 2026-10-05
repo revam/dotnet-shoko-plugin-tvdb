@@ -93,6 +93,7 @@ internal sealed class ServiceHarness : IDisposable
             .Returns(() => CrossSourceHints);
         MetadataService.Setup(service => service.GetSeason(It.IsAny<MetadataGuid>())).Returns((MetadataGuid id) => Series.GetSeason(id));
         SystemService.SetupGet(service => service.IsStarted).Returns(true);
+        ProviderManager.SetupGet(manager => manager.MetadataProviders).Returns(() => [ProviderInfo()]);
         TextManager
             .Setup(manager => manager.GetLanguageOrder(It.IsAny<TextKind>(), It.IsAny<MetadataEntityType?>()))
             .Returns((TextKind kind, MetadataEntityType? entityType) => kind is TextKind.Overview ? OverviewOrder : entityType == MetadataEntityType.Episode ? EpisodeTitleOrder : SeriesTitleOrder);
@@ -172,6 +173,18 @@ internal sealed class ServiceHarness : IDisposable
 
     public Mock<IMetadataTextManager> TextManager { get; } = new();
 
+    /// <summary>The kinds the core has the provider turned on for.</summary>
+    public HashSet<MetadataEntityType> EnabledKinds { get; } =
+    [
+        MetadataEntityType.Series,
+        MetadataEntityType.Season,
+        MetadataEntityType.Episode,
+        MetadataEntityType.Creator,
+        MetadataEntityType.Character,
+        MetadataEntityType.Studio,
+        MetadataEntityType.Network,
+    ];
+
     /// <summary>The core's series title language order.</summary>
     public List<TitleLanguage> SeriesTitleOrder { get; } = [TitleLanguage.Main, TitleLanguage.English];
 
@@ -184,6 +197,24 @@ internal sealed class ServiceHarness : IDisposable
     public Mock<IApplicationPaths> ApplicationPaths { get; } = new();
 
     public T Get<T>() where T : notnull => _services.GetRequiredService<T>();
+
+    private MetadataProviderInfo ProviderInfo() => new()
+    {
+        ID = Guid.Empty,
+        Version = new(1, 0),
+        Name = "TvDB",
+        Description = "TvDB",
+        Provider = Get<TvdbMetadataProvider>(),
+        ConfigurationInfo = null,
+        PluginInfo = null!,
+        SupportsSeries = true,
+        SupportsMovies = false,
+        SupportsCollections = false,
+        SupportsAutoLinking = true,
+        Source = MetadataSource.Tvdb,
+        AvailableEntityTypes = EnabledKinds,
+        EnabledEntityTypes = EnabledKinds,
+    };
 
     /// <summary>
     /// Refreshes One Piece through the provider, as the core's refresh job would.

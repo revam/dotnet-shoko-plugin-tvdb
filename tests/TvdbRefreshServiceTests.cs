@@ -170,7 +170,7 @@ public class TvdbRefreshServiceTests
     }
 
     [Fact]
-    public async Task AQuickRefresh_LeavesOutTheCastTheOrderingsAndTheMatching()
+    public async Task AQuickRefresh_LeavesOutTheCastTheOrderingsAndTheMatching_ButNotTheNetworks()
     {
         using var harness = new ServiceHarness();
         harness.CrossReferences.AddSeries(1, 81797);
@@ -178,6 +178,7 @@ public class TvdbRefreshServiceTests
         await harness.Refresh(new() { QuickRefresh = true });
 
         Assert.True(harness.Series.Series.ContainsKey(_seriesID));
+        Assert.NotEmpty(harness.Studios.GetNetworks(_seriesID));
         Assert.Empty(harness.People.GetCast(_seriesID));
         Assert.Empty(harness.Orderings.Orderings);
         Assert.DoesNotContain("series/81797/episodes/dvd?page=0", harness.Http.Paths);
@@ -185,26 +186,24 @@ public class TvdbRefreshServiceTests
     }
 
     [Fact]
-    public async Task TheOptions_OverrideTheSettings()
+    public async Task TheOptions_OverrideTheSettings_AndTheCreditsAndNetworksAreAlwaysWritten()
     {
         using var harness = new ServiceHarness();
 
-        await harness.Refresh(new() { DownloadNetworks = false, DownloadCrewAndCast = false, DownloadAlternateOrdering = false });
+        await harness.Refresh(new() { DownloadAlternateOrdering = false });
 
-        Assert.Empty(harness.Studios.GetNetworks(_seriesID));
-        Assert.Empty(harness.People.GetCast(_seriesID));
+        Assert.NotEmpty(harness.Studios.GetNetworks(_seriesID));
+        Assert.NotEmpty(harness.People.GetCast(_seriesID));
         Assert.Empty(harness.Orderings.Orderings);
     }
 
     [Fact]
     public async Task TheSettings_DecideWhereTheOptionsLeaveItOpen()
     {
-        using var harness = new ServiceHarness(new() { ApiKey = "api-key", AutoDownloadNetworks = false, AutoDownloadCastAndCrew = false, AutoDownloadAlternateOrderings = false });
+        using var harness = new ServiceHarness(new() { ApiKey = "api-key", AutoDownloadAlternateOrderings = false });
 
         await harness.Refresh();
 
-        Assert.Empty(harness.Studios.GetNetworks(_seriesID));
-        Assert.Empty(harness.People.GetCrew(_seriesID));
         Assert.Empty(harness.Orderings.Orderings);
 
         await harness.Refresh(new() { DownloadAlternateOrdering = true });

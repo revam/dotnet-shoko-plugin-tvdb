@@ -522,7 +522,7 @@ public class TvdbMetadataProviderTests
               "image": "https://artworks.thetvdb.com/banners/person/412417/65afe1871bc9d.jpg", "url": "https://thetvdb.com/people/412417-mayumi-tanaka",
               "peopleType": "Actor", "personName": "Mayumi Tanaka" } }
             """));
-        await harness.Refresh(new() { DownloadCrewAndCast = false });
+        await harness.Refresh(new() { QuickRefresh = true });
         var characterID = TvdbUtility.CharacterGuid(65111900);
 
         Assert.True(await harness.Get<TvdbMetadataProvider>().RefreshEntity(characterID, TestContext.Current.CancellationToken));
