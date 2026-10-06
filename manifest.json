@@ -9,6 +9,22 @@
   ],
   "releases": [
     {
+      "version": "1.2.0",
+      "tag": "v1.2.0",
+      "released_at": "2026-10-06T21:29:43.4896036Z",
+      "channel": "Stable",
+      "release_notes": "Cast, crew and networks are now switched on and off with the provider\u0027s kinds instead of the plugin\u0027s own download settings, which are gone; a person\u0027s own record is fetched while the \u0060creator\u0060 kind is on. Orderings now take their season names from the server: an ordering\u0027s season type is its English main title, and a group keeps only a season name of its own.\n\nRebuilt against the abstractions \u00606.0.0-alpha.99\u0060 release.\n\nRequires Shoko Server with abstractions \u00606.0.0-alpha.99\u0060.",
+      "dependencies": [],
+      "archives": [
+        {
+          "runtime": "any",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/revam/dotnet-shoko-plugin-tvdb/releases/download/v1.2.0/TheTVDBMetadata-v1.2.0-any.zip",
+          "checksum": "sha256:cd8954d5920d76b99f65af026ef937ddc8a034405001b534f988a1d8555660da"
+        }
+      ]
+    },
+    {
       "version": "1.1.0",
       "tag": "v1.1.0",
       "released_at": "2026-10-03T16:55:11.3114056Z",
