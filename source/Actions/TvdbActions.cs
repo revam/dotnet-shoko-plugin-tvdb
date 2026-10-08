@@ -1,9 +1,11 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Shoko.Abstractions.Actions;
+using Shoko.Abstractions.Connectivity.Suspensions;
 using Shoko.Abstractions.Metadata;
 using Shoko.Abstractions.Metadata.Providers;
 using Shoko.Abstractions.Metadata.Services;
+using Shoko.Plugin.Tvdb.Api;
 using Shoko.Plugin.Tvdb.Metadata;
 using Shoko.Plugin.Tvdb.Services;
 
@@ -24,22 +26,34 @@ internal static class TvdbActionValidation
     /// <summary>
     /// Refuses when the provider is switched off, or, for an action that
     /// reaches TvDB, while the provider is not configured, for want of an
-    /// API key, or paused.
+    /// API key, or suspended.
     /// </summary>
     /// <param name="provider">The provider.</param>
     /// <param name="providerManager">The registry, asked whether the provider is switched on.</param>
-    /// <param name="reachesTvdb">Whether the action reaches TvDB.</param>
-    /// <returns>Why the action cannot run, or <see langword="null"/>.</returns>
-    public static Task<ActionValidationResult?> Validate(TvdbMetadataProvider provider, IMetadataProviderManager providerManager, bool reachesTvdb)
+    /// <param name="suspensionReporter">The plugin's suspensions, or <c>null</c> for an action that does not reach TvDB.</param>
+    /// <returns>Why the action cannot run, or <c>null</c>.</returns>
+    public static Task<ActionValidationResult?> Validate(
+        TvdbMetadataProvider provider,
+        IMetadataProviderManager providerManager,
+        ISuspensionReporter<TvdbSuspensionProvider>? suspensionReporter
+    )
         => Task.FromResult<ActionValidationResult?>(
             !providerManager.IsProviderEnabled(provider)
                 ? new ActionValidationResult("The TvDB metadata provider is switched off.")
-                : reachesTvdb && !provider.IsConfigured
+                : suspensionReporter is not null && !provider.IsConfigured
                     ? new ActionValidationResult(provider.NotConfiguredReason ?? "The TvDB metadata provider is not configured.")
-                    : reachesTvdb && provider.PauseStatus is { IsPaused: true, Reason: var reason }
-                        ? new ActionValidationResult(reason ?? "The TvDB metadata provider is paused.")
+                    : suspensionReporter?.Current is { IsSuspended: true, Suspensions: [var suspension, ..] }
+                        ? new ActionValidationResult(suspension.Reason ?? Describe(suspension.Kind))
                         : null
         );
+
+    private static string Describe(SuspensionKind kind) => kind switch
+    {
+        SuspensionKind.RateLimited => "TvDB is rate limiting requests.",
+        SuspensionKind.ServerErrors => "TvDB is answering with server errors.",
+        SuspensionKind.AuthenticationFailed => "TvDB refused the API key.",
+        _ => "The TvDB metadata provider is suspended.",
+    };
 }
 
 /// <summary>
@@ -48,7 +62,13 @@ internal static class TvdbActionValidation
 /// <param name="provider">The metadata provider.</param>
 /// <param name="providerManager">The registry.</param>
 /// <param name="linkingService">The core's linking service, which runs the provider's auto-linker.</param>
-public sealed class AutoLinkTvdbSeriesAction(TvdbMetadataProvider provider, IMetadataProviderManager providerManager, IMetadataLinkingService linkingService) : SeriesAction
+/// <param name="suspensionReporter">The plugin's suspensions.</param>
+public sealed class AutoLinkTvdbSeriesAction(
+    TvdbMetadataProvider provider,
+    IMetadataProviderManager providerManager,
+    IMetadataLinkingService linkingService,
+    ISuspensionReporter<TvdbSuspensionProvider> suspensionReporter
+) : SeriesAction
 {
     /// <inheritdoc/>
     public override string Name => "Auto-link TvDB Show";
@@ -64,7 +84,7 @@ public sealed class AutoLinkTvdbSeriesAction(TvdbMetadataProvider provider, IMet
 
     /// <inheritdoc/>
     public override Task<ActionValidationResult?> Validate(CancellationToken token = default)
-        => TvdbActionValidation.Validate(provider, providerManager, reachesTvdb: true);
+        => TvdbActionValidation.Validate(provider, providerManager, suspensionReporter);
 
     /// <inheritdoc/>
     public override Task Execute(CancellationToken token = default)
@@ -77,7 +97,13 @@ public sealed class AutoLinkTvdbSeriesAction(TvdbMetadataProvider provider, IMet
 /// <param name="provider">The metadata provider.</param>
 /// <param name="providerManager">The registry.</param>
 /// <param name="refreshService">The core's refresh service, which queues the refreshes.</param>
-public sealed class RefreshTvdbSeriesAction(TvdbMetadataProvider provider, IMetadataProviderManager providerManager, IMetadataRefreshService refreshService) : SeriesAction
+/// <param name="suspensionReporter">The plugin's suspensions.</param>
+public sealed class RefreshTvdbSeriesAction(
+    TvdbMetadataProvider provider,
+    IMetadataProviderManager providerManager,
+    IMetadataRefreshService refreshService,
+    ISuspensionReporter<TvdbSuspensionProvider> suspensionReporter
+) : SeriesAction
 {
     /// <inheritdoc/>
     public override string Name => "Refresh TvDB Metadata";
@@ -93,7 +119,7 @@ public sealed class RefreshTvdbSeriesAction(TvdbMetadataProvider provider, IMeta
 
     /// <inheritdoc/>
     public override Task<ActionValidationResult?> Validate(CancellationToken token = default)
-        => TvdbActionValidation.Validate(provider, providerManager, reachesTvdb: true);
+        => TvdbActionValidation.Validate(provider, providerManager, suspensionReporter);
 
     /// <summary>
     /// Queues a forced refresh of every show the series is linked to.
@@ -145,9 +171,9 @@ public sealed class UnlinkTvdbSeriesAction(TvdbMetadataProvider provider, IMetad
     /// neither a key nor TvDB.
     /// </summary>
     /// <param name="token">A cancellation token.</param>
-    /// <returns>Why the action cannot run, or <see langword="null"/>.</returns>
+    /// <returns>Why the action cannot run, or <c>null</c>.</returns>
     public override Task<ActionValidationResult?> Validate(CancellationToken token = default)
-        => TvdbActionValidation.Validate(provider, providerManager, reachesTvdb: false);
+        => TvdbActionValidation.Validate(provider, providerManager, suspensionReporter: null);
 
     /// <summary>
     /// Unlinks every TvDB show and episode the series is linked to, and

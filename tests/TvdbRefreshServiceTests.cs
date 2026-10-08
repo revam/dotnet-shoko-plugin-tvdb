@@ -1,5 +1,6 @@
 using System.Net;
 using Moq;
+using Shoko.Abstractions.Connectivity.Suspensions;
 using Shoko.Abstractions.Metadata;
 using Shoko.Abstractions.Metadata.Enums;
 using Shoko.Abstractions.Metadata.Providers;
@@ -270,7 +271,7 @@ public class TvdbRefreshServiceTests
 
         Assert.True(exception.IsAuthenticationFailure);
         AssertTheShowIsIntact(harness);
-        Assert.True(harness.Get<TvdbMetadataProvider>().PauseStatus.IsPaused);
+        Assert.True(harness.SuspensionReporter.Current.IsSuspended);
     }
 
     [Fact]
@@ -342,17 +343,16 @@ public class TvdbRefreshServiceTests
     }
 
     [Fact]
-    public async Task ARefusedKey_FailsTheRefreshAndPausesTheProvider()
+    public async Task ARefusedKey_FailsTheRefreshAndSuspendsTheProvider()
     {
         using var harness = new ServiceHarness(http: RoutingHttpMessageHandler.OnePiece().Route("login", Fixture.Read("login-failure.json"), HttpStatusCode.Unauthorized));
 
         var exception = await Assert.ThrowsAsync<TvdbApiException>(() => harness.Refresh());
 
         Assert.True(exception.IsAuthenticationFailure);
-        var status = harness.Get<TvdbMetadataProvider>().PauseStatus;
-        Assert.True(status.IsPaused);
-        Assert.Equal("TvDB refused the API key or subscriber PIN.", status.Reason);
-        Assert.NotNull(status.ResumesAt);
+        var suspension = harness.SuspensionReporter.Active[SuspensionKind.AuthenticationFailed];
+        Assert.True(suspension.IsLiftable);
+        Assert.Null(suspension.ResumesAt);
     }
 
     [Fact]

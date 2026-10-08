@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Shoko.Abstractions.Config;
+using Shoko.Abstractions.Connectivity.Suspensions;
 using Shoko.Plugin.Tvdb;
 using Shoko.Plugin.Tvdb.Api;
 using Xunit;
@@ -20,7 +21,8 @@ public class TvdbApiClientTests
         string? apiKey = "api-key",
         string? subscriberPin = null,
         RecordingLogger<TvdbApiClient>? logger = null,
-        TvdbConfiguration? configuration = null
+        TvdbConfiguration? configuration = null,
+        FakeSuspensionReporter<TvdbSuspensionProvider>? reporter = null
     )
     {
         var configurationService = new FakeConfigurationService(configuration ?? new TvdbConfiguration()
@@ -30,7 +32,7 @@ public class TvdbApiClientTests
         });
         var http = new HttpClient(handler) { BaseAddress = new Uri("https://api4.thetvdb.com/v4/") };
 
-        return new TvdbApiClient(http, new TvdbRateLimiter(), new ConfigurationProvider<TvdbConfiguration>(configurationService), logger ?? new RecordingLogger<TvdbApiClient>());
+        return new TvdbApiClient(http, new TvdbRateLimiter(reporter: reporter), new ConfigurationProvider<TvdbConfiguration>(configurationService), logger ?? new RecordingLogger<TvdbApiClient>());
     }
 
     private static StubHttpMessageHandler LoggedIn()
@@ -114,7 +116,7 @@ public class TvdbApiClientTests
         Assert.DoesNotContain("pin", handler.Requests[1].Body, StringComparison.Ordinal);
         Assert.DoesNotContain("pin", handler.Requests[4].Body, StringComparison.Ordinal);
         Assert.Single(logger.Entries, level => level is Microsoft.Extensions.Logging.LogLevel.Warning);
-        Assert.False(client.RateLimiter.IsPaused);
+        Assert.Null(client.RateLimiter.RefusedCredentials);
     }
 
     [Fact]
@@ -187,7 +189,7 @@ public class TvdbApiClientTests
         var exception = await Assert.ThrowsAsync<TvdbApiException>(() => client.GetEpisodes(81797, "default", TestContext.Current.CancellationToken));
 
         Assert.True(exception.IsAuthenticationFailure);
-        Assert.Equal(TvdbApiClient.RefusedCredentialsReason, client.RateLimiter.PauseReason);
+        Assert.NotNull(client.RateLimiter.RefusedCredentials);
     }
 
     [Fact]
@@ -306,17 +308,17 @@ public class TvdbApiClientTests
     }
 
     [Fact]
-    public async Task RefusedCredentials_PauseThePluginAndAreNotTriedAgain()
+    public async Task RefusedCredentials_SuspendThePluginAndAreNotTriedAgain()
     {
         var handler = new StubHttpMessageHandler().Enqueue(HttpStatusCode.Unauthorized, Fixture.Read("login-failure.json"));
-        var client = CreateClient(handler);
+        var reporter = new FakeSuspensionReporter<TvdbSuspensionProvider>();
+        var client = CreateClient(handler, reporter: reporter);
 
         await Assert.ThrowsAsync<TvdbApiException>(() => client.GetSeries(81797, TestContext.Current.CancellationToken));
         await Assert.ThrowsAsync<TvdbApiException>(() => client.GetSeries(81797, TestContext.Current.CancellationToken));
 
         Assert.Single(handler.Requests);
-        Assert.True(client.RateLimiter.IsPaused);
-        Assert.Equal(TvdbApiClient.RefusedCredentialsReason, client.RateLimiter.PauseReason);
+        Assert.Equal([SuspensionKind.AuthenticationFailed], reporter.Active.Keys);
     }
 
     [Fact]
@@ -327,43 +329,45 @@ public class TvdbApiClientTests
             .Enqueue(HttpStatusCode.Unauthorized, Fixture.Read("login-failure.json"))
             .Enqueue(HttpStatusCode.OK, Fixture.Read("login-success.json"))
             .Enqueue(HttpStatusCode.OK, Fixture.Read("series-81797-extended.json"));
-        var client = CreateClient(handler, configuration: configuration);
+        var reporter = new FakeSuspensionReporter<TvdbSuspensionProvider>();
+        var client = CreateClient(handler, configuration: configuration, reporter: reporter);
         await Assert.ThrowsAsync<TvdbApiException>(() => client.GetSeries(81797, TestContext.Current.CancellationToken));
 
         configuration.ApiKey = "right-key";
         var series = await client.GetSeries(81797, TestContext.Current.CancellationToken);
 
         Assert.Equal(81797, series?.ID);
-        Assert.False(client.RateLimiter.IsPaused);
+        Assert.Empty(reporter.Active);
         Assert.Contains("right-key", handler.Requests[1].Body, StringComparison.Ordinal);
     }
 
     [Fact]
-    public async Task AServerError_PausesThePluginForAWhile()
+    public async Task AServerError_SuspendsThePluginForAWhile()
     {
         var handler = LoggedIn().Enqueue(HttpStatusCode.BadGateway, "");
-        var client = CreateClient(handler);
+        var reporter = new FakeSuspensionReporter<TvdbSuspensionProvider>();
+        var client = CreateClient(handler, reporter: reporter);
 
         await Assert.ThrowsAsync<TvdbApiException>(() => client.GetSeries(81797, TestContext.Current.CancellationToken));
 
-        Assert.True(client.RateLimiter.IsPaused);
-        Assert.Equal(TvdbApiClient.ServerErrorReason, client.RateLimiter.PauseReason);
+        Assert.NotNull(client.RateLimiter.ServerErrorsUntil);
+        Assert.NotNull(reporter.Active[SuspensionKind.ServerErrors].ResumesAt);
     }
 
     [Fact]
-    public async Task ARateLimit_PausesThePluginForAsLongAsTheServerAsks()
+    public async Task ARateLimit_SuspendsThePluginForAsLongAsTheServerAsks()
     {
         var handler = LoggedIn()
             .Enqueue(HttpStatusCode.TooManyRequests, "", retryAfter: TimeSpan.FromMilliseconds(1500))
             .Enqueue(HttpStatusCode.OK, Fixture.Read("series-81797-extended.json"));
-        var client = CreateClient(handler);
-        var reasons = new List<string?>();
-        client.RateLimiter.PauseStateChanged += (_, _) => reasons.Add(client.RateLimiter.PauseReason);
+        var reporter = new FakeSuspensionReporter<TvdbSuspensionProvider>();
+        var client = CreateClient(handler, reporter: reporter);
+        var before = DateTime.UtcNow;
 
         var series = await client.GetSeries(81797, TestContext.Current.CancellationToken);
 
         Assert.Equal(81797, series?.ID);
-        Assert.Equal(TvdbApiClient.RateLimitedReason, reasons[0]);
+        Assert.InRange(reporter.Active[SuspensionKind.RateLimited].ResumesAt!.Value, before.AddSeconds(1), DateTime.UtcNow.AddSeconds(2));
     }
 
     [Fact]

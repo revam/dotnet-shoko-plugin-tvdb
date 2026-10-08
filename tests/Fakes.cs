@@ -194,3 +194,30 @@ internal sealed class StubHttpMessageHandler : System.Net.Http.HttpMessageHandle
         return message;
     }
 }
+
+/// <summary>
+/// Keeps the suspensions reported to it as the core would, without their
+/// ends running out, so a test can read back what the plugin reported.
+/// </summary>
+internal sealed class FakeSuspensionReporter<TProvider> : Shoko.Abstractions.Connectivity.Suspensions.ISuspensionReporter<TProvider>
+    where TProvider : Shoko.Abstractions.Connectivity.Suspensions.ISuspensionProvider
+{
+    private readonly Dictionary<Shoko.Abstractions.Connectivity.Suspensions.SuspensionKind, Shoko.Abstractions.Connectivity.Suspensions.Suspension> _active = [];
+
+    public IReadOnlyDictionary<Shoko.Abstractions.Connectivity.Suspensions.SuspensionKind, Shoko.Abstractions.Connectivity.Suspensions.Suspension> Active => _active;
+
+    public Shoko.Abstractions.Connectivity.Suspensions.SuspensionStatus Current => new()
+    {
+        Provider = null!,
+        Suspensions = [.. _active.Values],
+        IsSuspended = _active.Count > 0,
+        ResumesAt = _active.Count > 0 && _active.Values.All(suspension => suspension.ResumesAt is not null) ? _active.Values.Max(suspension => suspension.ResumesAt) : null,
+    };
+
+    public void Suspend(Shoko.Abstractions.Connectivity.Suspensions.SuspensionKind kind, string? reason = null, DateTime? resumesAt = null, bool isLiftable = false)
+        => _active[kind] = new() { Kind = kind, Reason = reason, RaisedAt = DateTime.UtcNow, ResumesAt = resumesAt, IsLiftable = isLiftable };
+
+    public void Resume(Shoko.Abstractions.Connectivity.Suspensions.SuspensionKind kind) => _active.Remove(kind);
+
+    public void ResumeAll() => _active.Clear();
+}

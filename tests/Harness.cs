@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Shoko.Abstractions.Config;
+using Shoko.Abstractions.Connectivity.Suspensions;
 using Shoko.Abstractions.Core.Services;
 using Shoko.Abstractions.Metadata;
 using Shoko.Abstractions.Metadata.Anidb;
@@ -82,7 +83,7 @@ internal sealed class ServiceHarness : IDisposable
         Http = http ?? RoutingHttpMessageHandler.OnePiece();
         Series = new FakeSeriesStore(Tags, Studios, People);
         Orderings = new FakeOrderingService(Series);
-        RateLimiter = new TvdbRateLimiter(maxTokens: 50, tokensPerSecond: 1000);
+        RateLimiter = new TvdbRateLimiter(maxTokens: 50, tokensPerSecond: 1000, reporter: SuspensionReporter);
         Store = new TvdbStore(Database, Series, People, Tags, Studios, Orderings);
 
         LinkingService
@@ -102,6 +103,7 @@ internal sealed class ServiceHarness : IDisposable
         collection.AddLogging();
         collection.AddSingleton(ConfigurationProvider);
         collection.AddSingleton(RateLimiter);
+        collection.AddSingleton<ISuspensionReporter<TvdbSuspensionProvider>>(SuspensionReporter);
         collection.AddSingleton(Store);
         collection.AddSingleton<IMetadataSeriesStore>(Series);
         collection.AddSingleton<IMetadataCrossReferenceStore>(CrossReferences);
@@ -134,6 +136,8 @@ internal sealed class ServiceHarness : IDisposable
     public RoutingHttpMessageHandler Http { get; }
 
     public TvdbRateLimiter RateLimiter { get; }
+
+    public FakeSuspensionReporter<TvdbSuspensionProvider> SuspensionReporter { get; } = new();
 
     public TestDatabase Database { get; } = new();
 

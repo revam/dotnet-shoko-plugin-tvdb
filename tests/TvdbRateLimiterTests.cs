@@ -1,5 +1,7 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
+using Shoko.Abstractions.Connectivity.Suspensions;
 using Shoko.Plugin.Tvdb.Api;
 using Xunit;
 
@@ -7,7 +9,7 @@ namespace Shoko.Plugin.Tvdb.Tests;
 
 /// <summary>
 /// The politeness budget: how fast requests are let through and how the bucket
-/// refills.
+/// refills, and the suspensions the limiter reports.
 /// </summary>
 public class TvdbRateLimiterTests
 {
@@ -81,80 +83,83 @@ public class TvdbRateLimiterTests
     }
 
     [Fact]
-    public void APause_LastsUntilItRunsOutAndSaysWhy()
+    public void ARateLimit_IsReportedWithItsEnd_AndRunsOut()
     {
         var time = new ManualTimeProvider(DateTimeOffset.UnixEpoch);
-        using var limiter = new TvdbRateLimiter(timeProvider: time);
-        var raised = 0;
-        limiter.PauseStateChanged += (_, _) => raised++;
+        var reporter = new FakeSuspensionReporter<TvdbSuspensionProvider>();
+        using var limiter = new TvdbRateLimiter(timeProvider: time, reporter: reporter);
 
-        limiter.Pause(TimeSpan.FromSeconds(30), "Because.");
+        limiter.NotifyRateLimited(TimeSpan.FromSeconds(30));
 
-        Assert.True(limiter.IsPaused);
-        Assert.Equal("Because.", limiter.PauseReason);
         Assert.Equal(DateTimeOffset.UnixEpoch.AddSeconds(30), limiter.ResumesAt);
-        Assert.Equal(1, raised);
+        Assert.Equal(DateTime.UnixEpoch.AddSeconds(30), reporter.Active[SuspensionKind.RateLimited].ResumesAt);
+        Assert.False(reporter.Active[SuspensionKind.RateLimited].IsLiftable);
 
         time.Advance(TimeSpan.FromSeconds(31));
 
-        Assert.False(limiter.IsPaused);
-        Assert.Null(limiter.PauseReason);
         Assert.Null(limiter.ResumesAt);
     }
 
     [Fact]
-    public void AShorterPause_NeverCutsALongerOneShort()
+    public void TheKinds_AreKeptApart_AndTheLatestIsWaitedFor()
     {
         var time = new ManualTimeProvider(DateTimeOffset.UnixEpoch);
-        using var limiter = new TvdbRateLimiter(timeProvider: time);
+        var reporter = new FakeSuspensionReporter<TvdbSuspensionProvider>();
+        using var limiter = new TvdbRateLimiter(timeProvider: time, reporter: reporter);
 
-        limiter.Pause(TimeSpan.FromMinutes(5), "Long.");
-        limiter.Pause(TimeSpan.FromSeconds(5), "Short.");
+        limiter.NotifyServerError(TimeSpan.FromMinutes(5));
+        limiter.NotifyRateLimited(TimeSpan.FromSeconds(5));
+
+        Assert.Equal(DateTimeOffset.UnixEpoch.AddSeconds(5), limiter.RateLimitedUntil);
+        Assert.Equal(DateTimeOffset.UnixEpoch.AddMinutes(5), limiter.ServerErrorsUntil);
+        Assert.Equal(DateTimeOffset.UnixEpoch.AddMinutes(5), limiter.ResumesAt);
+        Assert.Equal([SuspensionKind.RateLimited, SuspensionKind.ServerErrors], reporter.Active.Keys.Order());
+    }
+
+    [Fact]
+    public void AShorterWait_NeverCutsALongerOneShort()
+    {
+        var time = new ManualTimeProvider(DateTimeOffset.UnixEpoch);
+        var reporter = new FakeSuspensionReporter<TvdbSuspensionProvider>();
+        using var limiter = new TvdbRateLimiter(timeProvider: time, reporter: reporter);
+
+        limiter.NotifyRateLimited(TimeSpan.FromMinutes(5));
+        limiter.NotifyRateLimited(TimeSpan.FromSeconds(5));
 
         Assert.Equal(DateTimeOffset.UnixEpoch.AddMinutes(5), limiter.ResumesAt);
-        Assert.Equal("Short.", limiter.PauseReason);
+        Assert.Equal(DateTime.UnixEpoch.AddMinutes(5), reporter.Active[SuspensionKind.RateLimited].ResumesAt);
     }
 
     [Fact]
-    public void Resuming_LiftsThePauseAtOnce()
+    public void ANothingWait_IsNoSuspension()
     {
-        using var limiter = new TvdbRateLimiter();
-        var raised = 0;
-        limiter.PauseStateChanged += (_, _) => raised++;
-        limiter.Pause(TimeSpan.FromHours(1), "Because.");
+        var reporter = new FakeSuspensionReporter<TvdbSuspensionProvider>();
+        using var limiter = new TvdbRateLimiter(reporter: reporter);
 
-        limiter.Resume();
-        limiter.Resume();
+        limiter.NotifyServerError(TimeSpan.Zero);
 
-        Assert.False(limiter.IsPaused);
-        Assert.Equal(2, raised);
+        Assert.Null(limiter.ResumesAt);
+        Assert.Empty(reporter.Active);
     }
 
     [Fact]
-    public void ANothingPause_IsNoPause()
+    public async Task ARefusedKey_IsSuspendedUntilLifted()
     {
-        using var limiter = new TvdbRateLimiter();
+        var reporter = new FakeSuspensionReporter<TvdbSuspensionProvider>();
+        using var limiter = new TvdbRateLimiter(reporter: reporter);
+        limiter.RefusedPin = ("key", "pin");
 
-        limiter.Pause(TimeSpan.Zero, "Because.");
+        limiter.RefuseCredentials(("key", null));
 
-        Assert.False(limiter.IsPaused);
-        Assert.Throws<ArgumentException>(() => limiter.Pause(TimeSpan.FromSeconds(1), " "));
-    }
+        var suspension = reporter.Active[SuspensionKind.AuthenticationFailed];
+        Assert.True(suspension.IsLiftable);
+        Assert.Null(suspension.ResumesAt);
+        Assert.Null(limiter.ResumesAt);
 
-    [Fact]
-    public async Task APause_RaisesItsEndWhenItRunsOut()
-    {
-        using var limiter = new TvdbRateLimiter();
-        var ended = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        limiter.Pause(TimeSpan.FromMilliseconds(50), "Because.");
-        limiter.PauseStateChanged += (_, _) =>
-        {
-            if (!limiter.IsPaused)
-                ended.TrySetResult();
-        };
+        await new TvdbSuspensionProvider(limiter).Lift(SuspensionKind.AuthenticationFailed, TestContext.Current.CancellationToken);
 
-        await ended.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
-
-        Assert.False(limiter.IsPaused);
+        Assert.Empty(reporter.Active);
+        Assert.Null(limiter.RefusedCredentials);
+        Assert.Null(limiter.RefusedPin);
     }
 }

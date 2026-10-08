@@ -83,7 +83,7 @@ removed the show's orderings by then, as it does for any purged series.
 
 The translations kept follow the server's language orders, the ones
 `IMetadataTextManager.GetLanguageOrder` hands a provider, as the bundled
-TMDb plugin's do:
+TMDB plugin's do:
 
 | Text | Kept in |
 |---|---|
@@ -185,16 +185,18 @@ Without an API key, which only happens on a build from source with none set,
 the provider reports `IsConfigured` as false with `NotConfiguredReason` saying
 so. The core then skips auto-linking quietly and answers a search through the
 API with `503 Service Unavailable`, and a refresh throws
-`MetadataProviderNotConfiguredException`. A missing key is never a pause.
+`MetadataProviderNotConfiguredException`. A missing key is never a suspension.
 
-## Pausing
+## Suspensions
 
-The provider reports a `MetadataProviderPauseStatus`, and the core holds its
-jobs back, while:
+The plugin's `TvdbSuspensionProvider` (named "TvDB") reports a suspension, and
+the core holds the provider's jobs back, while:
 
-- TvDB refused the key or PIN (for an hour, or until the settings are saved);
-- TvDB rate limits the plugin (for as long as its `Retry-After` says);
-- TvDB answered with a server error (for a minute).
+- TvDB refused the key (`AuthenticationFailed`, until the settings are saved
+  or an admin lifts it; a refused PIN alone only drops the PIN);
+- TvDB rate limits the plugin (`RateLimited`, for as long as its `Retry-After`
+  says);
+- TvDB answered with a server error (`ServerErrors`, for a minute).
 
 ## Linking and matching
 

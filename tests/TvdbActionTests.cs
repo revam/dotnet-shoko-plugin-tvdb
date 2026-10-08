@@ -50,7 +50,7 @@ public class TvdbActionTests
         var provider = harness.Get<TvdbMetadataProvider>();
         harness.ProviderManager.Setup(manager => manager.IsProviderEnabled(provider)).Returns(true);
 
-        var refresh = await new RefreshTvdbSeriesAction(provider, harness.ProviderManager.Object, harness.RefreshService.Object).Validate(TestContext.Current.CancellationToken);
+        var refresh = await new RefreshTvdbSeriesAction(provider, harness.ProviderManager.Object, harness.RefreshService.Object, harness.SuspensionReporter).Validate(TestContext.Current.CancellationToken);
         var unlink = await new UnlinkTvdbSeriesAction(provider, harness.ProviderManager.Object, harness.Get<TvdbLinkingService>()).Validate(TestContext.Current.CancellationToken);
 
         Assert.Equal("No TvDB API key is configured.", refresh?.Reason);
@@ -58,17 +58,17 @@ public class TvdbActionTests
     }
 
     [Fact]
-    public async Task WhileTheProviderIsPaused_OnlyTheActionsReachingTvDBAreRefused()
+    public async Task WhileTheProviderIsSuspended_OnlyTheActionsReachingTvDBAreRefused()
     {
         using var harness = new ServiceHarness();
         var provider = harness.Get<TvdbMetadataProvider>();
         harness.ProviderManager.Setup(manager => manager.IsProviderEnabled(provider)).Returns(true);
-        harness.RateLimiter.Pause(TimeSpan.FromMinutes(5), TvdbApiClient.RateLimitedReason);
+        harness.RateLimiter.NotifyRateLimited(TimeSpan.FromMinutes(5));
 
-        var refresh = await new RefreshTvdbSeriesAction(provider, harness.ProviderManager.Object, harness.RefreshService.Object).Validate(TestContext.Current.CancellationToken);
+        var refresh = await new RefreshTvdbSeriesAction(provider, harness.ProviderManager.Object, harness.RefreshService.Object, harness.SuspensionReporter).Validate(TestContext.Current.CancellationToken);
         var unlink = await new UnlinkTvdbSeriesAction(provider, harness.ProviderManager.Object, harness.Get<TvdbLinkingService>()).Validate(TestContext.Current.CancellationToken);
 
-        Assert.Equal(TvdbApiClient.RateLimitedReason, refresh?.Reason);
+        Assert.Equal("TvDB is rate limiting requests.", refresh?.Reason);
         Assert.Null(unlink);
     }
 }

@@ -41,28 +41,13 @@ public sealed class TvdbApiClient(
     private const int MaximumRateLimitRetries = 3;
 
     /// <summary>
-    /// How long the plugin's work is paused after TvDB answered with a
+    /// How long the plugin's work is suspended after TvDB answered with a
     /// server error.
     /// </summary>
     internal static readonly TimeSpan ServerErrorPause = TimeSpan.FromMinutes(1);
 
-    /// <summary>
-    /// How long the plugin's work is paused after TvDB refused the key,
-    /// unless the key or PIN is changed first.
-    /// </summary>
-    internal static readonly TimeSpan RefusedCredentialsPause = TimeSpan.FromHours(1);
-
     /// <summary>Why the plugin is not configured while no API key is available.</summary>
     internal const string NoApiKeyReason = "No TvDB API key is configured.";
-
-    /// <summary>The pause reason while TvDB rate limits the plugin.</summary>
-    internal const string RateLimitedReason = "TvDB is rate limiting requests.";
-
-    /// <summary>The pause reason after a server error.</summary>
-    internal const string ServerErrorReason = "TvDB answered with a server error.";
-
-    /// <summary>The pause reason after TvDB refused the key.</summary>
-    internal const string RefusedCredentialsReason = "TvDB refused the API key or subscriber PIN.";
 
     private readonly SemaphoreSlim _loginLock = new(1, 1);
 
@@ -76,26 +61,14 @@ public sealed class TvdbApiClient(
     private (string ApiKey, string? Pin) _tokenCredentials;
 
     /// <summary>
-    /// The credentials TvDB last refused, which are not tried again while
-    /// the pause that refusal set lasts.
-    /// </summary>
-    private (string ApiKey, string? Pin)? _refusedCredentials;
-
-    /// <summary>
-    /// The key and PIN whose login TvDB refused while the key alone was
-    /// taken, so later logins skip the PIN until either is changed.
-    /// </summary>
-    private (string ApiKey, string? Pin)? _refusedPin;
-
-    /// <summary>
     /// Whether an API key is available at all. Nothing can be fetched without
     /// one.
     /// </summary>
     public bool HasApiKey => ResolveApiKey(configurationProvider.Load()) is not null;
 
     /// <summary>
-    /// The rate limiter every request goes through, which also holds the
-    /// plugin's pause.
+    /// The rate limiter every request goes through, which also reports the
+    /// plugin's suspensions and keeps the key TvDB refused.
     /// </summary>
     public TvdbRateLimiter RateLimiter => rateLimiter;
 
@@ -358,12 +331,12 @@ public sealed class TvdbApiClient(
                     if (delay < TimeSpan.Zero)
                         delay = TimeSpan.FromSeconds(1);
                     logger.LogWarning("TvDB rate limited the request for /{Path}; retrying in {Delay}.", path, delay);
-                    rateLimiter.Pause(delay, RateLimitedReason);
+                    rateLimiter.NotifyRateLimited(delay);
                     await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
                     continue;
 
                 case var status when (int)status >= 500:
-                    rateLimiter.Pause(ServerErrorPause, ServerErrorReason);
+                    rateLimiter.NotifyServerError(ServerErrorPause);
                     throw new TvdbApiException(status, $"TvDB answered {((int)status).ToString(CultureInfo.InvariantCulture)} ({status}) for /{path}.");
 
                 case var status when !response.IsSuccessStatusCode:
@@ -399,16 +372,14 @@ public sealed class TvdbApiClient(
         var pin = string.IsNullOrWhiteSpace(configuration.SubscriberPin) ? null : configuration.SubscriberPin;
         var credentials = (apiKey, pin);
 
-        // Credentials TvDB refused are not tried again while the pause the
-        // refusal set lasts; new ones lift it.
-        if (_refusedCredentials is { } refused)
+        // Credentials TvDB refused are not tried again until they change or
+        // the suspension is lifted; new ones resume it.
+        if (rateLimiter.RefusedCredentials is { } refused)
         {
-            if (refused == credentials && rateLimiter.IsPaused)
+            if (refused == credentials)
                 return null;
 
-            _refusedCredentials = null;
-            if (string.Equals(rateLimiter.PauseReason, RefusedCredentialsReason, StringComparison.Ordinal))
-                rateLimiter.Resume();
+            rateLimiter.ForgetRefusedCredentials();
         }
 
         var cached = _token;
@@ -425,10 +396,7 @@ public sealed class TvdbApiClient(
 
             var token = await LoginWithFallback(apiKey, pin, cancellationToken).ConfigureAwait(false);
             if (token is null)
-            {
-                _refusedCredentials = credentials;
-                rateLimiter.Pause(RefusedCredentialsPause, RefusedCredentialsReason);
-            }
+                rateLimiter.RefuseCredentials(credentials);
 
             _token = token;
             _tokenCredentials = credentials;
@@ -450,14 +418,14 @@ public sealed class TvdbApiClient(
     /// <returns>The bearer token, or <c>null</c> when TvDB refused the key.</returns>
     private async Task<string?> LoginWithFallback(string apiKey, string? pin, CancellationToken cancellationToken)
     {
-        if (pin is not null && _refusedPin != (apiKey, pin))
+        if (pin is not null && rateLimiter.RefusedPin != (apiKey, pin))
         {
             var (token, refused) = await Login(apiKey, pin, cancellationToken).ConfigureAwait(false);
             if (!refused)
                 return token;
 
             logger.LogWarning("TvDB refused the subscriber PIN. Logging in without it; check the PIN in the TvDB plugin's settings.");
-            _refusedPin = (apiKey, pin);
+            rateLimiter.RefusedPin = (apiKey, pin);
         }
 
         var (keyOnlyToken, keyRefused) = await Login(apiKey, null, cancellationToken).ConfigureAwait(false);
@@ -488,8 +456,9 @@ public sealed class TvdbApiClient(
             if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
             {
                 // Logged by the caller rather than thrown; the request that
-                // asked throws instead, and the pause the refusal sets holds
-                // back the provider's jobs until it lapses or the key is changed.
+                // asked throws instead, and the suspension the refusal raises
+                // holds back the provider's jobs until the key is changed or
+                // the suspension is lifted.
                 return (null, true);
             }
 

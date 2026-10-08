@@ -1,5 +1,6 @@
 using System.Reflection;
 using Moq;
+using Shoko.Abstractions.Connectivity.Suspensions;
 using Shoko.Abstractions.Metadata;
 using Shoko.Abstractions.Metadata.Containers;
 using Shoko.Abstractions.Metadata.Enums;
@@ -74,7 +75,6 @@ public class TvdbMetadataProviderTests
         Assert.Contains(typeof(IMetadataSeriesLinkingProvider), interfaces);
         Assert.Contains(typeof(IMetadataAutoLinkingProvider), interfaces);
         Assert.Contains(typeof(IMetadataImageProvider), interfaces);
-        Assert.Contains(typeof(IPausableMetadataProvider), interfaces);
         Assert.DoesNotContain(typeof(IMetadataMovieProvider), interfaces);
     }
 
@@ -88,71 +88,31 @@ public class TvdbMetadataProviderTests
 
     #endregion
 
-    #region Pausing
+    #region Suspending
 
     [Fact]
-    public void WithoutAnApiKey_ItIsNotPaused()
-    {
-        using var harness = new ServiceHarness(new() { ApiKey = null });
-
-        Assert.Same(MetadataProviderPauseStatus.NotPaused, harness.Get<TvdbMetadataProvider>().PauseStatus);
-    }
-
-    [Fact]
-    public void WithAKey_ItIsNotPaused()
+    public void SavingTheSettings_ResumesARefusedKey()
     {
         using var harness = new ServiceHarness();
-
-        Assert.Same(MetadataProviderPauseStatus.NotPaused, harness.Get<TvdbMetadataProvider>().PauseStatus);
-    }
-
-    [Fact]
-    public void WhileTheRateLimiterIsPaused_ItIsPausedUntilItResumes()
-    {
-        using var harness = new ServiceHarness();
-        var provider = harness.Get<TvdbMetadataProvider>();
-        var raised = 0;
-        provider.PauseStatusChanged += (_, _) => raised++;
-
-        harness.RateLimiter.Pause(TimeSpan.FromMinutes(5), TvdbApiClient.RateLimitedReason);
-
-        var status = provider.PauseStatus;
-        Assert.True(status.IsPaused);
-        Assert.Equal(TvdbApiClient.RateLimitedReason, status.Reason);
-        Assert.InRange(status.ResumesAt!.Value, DateTime.UtcNow.AddMinutes(4), DateTime.UtcNow.AddMinutes(6));
-        Assert.Equal(1, raised);
-
-        harness.RateLimiter.Resume();
-
-        Assert.False(provider.PauseStatus.IsPaused);
-        Assert.Equal(2, raised);
-    }
-
-    [Fact]
-    public void SavingTheSettings_LiftsAPauseForARefusedKey()
-    {
-        using var harness = new ServiceHarness();
-        var provider = harness.Get<TvdbMetadataProvider>();
-        var raised = 0;
-        provider.PauseStatusChanged += (_, _) => raised++;
-        harness.RateLimiter.Pause(TimeSpan.FromHours(1), TvdbApiClient.RefusedCredentialsReason);
+        _ = harness.Get<TvdbMetadataProvider>();
+        harness.RateLimiter.RefuseCredentials(("api-key", null));
 
         harness.ConfigurationService.RaiseSaved();
 
-        Assert.False(provider.PauseStatus.IsPaused);
-        Assert.True(raised >= 2);
+        Assert.Empty(harness.SuspensionReporter.Active);
+        Assert.Null(harness.RateLimiter.RefusedCredentials);
     }
 
     [Fact]
     public void SavingTheSettings_LeavesARateLimitAlone()
     {
         using var harness = new ServiceHarness();
-        var provider = harness.Get<TvdbMetadataProvider>();
-        harness.RateLimiter.Pause(TimeSpan.FromMinutes(5), TvdbApiClient.RateLimitedReason);
+        _ = harness.Get<TvdbMetadataProvider>();
+        harness.RateLimiter.NotifyRateLimited(TimeSpan.FromMinutes(5));
 
         harness.ConfigurationService.RaiseSaved();
 
-        Assert.True(provider.PauseStatus.IsPaused);
+        Assert.Equal([SuspensionKind.RateLimited], harness.SuspensionReporter.Active.Keys);
     }
 
     #endregion

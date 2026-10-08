@@ -40,15 +40,15 @@ namespace Shoko.Plugin.Tvdb.Metadata;
 ///   here; the provider fetches from TvDB and writes into the core's
 ///   stores, and the core reads the shows back from them. Without an API key
 ///   the provider says it is not configured. While TvDB refused the key,
-///   rate limits the plugin or failed, it says it is paused, and the core
-///   holds its jobs back.
+///   rate limits the plugin or failed, <see cref="TvdbSuspensionProvider"/>
+///   reports a suspension, and the core holds its jobs back.
 /// </para>
 /// <para>
 ///   It also refreshes TvDB's people, characters and companies one at a
 ///   time, a company as a studio or a network by how a show named it.
 /// </para>
 /// </remarks>
-public sealed class TvdbMetadataProvider : IMetadataSeriesLinkingProvider, IMetadataAutoLinkingProvider, IMetadataImageProvider, IMetadataEntityProvider, IPausableMetadataProvider, IMetadataProvider<TvdbConfiguration>, IDisposable
+public sealed class TvdbMetadataProvider : IMetadataSeriesLinkingProvider, IMetadataAutoLinkingProvider, IMetadataImageProvider, IMetadataEntityProvider, IMetadataProvider<TvdbConfiguration>, IDisposable
 {
     private readonly TvdbRefreshService _refreshService;
 
@@ -76,7 +76,7 @@ public sealed class TvdbMetadataProvider : IMetadataSeriesLinkingProvider, IMeta
     /// <param name="linkingService">Matches episodes and records links.</param>
     /// <param name="imageService">Hands out the images.</param>
     /// <param name="store">The plugin's store, cleaned up after a purge.</param>
-    /// <param name="apiClient">The TvDB client, whose key makes up the configuration and whose rate limiter makes up the pause.</param>
+    /// <param name="apiClient">The TvDB client, whose key makes up the configuration and whose rate limiter reports the suspensions.</param>
     /// <param name="configurationProvider">The plugin's configuration, watched for a new key.</param>
     /// <param name="metadataService">The core's metadata service, for the AniDB anime to link.</param>
     /// <param name="logger">The logger.</param>
@@ -101,7 +101,6 @@ public sealed class TvdbMetadataProvider : IMetadataSeriesLinkingProvider, IMeta
         _configurationProvider = configurationProvider;
         _metadataService = metadataService;
         _logger = logger;
-        _apiClient.RateLimiter.PauseStateChanged += OnPauseStateChanged;
         _configurationProvider.Saved += OnConfigurationSaved;
     }
 
@@ -236,38 +235,12 @@ public sealed class TvdbMetadataProvider : IMetadataSeriesLinkingProvider, IMeta
 
     #endregion
 
-    #region Pausing
+    #region Suspending
 
-    /// <summary>
-    /// Paused while the rate limiter holds a pause: after TvDB rate limited
-    /// the plugin, answered with a server error or refused the key. A missing
-    /// key is not a pause but <see cref="IsConfigured"/>.
-    /// </summary>
-    public MetadataProviderPauseStatus PauseStatus
-    {
-        get
-        {
-            var rateLimiter = _apiClient.RateLimiter;
-            if (rateLimiter.ResumesAt is { } resumesAt && rateLimiter.PauseReason is { } reason)
-                return new() { IsPaused = true, Reason = reason, ResumesAt = resumesAt.UtcDateTime };
-
-            return MetadataProviderPauseStatus.NotPaused;
-        }
-    }
-
-    /// <inheritdoc/>
-    public event EventHandler? PauseStatusChanged;
-
-    private void OnPauseStateChanged(object? sender, EventArgs eventArgs)
-        => PauseStatusChanged?.Invoke(this, EventArgs.Empty);
-
-    // A saved configuration may replace a key TvDB refused, which lifts
-    // the pause the refusal set; lifting it raises the change.
+    // A saved configuration may replace a key TvDB refused, so the refusal
+    // is forgotten and its suspension resumed.
     private void OnConfigurationSaved(object? sender, ConfigurationSavedEventArgs<TvdbConfiguration> eventArgs)
-    {
-        if (string.Equals(_apiClient.RateLimiter.PauseReason, TvdbApiClient.RefusedCredentialsReason, StringComparison.Ordinal))
-            _apiClient.RateLimiter.Resume();
-    }
+        => _apiClient.RateLimiter.ForgetRefusedCredentials();
 
     #endregion
 
@@ -473,11 +446,10 @@ public sealed class TvdbMetadataProvider : IMetadataSeriesLinkingProvider, IMeta
     #endregion
 
     /// <summary>
-    /// Stops listening for pauses and configuration changes.
+    /// Stops listening for configuration changes.
     /// </summary>
     public void Dispose()
     {
-        _apiClient.RateLimiter.PauseStateChanged -= OnPauseStateChanged;
         _configurationProvider.Saved -= OnConfigurationSaved;
     }
 }

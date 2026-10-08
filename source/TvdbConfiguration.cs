@@ -13,7 +13,7 @@ namespace Shoko.Plugin.Tvdb;
 ///   property fails configuration validation, which stops the whole plugin from
 ///   loading, so the missing credential is checked for at runtime instead: the
 ///   plugin stays loaded, the core keeps reading what is already stored, and
-///   the provider reports itself paused, so the core holds its jobs back.
+///   the provider reports itself not configured, so the core holds its jobs back.
 /// </para>
 /// <para>
 ///   There is no switch here for whether the provider answers either. That
