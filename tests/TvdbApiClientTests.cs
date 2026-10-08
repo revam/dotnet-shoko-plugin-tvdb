@@ -95,6 +95,29 @@ public class TvdbApiClientTests
     }
 
     [Fact]
+    public async Task ARefusedSubscriberPin_IsLeftOutAndNotTriedAgain()
+    {
+        var handler = new StubHttpMessageHandler()
+            .Enqueue(HttpStatusCode.Unauthorized, Fixture.Read("login-failure.json"))
+            .Enqueue(HttpStatusCode.OK, Fixture.Read("login-success.json"))
+            .Enqueue(HttpStatusCode.OK, Fixture.Read("series-81797-extended.json"))
+            .Enqueue(HttpStatusCode.Unauthorized, "")
+            .Enqueue(HttpStatusCode.OK, Fixture.Read("login-success.json"))
+            .Enqueue(HttpStatusCode.OK, Fixture.Read("series-81797-extended.json"));
+        var logger = new RecordingLogger<TvdbApiClient>();
+        var client = CreateClient(handler, subscriberPin: "WRONG", logger: logger);
+
+        Assert.Equal(81797, (await client.GetSeries(81797, TestContext.Current.CancellationToken))?.ID);
+        Assert.Equal(81797, (await client.GetSeries(81797, TestContext.Current.CancellationToken))?.ID);
+
+        Assert.Contains("\"pin\":\"WRONG\"", handler.Requests[0].Body, StringComparison.Ordinal);
+        Assert.DoesNotContain("pin", handler.Requests[1].Body, StringComparison.Ordinal);
+        Assert.DoesNotContain("pin", handler.Requests[4].Body, StringComparison.Ordinal);
+        Assert.Single(logger.Entries, level => level is Microsoft.Extensions.Logging.LogLevel.Warning);
+        Assert.False(client.RateLimiter.IsPaused);
+    }
+
+    [Fact]
     public async Task TheTokenIsCached_SoASecondRequestDoesNotLogInAgain()
     {
         var handler = LoggedIn()

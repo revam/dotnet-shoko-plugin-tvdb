@@ -43,12 +43,12 @@ public class TvdbConfiguration : IMetadataProviderConfiguration
 
     /// <summary>
     /// A TvDB subscriber PIN, sent as <c>pin</c> alongside the API key.
-    /// Only a user-supported key needs one, since it authenticates as the
-    /// subscriber whose PIN comes with it; a licensed key, as official builds
-    /// ship, needs none.
+    /// Optional with the licensed key official builds ship, whose terms ask
+    /// its users to support TvDB, and needed with a user-supported key. A PIN
+    /// TvDB refuses is logged and left out, so it never stops the plugin.
     /// </summary>
     [DataType(DataType.Password)]
-    [Display(Name = "Subscriber PIN", Description = "Optional. Only needed with a user-supported API key; leave empty on an official build. The PIN is on your TvDB account's dashboard.")]
+    [Display(Name = "Subscriber PIN", Description = "Optional. This plugin uses Shoko's licensed TvDB key. If you use it, please support TvDB: subscribe at https://thetvdb.com/subscribe and enter the PIN from your account's dashboard here, or add and update series data at https://thetvdb.com.")]
     public string? SubscriberPin { get; set; }
 
     #endregion

@@ -14,10 +14,10 @@ internal static class Constants
     /// </summary>
     /// <remarks>
     /// TvDB issues keys per project, not to individual users. A licensed
-    /// key authenticates on its own, so an official build needs neither a key
-    /// nor a subscriber PIN from its user; a PIN only matters for a
-    /// user-supported key, which authenticates as the subscriber it comes
-    /// with. A key embedded in a binary can be read back out of it, so this is
+    /// key authenticates on its own, so an official build needs no key from
+    /// its user and takes a subscriber PIN only as their support for TvDB;
+    /// a user-supported key needs one, as it authenticates as the subscriber
+    /// it comes with. A key embedded in a binary can be read back out of it, so this is
     /// kept out of the tree, not out of the DLL.
     /// <br/><br/>
     /// The comparison against the placeholder deliberately lives in

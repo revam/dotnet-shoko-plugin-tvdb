@@ -280,7 +280,7 @@ deletes the old file.
 
 ## Credentials
 
-**An official build needs no API key and no PIN.** It ships a licensed
+**An official build needs no API key, and the PIN is optional.** It ships a licensed
 TvDB project key, which the release workflow stamps into
 `Constants.ProjectApiKey` from the `TVDB_PROJECT_KEY` secret. A licensed key
 authenticates on its own, so a user of an official build sets nothing.
@@ -290,12 +290,20 @@ setting is for a build from source or a fork, which has no key stamped into
 it: register the fork as a project at <https://thetvdb.com/api-information>
 and paste its key there. A key in the setting wins over a stamped one.
 
-The **Subscriber PIN** setting is optional. It only matters for a
-user-supported key, which authenticates as the TvDB subscriber whose PIN
-comes with it (found under the account's dashboard after subscribing at
-<https://thetvdb.com/subscribe>). With a licensed key, leave it empty. When no
-PIN is set, the `pin` field is left out of the login body entirely, since
-TvDB rejects an empty one.
+**Please support TvDB.** The licensed key is Shoko's, and TvDB's terms for it
+ask the people using it to give something back. If you use this plugin,
+subscribe at <https://thetvdb.com/subscribe> and enter your PIN in the
+**Subscriber PIN** setting, or add and update series data at
+<https://thetvdb.com>. While no PIN is set, the plugin says so once in the log
+at start-up.
+
+The **Subscriber PIN** setting is optional, and found under the account's
+dashboard after subscribing. A user-supported key needs it, since it
+authenticates as the subscriber whose PIN comes with it. When no PIN is set,
+the `pin` field is left out of the login body entirely, since TvDB rejects an
+empty one. A PIN TvDB refuses is logged as a warning and the plugin logs in
+with the key alone, not trying that PIN again until the key or PIN is
+changed.
 
 A key embedded in a binary can be read back out of it. The stamped key stays
 out of the source tree, not out of the hands of anyone holding the DLL.
@@ -305,7 +313,7 @@ out of the source tree, not out of the hands of anyone holding the DLL.
 | Setting | Default | What it does |
 |---|---|---|
 | API Key | *(none)* | For a build from source or a fork: its own TvDB project key. Official builds ship one, and a key set here wins over it. |
-| Subscriber PIN | *(none)* | Optional. Only for a user-supported key; leave it empty with a licensed one. |
+| Subscriber PIN | *(none)* | Optional. Your TvDB subscriber PIN, to support TvDB; needed with a user-supported key. A refused PIN is left out. |
 | Search Result Limit | `10` | How many search hits to judge per title when auto-linking. |
 | Consider Existing Other Links | off | Leave out episodes another anime is linked to when matching. |
 | Download All Titles | off | Keep the show's names in every language, not only in the series title language order. Episode names never widen. See [Languages](#languages). |

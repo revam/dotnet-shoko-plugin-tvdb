@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Shoko.Abstractions.Config;
 using Shoko.Abstractions.Core.Services;
 using Shoko.Abstractions.Metadata;
 using Shoko.Abstractions.Metadata.CrossReferences;
@@ -18,7 +19,8 @@ namespace Shoko.Plugin.Tvdb.Services;
 
 /// <summary>
 /// The little the plugin does on its own at start-up: registering the image
-/// template, and once the server has started and after an upgrade,
+/// template, asking users without a subscriber PIN to support TvDB, and once
+/// the server has started and after an upgrade,
 /// refreshing every linked show once and dropping the file the shows used to
 /// be kept in.
 /// </summary>
@@ -28,6 +30,7 @@ namespace Shoko.Plugin.Tvdb.Services;
 /// <param name="crossReferences">The core's store of links, asked whether anything is linked.</param>
 /// <param name="refreshService">The core's refresh service.</param>
 /// <param name="applicationPaths">The server's directories, where the old file lived.</param>
+/// <param name="configurationProvider">The plugin's settings, read for the subscriber PIN.</param>
 /// <param name="logger">The logger.</param>
 public sealed class TvdbBackgroundService(
     ISystemService systemService,
@@ -36,6 +39,7 @@ public sealed class TvdbBackgroundService(
     IMetadataCrossReferenceStore crossReferences,
     IMetadataRefreshService refreshService,
     IApplicationPaths applicationPaths,
+    ConfigurationProvider<TvdbConfiguration> configurationProvider,
     ILogger<TvdbBackgroundService> logger
 ) : BackgroundService
 {
@@ -51,9 +55,32 @@ public sealed class TvdbBackgroundService(
             logger.LogWarning(ex, "Unable to register the TvDB image template URL.");
         }
 
+        AskForSupport();
+
         await WaitForStart(stoppingToken).ConfigureAwait(false);
         await RefreshIfNothingStored(stoppingToken).ConfigureAwait(false);
         RemoveOldStore();
+    }
+
+    /// <summary>
+    /// Logs, once per start, a request to support TvDB when no subscriber PIN
+    /// is set, as the terms of the licensed key ask of its users.
+    /// </summary>
+    private void AskForSupport()
+    {
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(configurationProvider.Load().SubscriberPin))
+                return;
+
+            logger.LogInformation(
+                "The TvDB plugin uses Shoko's licensed TvDB key. If you use it, please support TvDB by subscribing at https://thetvdb.com/subscribe and entering your PIN in the plugin's settings, or by adding and updating series data at https://thetvdb.com."
+            );
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "Unable to read the TvDB settings.");
+        }
     }
 
     /// <summary>

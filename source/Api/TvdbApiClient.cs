@@ -19,7 +19,7 @@ namespace Shoko.Plugin.Tvdb.Api;
 /// </summary>
 /// <remarks>
 /// Unlike Fanart.tv, TvDB does not take the key on every request. It trades
-/// the key (and, for a user-supported key, the subscriber PIN) for a bearer
+/// the key (and the subscriber PIN, when one is set) for a bearer
 /// token at <c>POST /v4/login</c>, and the token is what every later request
 /// carries. The token is good for roughly a month, so it is cached here rather
 /// than fetched per call, and re-fetched exactly once when a request comes back
@@ -80,6 +80,12 @@ public sealed class TvdbApiClient(
     /// the pause that refusal set lasts.
     /// </summary>
     private (string ApiKey, string? Pin)? _refusedCredentials;
+
+    /// <summary>
+    /// The key and PIN whose login TvDB refused while the key alone was
+    /// taken, so later logins skip the PIN until either is changed.
+    /// </summary>
+    private (string ApiKey, string? Pin)? _refusedPin;
 
     /// <summary>
     /// Whether an API key is available at all. Nothing can be fetched without
@@ -417,7 +423,7 @@ public sealed class TvdbApiClient(
             if (_token is { } current && _tokenCredentials == credentials && !(forceRefresh && ReferenceEquals(current, cached)))
                 return current;
 
-            var token = await Login(apiKey, pin, cancellationToken).ConfigureAwait(false);
+            var token = await LoginWithFallback(apiKey, pin, cancellationToken).ConfigureAwait(false);
             if (token is null)
             {
                 _refusedCredentials = credentials;
@@ -434,7 +440,42 @@ public sealed class TvdbApiClient(
         }
     }
 
-    private async Task<string?> Login(string apiKey, string? pin, CancellationToken cancellationToken)
+    /// <summary>
+    /// Logs in with the key and PIN, and when TvDB refuses that, once more
+    /// with the key alone, so a wrong PIN never stops the plugin.
+    /// </summary>
+    /// <param name="apiKey">The API key.</param>
+    /// <param name="pin">The subscriber PIN, or <c>null</c> when none is set.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The bearer token, or <c>null</c> when TvDB refused the key.</returns>
+    private async Task<string?> LoginWithFallback(string apiKey, string? pin, CancellationToken cancellationToken)
+    {
+        if (pin is not null && _refusedPin != (apiKey, pin))
+        {
+            var (token, refused) = await Login(apiKey, pin, cancellationToken).ConfigureAwait(false);
+            if (!refused)
+                return token;
+
+            logger.LogWarning("TvDB refused the subscriber PIN. Logging in without it; check the PIN in the TvDB plugin's settings.");
+            _refusedPin = (apiKey, pin);
+        }
+
+        var (keyOnlyToken, keyRefused) = await Login(apiKey, null, cancellationToken).ConfigureAwait(false);
+        if (keyRefused)
+            logger.LogError("TvDB refused the API key. Check the key and, for a user-supported key, the subscriber PIN.");
+
+        return keyOnlyToken;
+    }
+
+    /// <summary>
+    /// Sends one login request.
+    /// </summary>
+    /// <param name="apiKey">The API key.</param>
+    /// <param name="pin">The subscriber PIN to send, or <c>null</c> to leave it out.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The bearer token, if any, and whether TvDB refused the credentials.</returns>
+    /// <exception cref="TvdbApiException">Thrown when TvDB answers with anything other than success or a refusal.</exception>
+    private async Task<(string? Token, bool Refused)> Login(string apiKey, string? pin, CancellationToken cancellationToken)
     {
         await rateLimiter.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
@@ -446,11 +487,10 @@ public sealed class TvdbApiClient(
             using var response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
             if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
             {
-                // Logged once here rather than thrown; the request that asked
-                // throws instead, and the pause the refusal sets holds back
-                // the provider's jobs until it lapses or the key is changed.
-                logger.LogError("TvDB refused the API key{Pin}. Check the key and, for a user-supported key, the subscriber PIN.", pin is null ? " (no subscriber PIN was sent)" : " and subscriber PIN");
-                return null;
+                // Logged by the caller rather than thrown; the request that
+                // asked throws instead, and the pause the refusal sets holds
+                // back the provider's jobs until it lapses or the key is changed.
+                return (null, true);
             }
 
             if (!response.IsSuccessStatusCode)
@@ -470,10 +510,10 @@ public sealed class TvdbApiClient(
             if (envelope?.Data?.Token is not { Length: > 0 } token)
             {
                 logger.LogError("TvDB accepted the login request but returned no token.");
-                return null;
+                return (null, false);
             }
 
-            return token;
+            return (token, false);
         }
         finally
         {
