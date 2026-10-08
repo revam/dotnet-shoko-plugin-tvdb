@@ -9,6 +9,22 @@
   ],
   "releases": [
     {
+      "version": "1.2.1",
+      "tag": "v1.2.1",
+      "released_at": "2026-10-08T02:22:27.0947266Z",
+      "channel": "Stable",
+      "release_notes": "The plugin\u0027s configuration is now marked as a metadata provider configuration, so it registers with the provider rather than as a standalone configuration. Rebuilt against the abstractions \u00606.0.0-alpha.100\u0060 release, where the interfaces that tie a configuration to its provider moved into \u0060Shoko.Abstractions.Config\u0060.\n\nRequires Shoko Server with abstractions \u00606.0.0-alpha.100\u0060.",
+      "dependencies": [],
+      "archives": [
+        {
+          "runtime": "any",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/revam/dotnet-shoko-plugin-tvdb/releases/download/v1.2.1/TheTVDBMetadata-v1.2.1-any.zip",
+          "checksum": "sha256:4e27303480a2c933dd1cbe635ef1cb3b166fc4edc7f20a7802f5f8f897a9bd45"
+        }
+      ]
+    },
+    {
       "version": "1.2.0",
       "tag": "v1.2.0",
       "released_at": "2026-10-06T21:29:43.4896036Z",
