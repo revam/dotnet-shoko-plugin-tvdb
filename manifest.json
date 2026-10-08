@@ -9,6 +9,22 @@
   ],
   "releases": [
     {
+      "version": "1.3.0",
+      "tag": "v1.3.0",
+      "released_at": "2026-10-08T23:04:11.4351251Z",
+      "channel": "Stable",
+      "release_notes": "The plugin now asks users to support TVDB. It uses Shoko\u0027s licensed TVDB key, so the subscriber PIN setting and a start-up note point to subscribing at https://thetvdb.com/subscribe or adding and updating series data on https://thetvdb.com. A PIN that TVDB refuses is dropped with a warning instead of blocking the login.\n\nRate limits, server errors and a refused API key are reported as suspensions, so the server and the Web UI can show why TVDB\u0027s jobs are waiting. A refused key now holds until the settings are saved, other credentials are tried, or an admin lifts it, instead of retrying after an hour.\n\nBuilt against the abstractions \u00606.0.0-alpha.101\u0060 release.\n\nRequires Shoko Server with abstractions \u00606.0.0-alpha.101\u0060.",
+      "dependencies": [],
+      "archives": [
+        {
+          "runtime": "any",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/revam/dotnet-shoko-plugin-tvdb/releases/download/v1.3.0/TheTVDBMetadata-v1.3.0-any.zip",
+          "checksum": "sha256:7b00f84d8dd44a8941a90be6532680b81408fb3b18fd5918ef4fa8dbe6c6d4fe"
+        }
+      ]
+    },
+    {
       "version": "1.2.1",
       "tag": "v1.2.1",
       "released_at": "2026-10-08T02:22:27.0947266Z",
