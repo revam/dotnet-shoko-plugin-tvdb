@@ -6,7 +6,7 @@
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <Title>Shoko TvDB Metadata</Title>
         <Authors>revam</Authors>
-        <Version>1.2.1</Version>
+        <Version>1.3.0</Version>
         <Configurations>Debug;Release</Configurations>
         <Platforms>AnyCPU;x64</Platforms>
         <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
