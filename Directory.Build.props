@@ -3,6 +3,6 @@
         <!-- The one place the abstractions version is spelled. Both the plugin
              and the tests reference the same snapshot, so that the tests run
              against exactly the contract the plugin was built for. -->
-        <ShokoAbstractionsVersion>6.0.0-alpha.99</ShokoAbstractionsVersion>
+        <ShokoAbstractionsVersion>6.0.0-alpha.100</ShokoAbstractionsVersion>
     </PropertyGroup>
 </Project>
