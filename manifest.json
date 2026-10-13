@@ -1,7 +1,7 @@
 {
   "id": "12126642-8c32-455f-aca1-e1a2f7b35a8c",
   "name": "TvDB",
-  "overview": "Reference implementation of Shoko's metadata provider contract, supplying series, season and episode metadata from TvDB's APIv4 for the `tvdb` metadata source.",
+  "overview": "Supplies series, season and episode metadata from TvDB's APIv4 for the `tvdb` metadata source, through Shoko's metadata provider contract.",
   "authors": "revam",
   "repository_url": "https://github.com/revam/dotnet-shoko-plugin-tvdb",
   "tags": [
