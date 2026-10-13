@@ -3,12 +3,11 @@
 Supplies TvDB v4 series, season and episode metadata to Shoko through the
 metadata provider contract, under the `tvdb` metadata source.
 
-This is a **reference implementation** as much as a plugin. It shows a
-third-party provider doing the whole job on the contract: refreshing into the
-core's stores, offering images, pausing while its source will not take work,
-searching, auto-linking and matching episodes, and storing a source's other
-episode orderings as global orderings. What it does, it does properly: real
-authentication, real rate limiting, and tests.
+It does the whole job on the contract: refreshing into the core's stores,
+offering images, pausing while its source will not take work, searching,
+auto-linking and matching episodes, and storing a source's other episode
+orderings as global orderings, with real authentication, real rate limiting,
+and tests.
 
 ## How it fits the core
 
