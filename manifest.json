@@ -9,6 +9,22 @@
   ],
   "releases": [
     {
+      "version": "1.3.1",
+      "tag": "v1.3.1",
+      "released_at": "2026-10-13T19:40:18.7006284Z",
+      "channel": "Stable",
+      "release_notes": "Rebuilt against the abstractions \u00606.0.0-alpha.104\u0060 release.\n\nRequires Shoko Server with abstractions \u00606.0.0-alpha.104\u0060.",
+      "dependencies": [],
+      "archives": [
+        {
+          "runtime": "any",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/revam/dotnet-shoko-plugin-tvdb/releases/download/v1.3.1/TheTVDBMetadata-v1.3.1-any.zip",
+          "checksum": "sha256:2031198009e229a9b77ecaff73a276e998f869d65301f60a48ec1cfdbc87f155"
+        }
+      ]
+    },
+    {
       "version": "1.3.0",
       "tag": "v1.3.0",
       "released_at": "2026-10-08T23:04:11.4351251Z",
