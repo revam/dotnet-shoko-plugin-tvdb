@@ -28,7 +28,7 @@ namespace Shoko.Plugin.Tvdb;
 /// </para>
 /// </remarks>
 [Display(Name = "TvDB")]
-public class TvdbConfiguration : IMetadataProviderConfiguration
+public class TvdbConfiguration : IMetadataProviderConfiguration, IPluginConfiguration
 {
     #region Credentials
 

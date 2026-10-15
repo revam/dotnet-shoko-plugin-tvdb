@@ -24,7 +24,7 @@ namespace Shoko.Plugin.Tvdb;
 /// <see cref="RegisterServices(IServiceCollection, IApplicationPaths)"/>
 /// instead.
 /// </remarks>
-public class Plugin : IPlugin, IPluginServiceRegistration
+public class Plugin : IPlugin<TvdbConfiguration>, IPluginServiceRegistration
 {
     /// <summary>
     /// The embedded resource of the plugin's thumbnail.
