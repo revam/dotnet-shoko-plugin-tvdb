@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using Shoko.Abstractions.Extensions;
 using Shoko.Abstractions.Metadata;
 using Shoko.Abstractions.Metadata.Enums;
 using Shoko.Abstractions.Metadata.Search;
@@ -159,6 +160,7 @@ public static class TvdbEntityMapper
             EndDate = status is ReleaseStatus.Finished && ParseDate(series.LastAired) is { } lastAired ? new PartialDateOnly(lastAired) : null,
             ReleaseStatus = status,
             OriginalLanguageCode = TvdbUtility.ToLanguageCode(series.OriginalLanguage),
+            OriginalCountryCode = TvdbUtility.ToCountryCode(series.OriginalCountry),
             Popularity = series.Score is > 0 ? series.Score : null,
             Resources = SeriesResources(series),
             CrossSourceIDs = SeriesCrossSourceIDs(series),
@@ -987,7 +989,7 @@ public static class TvdbEntityMapper
         {
             ID = TvdbUtility.CharacterGuid(credit.ID),
             Name = name,
-            AlternativeNames = CharacterAliases(credit, name),
+            Synonyms = CharacterAliases(credit, name),
             Resources = CharacterPage(credit, slug) is { } page
                 ? [new() { Type = ResourceType.Metadata, Name = "TvDB", Url = page, ID = TvdbUtility.FormatID(credit.ID) }]
                 : [],
@@ -1019,6 +1021,18 @@ public static class TvdbEntityMapper
 
     private static IReadOnlyList<MetadataNameData> CharacterAliases(TvdbCharacter credit, string name)
         => OtherNames((credit.Aliases ?? []).Select(alias => (alias.Language, alias.Name)), name);
+
+    // A person's name in each kept language, and always in their own, once per language.
+    private static List<MetadataNameData> OfficialNames(IEnumerable<TvdbStoredText> translations, IReadOnlyList<string>? titleLanguages, string? originalLanguageCode)
+        => [
+            .. translations
+                .Select(translation => new MetadataNameData { Name = translation.Value, LanguageCode = TvdbUtility.ToLanguageCode(translation.Language) })
+                .Where(translation => translation.LanguageCode is not null)
+                .Where(translation => titleLanguages is null ||
+                    translation.LanguageCode == originalLanguageCode ||
+                    titleLanguages.Any(language => TvdbUtility.ToLanguageCode(language) == translation.LanguageCode))
+                .DistinctBy(translation => translation.LanguageCode),
+        ];
 
     // Other names, each once per language, leaving out the name the person or
     // character is stored under. TvDB repeats a person's aliases without
@@ -1064,8 +1078,8 @@ public static class TvdbEntityMapper
     /// What the plugin keeps of a person's own record.
     /// </summary>
     /// <remarks>
-    /// The names are the person's aliases, their name in each language and
-    /// the aliases given with it; the biographies are the person's own and
+    /// The names are the person's aliases and the aliases given with their
+    /// name in each language, kept apart from those names; the biographies are the person's own and
     /// their overview in each language. Blank ones are left out.
     /// </remarks>
     /// <param name="person">The record as TvDB returned it.</param>
@@ -1083,7 +1097,7 @@ public static class TvdbEntityMapper
         IEnumerable<(string? Language, string? Value)> names =
         [
             .. (person.Aliases ?? []).Select(alias => (alias.Language, alias.Name)),
-            .. nameTranslations.Select(translation => (translation.Language, translation.Name)),
+            .. nameTranslations.Where(translation => translation.IsAlias is true).Select(translation => (translation.Language, translation.Name)),
             .. nameTranslations.SelectMany(translation => (translation.Aliases ?? []).Select(alias => (translation.Language, (string?)alias))),
             .. (person.Translations?.Aliases ?? []).Select(alias => ((string?)null, (string?)alias)),
         ];
@@ -1102,7 +1116,9 @@ public static class TvdbEntityMapper
             Birth = string.IsNullOrWhiteSpace(person.Birth) ? null : person.Birth.Trim(),
             Death = string.IsNullOrWhiteSpace(person.Death) ? null : person.Death.Trim(),
             Gender = person.Gender,
+            BirthPlace = string.IsNullOrWhiteSpace(person.BirthPlace) ? null : person.BirthPlace.Trim(),
             Names = StoredTexts(names),
+            Translations = StoredTexts(nameTranslations.Where(translation => translation.IsAlias is not true).Select(translation => (translation.Language, translation.Name))),
             Biographies = StoredTexts(biographies),
             RemoteIDs =
             [
@@ -1129,8 +1145,10 @@ public static class TvdbEntityMapper
     /// Adds what a person's own record says to what their credits said.
     /// </summary>
     /// <remarks>
-    /// The record's name wins, and the credited name, the aliases and the
-    /// translated names become other names. The overview is the
+    /// The record's name wins, its name in each kept language and in the
+    /// person's own language are official names, and the credited name and
+    /// the aliases are synonyms. Where they were born gives their country and
+    /// language. The overview is the
     /// biography in the first of <paramref name="languages"/> that has one,
     /// then English, then any. The links are the credits' own, then the
     /// person's page and their IDs elsewhere. A record TvDB did not have
@@ -1139,9 +1157,15 @@ public static class TvdbEntityMapper
     /// <param name="creator">The person as their credits have them.</param>
     /// <param name="person">What the plugin keeps of the person's record, if anything.</param>
     /// <param name="languages">The three-letter codes to choose the biography by, in order.</param>
+    /// <param name="titleLanguages">The three-letter codes to keep the person's names in, or <c>null</c> for every one.</param>
     /// <returns>The person to store.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="creator"/> is <see langword="null"/>.</exception>
-    public static MetadataCreatorData WithPersonDetails(MetadataCreatorData creator, TvdbStoredPerson? person, IReadOnlyList<string>? languages = null)
+    public static MetadataCreatorData WithPersonDetails(
+        MetadataCreatorData creator,
+        TvdbStoredPerson? person,
+        IReadOnlyList<string>? languages = null,
+        IReadOnlyList<string>? titleLanguages = null
+    )
     {
         ArgumentNullException.ThrowIfNull(creator);
 
@@ -1161,11 +1185,16 @@ public static class TvdbEntityMapper
             if (ToPersonResource(remote) is { } resource)
                 resources.Add(resource);
 
+        var country = LanguageExtensions.TryGetCountryCodeFromPlace(person.BirthPlace, out var countryCode) ? countryCode : null;
+        var languageCode = LanguageExtensions.GetLanguageCodeFromCountryCode(country);
         return creator with
         {
             Name = name,
+            OriginalCountryCode = country ?? creator.OriginalCountryCode,
+            OriginalLanguageCode = languageCode ?? creator.OriginalLanguageCode,
+            Titles = OfficialNames(person.Translations, titleLanguages, languageCode),
             Overview = ChooseBiography(person.Biographies, languages) ?? creator.Overview,
-            AlternativeNames = [.. creator.AlternativeNames.Concat(OtherNames(names, name)).Where(alias => !string.Equals(alias.Name, name, StringComparison.Ordinal)).DistinctBy(alias => (alias.LanguageCode, alias.Name))],
+            Synonyms = [.. creator.Synonyms.Concat(OtherNames(names, name)).Where(alias => !string.Equals(alias.Name, name, StringComparison.Ordinal)).DistinctBy(alias => (alias.LanguageCode, alias.Name))],
             Gender = ToPersonGender(person.Gender) is var gender and not PersonGender.Unknown ? gender : creator.Gender,
             BirthDay = ParseFuzzyDate(person.Birth) ?? creator.BirthDay,
             DeathDay = ParseFuzzyDate(person.Death) ?? creator.DeathDay,
@@ -1181,9 +1210,10 @@ public static class TvdbEntityMapper
     /// </summary>
     /// <param name="person">What the plugin keeps of the person's record, which TvDB had.</param>
     /// <param name="languages">The three-letter codes to choose the biography by, in order.</param>
+    /// <param name="titleLanguages">The three-letter codes to keep the person's names in, or <c>null</c> for every one.</param>
     /// <returns>The person to store.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="person"/> is <see langword="null"/>.</exception>
-    public static MetadataCreatorData ToCreatorData(TvdbStoredPerson person, IReadOnlyList<string>? languages = null)
+    public static MetadataCreatorData ToCreatorData(TvdbStoredPerson person, IReadOnlyList<string>? languages = null, IReadOnlyList<string>? titleLanguages = null)
     {
         ArgumentNullException.ThrowIfNull(person);
 
@@ -1193,7 +1223,7 @@ public static class TvdbEntityMapper
             Name = person.Name ?? string.Empty,
             Resources = [new() { Type = ResourceType.Metadata, Name = "TvDB", Url = TvdbUtility.PersonUrl(person.ID), ID = TvdbUtility.FormatID(person.ID) }],
         };
-        return WithPersonDetails(creator, person, languages);
+        return WithPersonDetails(creator, person, languages, titleLanguages);
     }
 
     /// <summary>

@@ -69,7 +69,7 @@ public class TvdbPeopleServiceTests
         await harness.Refresh();
 
         var oda = Creator(harness, 604);
-        Assert.Equal("Eiichiro Oda", oda.Name);
+        Assert.Equal("Eiichiro Oda", oda.DefaultTitle.Value);
         Assert.Null(oda.BirthDay);
         Assert.Equal(["https://thetvdb.com/dereferrer/people/604"], oda.Resources.Select(resource => resource.Url));
         Assert.False(harness.Store.GetPerson(604)!.Found);
@@ -175,7 +175,7 @@ public class TvdbPeopleServiceTests
 
         Assert.Equal(["people/412417/extended?meta=translations"], PeoplePaths(harness));
         Assert.Null(harness.Store.GetPerson(412417));
-        Assert.Equal("Mayumi Tanaka", Creator(harness, 412417).Name);
+        Assert.Equal("Mayumi Tanaka", Creator(harness, 412417).DefaultTitle.Value);
         Assert.Equal(2, harness.People.GetCast(TvdbUtility.SeriesGuid(81797)).Count);
     }
 

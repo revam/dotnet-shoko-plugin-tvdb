@@ -467,7 +467,7 @@ public class TvdbMetadataProviderTests
         Assert.True(await harness.Get<TvdbMetadataProvider>().RefreshEntity(creatorID, TestContext.Current.CancellationToken));
 
         var creator = harness.People.GetCreator(creatorID);
-        Assert.Equal("Mayumi Tanaka", creator?.Name);
+        Assert.Equal("Mayumi Tanaka", creator?.DefaultTitle.Value);
         Assert.Equal(new FuzzyDateOnly(1955, 1, 15), creator?.BirthDay);
         Assert.Contains("https://thetvdb.com/people/412417-mayumi-tanaka", ((IWithResources)creator!).Resources.Select(resource => resource.Url));
         Assert.True(harness.Store.GetPerson(412417)?.Found);
@@ -488,7 +488,7 @@ public class TvdbMetadataProviderTests
         Assert.True(await harness.Get<TvdbMetadataProvider>().RefreshEntity(characterID, TestContext.Current.CancellationToken));
 
         var character = harness.People.GetCharacter(characterID);
-        Assert.Equal("Monkey D. Luffy", character?.Name);
+        Assert.Equal("Monkey D. Luffy", character?.DefaultTitle.Value);
         Assert.Equal(["https://thetvdb.com/series/one-piece/people/65111900"], ((IWithResources)character!).Resources.Select(resource => resource.Url));
         Assert.Equal("person/412417/65afe1871bc9d.jpg", harness.Store.GetPortrait(characterID));
     }

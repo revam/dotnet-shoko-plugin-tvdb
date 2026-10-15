@@ -140,7 +140,7 @@ public sealed class TvdbRefreshService(
             foreach (var (creatorID, creator) in people.Creators)
             {
                 var person = TvdbUtility.TryGetID(creatorID, MetadataEntityType.Creator, out var peopleID) ? details.GetValueOrDefault(peopleID) : null;
-                creators.Add(TvdbEntityMapper.WithPersonDetails(creator, person, languages.Overviews));
+                creators.Add(TvdbEntityMapper.WithPersonDetails(creator, person, languages.Overviews, languages.SeriesTitles));
                 if (person?.Image is { Length: > 0 } image)
                     people.Portraits.TryAdd(creatorID, image);
             }
@@ -235,7 +235,8 @@ public sealed class TvdbRefreshService(
         var person = TvdbEntityMapper.ToStoredPerson(remote, now);
         person.ID = peopleID;
         store.SavePerson(person);
-        var creator = TvdbEntityMapper.ToCreatorData(person, TvdbUtility.ToTvdbLanguageCodes(textManager.GetLanguageOrder(TextKind.Overview), null));
+        var languages = TvdbTextLanguages.From(configurationProvider.Load(), textManager, null);
+        var creator = TvdbEntityMapper.ToCreatorData(person, languages.Overviews, languages.SeriesTitles);
         store.People.SaveCreators([creator]);
         if (person.Image is { Length: > 0 } image)
             store.SavePortraits([new(creator.ID, image)]);

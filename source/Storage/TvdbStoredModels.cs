@@ -127,8 +127,17 @@ public sealed class TvdbStoredPerson
     /// <summary>TvDB's number for the person's gender.</summary>
     public int? Gender { get; set; }
 
-    /// <summary>The person's other names and translated names.</summary>
+    /// <summary>Where the person was born, as TvDB wrote it.</summary>
+    public string? BirthPlace { get; set; }
+
+    /// <summary>
+    /// The person's other names. A record kept before
+    /// <see cref="Translations"/> was has the translated names here too.
+    /// </summary>
     public List<TvdbStoredText> Names { get; set; } = [];
+
+    /// <summary>The person's name in each language, their official names.</summary>
+    public List<TvdbStoredText> Translations { get; set; } = [];
 
     /// <summary>The person's biographies and translated overviews.</summary>
     public List<TvdbStoredText> Biographies { get; set; } = [];

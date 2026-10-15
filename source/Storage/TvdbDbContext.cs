@@ -73,6 +73,7 @@ public class TvdbDbContext(DbContextOptions<TvdbDbContext> options) : DbContext(
             person.HasKey(row => row.ID);
             person.Property(row => row.ID).ValueGeneratedNever();
             person.ComplexCollection(row => row.Names, text => text.ToJson());
+            person.ComplexCollection(row => row.Translations, text => text.ToJson());
             person.ComplexCollection(row => row.Biographies, text => text.ToJson());
             person.ComplexCollection(row => row.RemoteIDs, remoteID => remoteID.ToJson());
         });

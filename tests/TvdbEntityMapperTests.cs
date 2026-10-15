@@ -105,7 +105,7 @@ public class TvdbEntityMapperTests
         Assert.Equal(AnimeType.TV, series.Type);
         Assert.Equal(new PartialDateOnly(new DateOnly(1999, 10, 20)), series.AirDate);
         Assert.Equal(ReleaseStatus.Releasing, series.ReleaseStatus);
-        Assert.Equal("ja", series.OriginalLanguageCode);
+        Assert.Equal(("ja", "JP"), (series.OriginalLanguageCode, series.OriginalCountryCode));
         Assert.Equal(3236299, series.Popularity);
         Assert.Equal(0, series.Rating);
     }
@@ -632,8 +632,8 @@ public class TvdbEntityMapperTests
         var people = TvdbEntityMapper.People(series);
 
         var luffy = people.Characters[TvdbUtility.CharacterGuid(65111900)];
-        Assert.Equal([("en", "Straw Hat Luffy"), ("ja", "モンキー・D・ルフィ")], luffy.AlternativeNames.Select(alias => (alias.LanguageCode, alias.Name)));
-        Assert.Empty(people.Characters[TvdbUtility.CharacterGuid(7002)].AlternativeNames);
+        Assert.Equal([("en", "Straw Hat Luffy"), ("ja", "モンキー・D・ルフィ")], luffy.Synonyms.Select(alias => (alias.LanguageCode, alias.Name)));
+        Assert.Empty(people.Characters[TvdbUtility.CharacterGuid(7002)].Synonyms);
     }
 
     [Fact]

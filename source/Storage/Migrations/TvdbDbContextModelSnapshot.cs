@@ -40,6 +40,9 @@ namespace Shoko.Plugin.Tvdb.Storage.Migrations
                     b.Property<string>("Birth")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("BirthPlace")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Death")
                         .HasColumnType("TEXT");
 
@@ -105,6 +108,20 @@ namespace Shoko.Plugin.Tvdb.Storage.Migrations
 
                             b1
                                 .ToJson("RemoteIDs")
+                                .HasColumnType("TEXT");
+                        });
+
+                    b.ComplexCollection(typeof(List<Dictionary<string, object>>), "Translations", "Shoko.Plugin.Tvdb.Storage.TvdbStoredPerson.Translations#TvdbStoredText", b1 =>
+                        {
+                            b1.IsRequired();
+
+                            b1.Property<string>("Language");
+
+                            b1.Property<string>("Value")
+                                .IsRequired();
+
+                            b1
+                                .ToJson("Translations")
                                 .HasColumnType("TEXT");
                         });
 

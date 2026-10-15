@@ -43,10 +43,23 @@ public class TvdbPersonDetailsTests
         Assert.Null(creator.DeathDay);
         Assert.Equal(PersonGender.Female, creator.Gender);
         Assert.StartsWith("田中 真弓は、日本の声優", creator.Overview);
+        Assert.Equal([("en", "Tanaka Mayumi"), ("ja", "たなか まゆみ")], creator.Synonyms.Select(alias => (alias.LanguageCode, alias.Name)));
+    }
+
+    [Fact]
+    public void APersonsNameInEachLanguage_IsAnOfficialTitleAndTheirBirthPlaceGivesTheirOrigin()
+    {
+        var creator = Map(412417, "Mayumi Tanaka");
+
         Assert.Equal(
-            [("en", "Tanaka Mayumi"), ("ja", "たなか まゆみ"), ("ja", "田中真弓"), ("zh-hant", "田中真弓")],
-            creator.AlternativeNames.Select(alias => (alias.LanguageCode, alias.Name))
+            [("en", "Mayumi Tanaka"), ("ja", "田中真弓"), ("zh-hant", "田中真弓"), ("es", "Mayumi Tanaka")],
+            creator.Titles.Select(title => (title.LanguageCode, title.Name))
         );
+        Assert.Equal(("JP", "ja"), (creator.OriginalCountryCode, creator.OriginalLanguageCode));
+
+        // Kept languages limit the names, but the person's own language is always kept.
+        var limited = TvdbEntityMapper.WithPersonDetails(Credited(412417, "Mayumi Tanaka"), TvdbEntityMapper.ToStoredPerson(ReadPerson(412417), _fetchedAt), titleLanguages: ["eng"]);
+        Assert.Equal(["en", "ja"], limited.Titles.Select(title => title.LanguageCode));
     }
 
     [Fact]
@@ -86,7 +99,9 @@ public class TvdbPersonDetailsTests
         Assert.Null(creator.DeathDay);
         Assert.Equal(PersonGender.Male, creator.Gender);
         Assert.Null(creator.Overview);
-        Assert.Equal([("ja", "中井和哉")], creator.AlternativeNames.Select(alias => (alias.LanguageCode, alias.Name)));
+        Assert.Empty(creator.Synonyms);
+        Assert.Equal([("en", "Kazuya Nakai"), ("ja", "中井和哉")], creator.Titles.Select(title => (title.LanguageCode, title.Name)));
+        Assert.Null(creator.OriginalCountryCode);
     }
 
     [Fact]
@@ -132,7 +147,7 @@ public class TvdbPersonDetailsTests
         var creator = TvdbEntityMapper.WithPersonDetails(Credited(412417, "M. Tanaka"), TvdbEntityMapper.ToStoredPerson(ReadPerson(412417), _fetchedAt));
 
         Assert.Equal("Mayumi Tanaka", creator.Name);
-        Assert.Contains(creator.AlternativeNames, alias => alias is { Name: "M. Tanaka", LanguageCode: null });
+        Assert.Contains(creator.Synonyms, alias => alias is { Name: "M. Tanaka", LanguageCode: null });
     }
 
     [Fact]
@@ -150,7 +165,7 @@ public class TvdbPersonDetailsTests
 
         Assert.Equal(
             [("en", "Tanaka Mayumi"), ("ja", "たなか まゆみ"), (null, "M. Tanaka"), (null, "Mayu")],
-            creator.AlternativeNames.Select(alias => (alias.LanguageCode, alias.Name)).OrderBy(alias => alias.LanguageCode is null).ThenBy(alias => alias.LanguageCode, StringComparer.Ordinal).ThenBy(alias => alias.Name, StringComparer.Ordinal)
+            creator.Synonyms.Select(alias => (alias.LanguageCode, alias.Name)).OrderBy(alias => alias.LanguageCode is null).ThenBy(alias => alias.LanguageCode, StringComparer.Ordinal).ThenBy(alias => alias.Name, StringComparer.Ordinal)
         );
     }
 
