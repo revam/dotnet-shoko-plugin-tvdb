@@ -1,15 +1,29 @@
 {
   "id": "12126642-8c32-455f-aca1-e1a2f7b35a8c",
   "name": "TvDB",
-  "overview": "Supplies series, season and episode metadata from TvDB's APIv4 for the `tvdb` metadata source, through Shoko's metadata provider contract.",
+  "overview": "Supplies series, season and episode metadata from TvDB\u0027s APIv4 for the \u0060tvdb\u0060 metadata source, through Shoko\u0027s metadata provider contract.",
   "authors": "revam",
   "repository_url": "https://github.com/revam/dotnet-shoko-plugin-tvdb",
   "tags": [
     "service-registration"
   ],
-  "thumbnail_url": "https://raw.githubusercontent.com/revam/dotnet-shoko-plugin-tvdb/stable/source/Assets/thumbnail.svg",
-  "icon_url": "https://raw.githubusercontent.com/revam/dotnet-shoko-plugin-tvdb/stable/source/Assets/icon.svg",
   "releases": [
+    {
+      "version": "1.4.0",
+      "tag": "v1.4.0",
+      "released_at": "2026-10-15T09:40:09.7716038Z",
+      "channel": "Stable",
+      "release_notes": "Its settings are now the plugin\u0027s own settings, so a client can open them from the plugin. Otherwise behaves as before.\n\nRequires Shoko Server with abstractions \u00606.0.0-alpha.107\u0060.",
+      "dependencies": [],
+      "archives": [
+        {
+          "runtime": "any",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/revam/dotnet-shoko-plugin-tvdb/releases/download/v1.4.0/TvDB-v1.4.0-any.zip",
+          "checksum": "sha256:8b4631bff595bd2538ce9c44ce6e3c6b395d641a64fd47e5823c396ca5bb0799"
+        }
+      ]
+    },
     {
       "version": "1.3.1",
       "tag": "v1.3.1",
@@ -106,5 +120,7 @@
         }
       ]
     }
-  ]
+  ],
+  "thumbnail_url": "https://raw.githubusercontent.com/revam/dotnet-shoko-plugin-tvdb/stable/source/Assets/thumbnail.svg",
+  "icon_url": "https://raw.githubusercontent.com/revam/dotnet-shoko-plugin-tvdb/stable/source/Assets/icon.svg"
 }
