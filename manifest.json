@@ -9,6 +9,22 @@
   ],
   "releases": [
     {
+      "version": "1.5.0",
+      "tag": "v1.5.0",
+      "released_at": "2026-10-16T07:18:51.1699196Z",
+      "channel": "Stable",
+      "release_notes": "People are now named like every other entry: their name per language is an official title next to their main name, in the languages the server names people by, and their biographies are overviews per language, with the same one first on every refresh. Where a person was born is stored as their place of birth.\n\nRequires Shoko Server with abstractions \u00606.0.0-alpha.108\u0060.",
+      "dependencies": [],
+      "archives": [
+        {
+          "runtime": "any",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/revam/dotnet-shoko-plugin-tvdb/releases/download/v1.5.0/TvDB-v1.5.0-any.zip",
+          "checksum": "sha256:b7d6e2ad11fdc5f2c80465bf6f57cf1ef3754c9fa7db41ab25e57810de9a5c8e"
+        }
+      ]
+    },
+    {
       "version": "1.4.0",
       "tag": "v1.4.0",
       "released_at": "2026-10-15T09:40:09.7716038Z",
