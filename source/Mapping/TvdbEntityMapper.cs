@@ -1148,12 +1148,12 @@ public static class TvdbEntityMapper
     /// The record's name wins as the main title, in no known language. Its
     /// name in each of the person title languages and in the person's own
     /// language are official titles, and the credited name and the aliases
-    /// are synonyms. Where they were born gives their country and language.
-    /// The overviews are their biographies, one per language: first the one
-    /// in the first of the person overview order that has one, then English,
-    /// then any, and after it those in the person overview languages. The
-    /// links are the credits' own, then the person's page and their IDs
-    /// elsewhere. A record TvDB did not have adds nothing.
+    /// are synonyms. Where they were born is kept, and gives their country and
+    /// language. The overviews are their biographies, one per language: first
+    /// the one in the first of the person overview order that has one, then
+    /// English, then any, and after it those in the person overview
+    /// languages. The links are the credits' own, then the person's page and
+    /// their IDs elsewhere. A record TvDB did not have adds nothing.
     /// </remarks>
     /// <param name="creator">The person as their credits have them.</param>
     /// <param name="person">What the plugin keeps of the person's record, if anything.</param>
@@ -1200,6 +1200,7 @@ public static class TvdbEntityMapper
             Titles = titles,
             OriginalCountryCode = country ?? creator.OriginalCountryCode,
             OriginalLanguageCode = languageCode ?? creator.OriginalLanguageCode,
+            PlaceOfBirth = person.BirthPlace ?? creator.PlaceOfBirth,
             Overviews = biographies.Count > 0 ? biographies : creator.Overviews,
             Gender = ToPersonGender(person.Gender) is var gender and not PersonGender.Unknown ? gender : creator.Gender,
             BirthDay = ParseFuzzyDate(person.Birth) ?? creator.BirthDay,

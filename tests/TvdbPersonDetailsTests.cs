@@ -56,7 +56,7 @@ public class TvdbPersonDetailsTests
     }
 
     [Fact]
-    public void APersonsNameInEachLanguage_IsAnOfficialTitleAndTheirBirthPlaceGivesTheirOrigin()
+    public void APersonsNameInEachLanguage_IsAnOfficialTitleAndTheirBirthPlaceIsKeptAndGivesTheirOrigin()
     {
         var creator = Map(412417, "Mayumi Tanaka");
 
@@ -64,7 +64,7 @@ public class TvdbPersonDetailsTests
             [("en", "Mayumi Tanaka"), ("ja", "田中真弓"), ("zh-hant", "田中真弓"), ("es", "Mayumi Tanaka")],
             Texts(creator, TitleType.Official)
         );
-        Assert.Equal(("JP", "ja"), (creator.OriginalCountryCode, creator.OriginalLanguageCode));
+        Assert.Equal(("Tokyo, Japan", "JP", "ja"), (creator.PlaceOfBirth, creator.OriginalCountryCode, creator.OriginalLanguageCode));
 
         // Kept languages limit the names, but the person's own language is always kept.
         Assert.Equal(["en", "ja"], Texts(Map(412417, "Mayumi Tanaka", Languages("eng")), TitleType.Official).Select(title => title.LanguageCode));

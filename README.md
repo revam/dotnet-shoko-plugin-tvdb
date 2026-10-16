@@ -124,7 +124,7 @@ and crew also fetches each credited person's own record,
   and their aliases as synonyms (see [Languages](#languages));
 - their biographies as overviews, each in its own language, the first one
   chosen by the server's description language order;
-- their country and language, guessed from where they were born;
+- where they were born, and their country and language guessed from it;
 - their gender, birth and death, where a date TvDB knows only part of
   (`1967`, `1930-04-00`) keeps the parts it knows;
 - their page on TvDB under their slug, after the dereferrer link, and their
@@ -147,8 +147,8 @@ or a server error also stops the fetching until the next refresh. Turning the
 `creator` kind off stops the fetching, but what was fetched before is still
 written.
 
-Left out, as the core's people store has no place for them: the birthplace,
-the awards, races, tag options and score, and the person's other roles.
+Left out, as the core's people store has no place for them: the awards,
+races, tag options and score, and the person's other roles.
 
 ## One entry at a time
 
