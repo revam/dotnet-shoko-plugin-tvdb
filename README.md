@@ -90,22 +90,25 @@ of the selections `IMetadataTextManager.GetTitleSelection` and
 | The show's overviews | The description language order and English, or every language with **Download All Overviews** on |
 | An episode's names | The episode title language order |
 | An episode's overviews | The description language order |
-| A person's names | Their own language, and the series title language order and English, or every language with **Download All Titles** on |
+| A person's names | Their own language and the title languages the server names people by, or every language with **Download All Titles** on |
 | A person's biographies | The first in the description language order that has one, then English, then any, and after it those in the description language order, or every language with **Download All Overviews** on |
 
 The show's own name and overview, in its original language, are always kept,
 and so are its English ones, whatever the orders say: they cost nothing and
 are what the auto-matching searches. An episode gets no such exception.
 The show's and a person's records carry every translation, so the switches
-cost nothing; an episode's translations cost one request per page of episodes per language, so
-they never widen past the orders. The episodes are fetched once per language
-either order names, the show's own aside.
+cost nothing; an episode's translations cost one request per page of episodes
+per language, so they never widen past the orders. The episodes are fetched
+once per language either order names, the show's own aside. A season keeps
+only the name its record gives, as the show's record names its seasons in no
+other language.
 
 A language is asked for under TvDB's code: ISO 639-2/T (three letters), but
 `pt` for Brazilian Portuguese (`por` is Portugal's) and `zhtw` for Taiwan's,
 traditional, Chinese. A regional language TvDB has no code for, such as
 American English, takes its language's code. The order's main (original
-language) entry stands for the show's original language. A language TvDB
+language) entry stands for the show's original language, and for a person's
+names it is left out, their own language being kept anyway. A language TvDB
 cannot express, such as romaji, is skipped.
 
 ## People

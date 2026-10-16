@@ -16,7 +16,7 @@ namespace Shoko.Plugin.Tvdb.Mapping;
 /// <param name="SeriesOverviews">The languages of the show's overviews.</param>
 /// <param name="EpisodeTitles">The languages of the episodes' names.</param>
 /// <param name="Overviews">The languages of the episodes' overviews and the order a person's first biography is chosen in.</param>
-/// <param name="PersonTitles">The languages of a person's names, besides their own language.</param>
+/// <param name="PersonTitles">The languages of a person's names besides their own: the ones the core names people by.</param>
 /// <param name="PersonOverviews">The languages of a person's biographies, besides the first one.</param>
 public sealed record TvdbTextLanguages(
     IReadOnlyList<string>? SeriesTitles,
@@ -43,7 +43,10 @@ public sealed record TvdbTextLanguages(
     /// records, so the download-all switches keep every one of them, and
     /// English is always kept for the show besides the selection, as the
     /// auto-matching searches it. The episodes cost a request per page per
-    /// language, so they only ever follow the selection.
+    /// language, so they only ever follow the selection. A person's names
+    /// follow the selection the core names creators by, its main step left
+    /// out: a person's own language is always kept, and it is not the show's.
+    /// A season keeps only the name its record gives, so it needs none.
     /// </remarks>
     /// <param name="configuration">The plugin's configuration.</param>
     /// <param name="textManager">The core's text manager, which makes the selections.</param>
@@ -62,7 +65,7 @@ public sealed record TvdbTextLanguages(
             configuration.DownloadAllOverviews ? null : WithEnglish(overviews),
             Codes(textManager.GetTitleSelection(MetadataEntityType.Episode), originalLanguage),
             overviews,
-            configuration.DownloadAllTitles ? null : seriesTitles,
+            configuration.DownloadAllTitles ? null : Codes(textManager.GetTitleSelection(MetadataEntityType.Creator), null),
             configuration.DownloadAllOverviews ? null : overviews
         );
     }
