@@ -77,27 +77,29 @@ public class TvdbConfiguration : IMetadataProviderConfiguration, IPluginConfigur
     #region Downloads
 
     /// <summary>
-    /// Whether to store a show's names in every language its record carries,
-    /// rather than only in the core's series title language order.
+    /// Whether to store the names of a show and its people in every language
+    /// their records carry, rather than only in the core's series title
+    /// language order.
     /// </summary>
     /// <remarks>
-    /// The record carries them all, so this costs no request. An episode's
+    /// The records carry them all, so this costs no request. An episode's
     /// names always follow the core's episode title language order, since
     /// each language costs one request per page of the show's episodes.
     /// </remarks>
-    [Display(Name = "Download All Titles", Description = "Store a show's names in every language TvDB has, not only in the server's series title language order. Episode names always follow the episode title language order.")]
+    [Display(Name = "Download All Titles", Description = "Store the names of a show and its people in every language TvDB has, not only in the server's series title language order. Episode names always follow the episode title language order.")]
     public bool DownloadAllTitles { get; set; }
 
     /// <summary>
-    /// Whether to store a show's overviews in every language its record
-    /// carries, rather than only in the core's description language order.
+    /// Whether to store the overviews of a show and its people in every
+    /// language their records carry, rather than only in the core's
+    /// description language order.
     /// </summary>
     /// <remarks>
-    /// The record carries them all, so this costs no request. An episode's
+    /// The records carry them all, so this costs no request. An episode's
     /// overviews always follow the core's description language order, since
     /// each language costs one request per page of the show's episodes.
     /// </remarks>
-    [Display(Name = "Download All Overviews", Description = "Store a show's overviews in every language TvDB has, not only in the server's description language order. Episode overviews always follow that order.")]
+    [Display(Name = "Download All Overviews", Description = "Store the overviews of a show and its people in every language TvDB has, not only in the server's description language order. Episode overviews always follow that order.")]
     public bool DownloadAllOverviews { get; set; }
 
     /// <summary>

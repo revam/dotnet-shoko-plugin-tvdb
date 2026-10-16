@@ -171,21 +171,38 @@ internal sealed class FakeStudioStore : IMetadataStudioStore
     public IReadOnlyList<MetadataGuid> RemoveOrphaned(MetadataSource source, DateTime orphanedBefore) => [];
 }
 
+internal static class FakeTexts
+{
+    /// <summary>
+    /// An entry's main title, or a made-up one from its ID as the core makes
+    /// for an entry without one.
+    /// </summary>
+    public static ITitle MainTitle(MetadataGuid id, IReadOnlyList<ITitle> titles)
+        => titles.FirstOrDefault(title => title.Type is TitleType.Main)
+            ?? new TitleStub
+            {
+                Source = id.Source,
+                Language = TitleLanguage.Unknown,
+                LanguageCode = "unk",
+                Type = TitleType.Main,
+                Value = id.ToString(),
+                IsSynthesized = true,
+            };
+}
+
 internal sealed class FakeCharacter(MetadataCharacterData data) : ICharacter
 {
     public MetadataGuid ID => data.ID;
 
     public MetadataCharacterData Data => data;
 
-    public string Name => data.Name;
+    public string Title => DefaultTitle.Value;
 
-    public string Title => data.Name;
-
-    public ITitle DefaultTitle => new TitleStub { Source = data.ID.Source, Language = TitleLanguage.Unknown, LanguageCode = "unk", Type = TitleType.Main, Value = data.Name };
+    public ITitle DefaultTitle => FakeTexts.MainTitle(data.ID, data.Titles);
 
     public ITitle? PreferredTitle => DefaultTitle;
 
-    public IReadOnlyList<ITitle> Titles => [DefaultTitle];
+    public IReadOnlyList<ITitle> Titles => data.Titles;
 
     public string? OriginalLanguageCode => data.OriginalLanguageCode;
 
@@ -201,11 +218,11 @@ internal sealed class FakeCharacter(MetadataCharacterData data) : ICharacter
 
     public FuzzyDateOnly? BirthDay => data.BirthDay;
 
-    public IText? DefaultOverview => data.Overview is { } overview ? new TextStub { Source = data.ID.Source, Language = TitleLanguage.English, LanguageCode = "en", Value = overview } : null;
+    public IText? DefaultOverview => data.Overviews.FirstOrDefault();
 
     public IText? PreferredOverview => DefaultOverview;
 
-    public IReadOnlyList<IText> Overviews => DefaultOverview is { } overview ? [overview] : [];
+    public IReadOnlyList<IText> Overviews => data.Overviews;
 
     public DateTime LastUpdatedAt => DateTime.UnixEpoch;
 
@@ -228,15 +245,13 @@ internal sealed class FakeCreator(MetadataCreatorData data) : ICreator
 
     public MetadataCreatorData Data => data;
 
-    public string Name => data.Name;
+    public string Title => DefaultTitle.Value;
 
-    public string Title => data.Name;
-
-    public ITitle DefaultTitle => new TitleStub { Source = data.ID.Source, Language = TitleLanguage.Unknown, LanguageCode = "unk", Type = TitleType.Main, Value = data.Name };
+    public ITitle DefaultTitle => FakeTexts.MainTitle(data.ID, data.Titles);
 
     public ITitle? PreferredTitle => DefaultTitle;
 
-    public IReadOnlyList<ITitle> Titles => [DefaultTitle];
+    public IReadOnlyList<ITitle> Titles => data.Titles;
 
     public string? OriginalLanguageCode => data.OriginalLanguageCode;
 
@@ -258,11 +273,11 @@ internal sealed class FakeCreator(MetadataCreatorData data) : ICreator
 
     public bool IsRestricted => data.IsRestricted;
 
-    public IText? DefaultOverview => data.Overview is { } overview ? new TextStub { Source = data.ID.Source, Language = TitleLanguage.English, LanguageCode = "en", Value = overview } : null;
+    public IText? DefaultOverview => data.Overviews.FirstOrDefault();
 
     public IText? PreferredOverview => DefaultOverview;
 
-    public IReadOnlyList<IText> Overviews => DefaultOverview is { } overview ? [overview] : [];
+    public IReadOnlyList<IText> Overviews => data.Overviews;
 
     public DateTime LastUpdatedAt => DateTime.UnixEpoch;
 
@@ -301,7 +316,7 @@ internal sealed class FakeCast(MetadataGuid entry, MetadataCastData data, FakeCh
 
     public string? OriginalName => null;
 
-    public string? Description => character?.Data.Overview;
+    public string? Description => character?.DefaultOverview?.Value;
 
     public string? DubGroup => data.DubGroup;
 

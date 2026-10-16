@@ -15,6 +15,7 @@ using Shoko.Abstractions.Metadata.Search;
 using Shoko.Abstractions.Metadata.Services;
 using Shoko.Abstractions.Metadata.Storage;
 using Shoko.Abstractions.Metadata.Stub;
+using Shoko.Abstractions.Metadata.Text.Options;
 using Shoko.Abstractions.Plugin;
 using Shoko.Plugin.Tvdb.Api;
 using Shoko.Plugin.Tvdb.Metadata;
@@ -95,9 +96,23 @@ internal sealed class ServiceHarness : IDisposable
         MetadataService.Setup(service => service.GetSeason(It.IsAny<MetadataGuid>())).Returns((MetadataGuid id) => Series.GetSeason(id));
         SystemService.SetupGet(service => service.IsStarted).Returns(true);
         ProviderManager.SetupGet(manager => manager.MetadataProviders).Returns(() => [ProviderInfo()]);
+        // Each language over two sources, as the core walks every ranked one.
         TextManager
-            .Setup(manager => manager.GetLanguageOrder(It.IsAny<TextKind>(), It.IsAny<MetadataEntityType?>()))
-            .Returns((TextKind kind, MetadataEntityType? entityType) => kind is TextKind.Overview ? OverviewOrder : entityType == MetadataEntityType.Episode ? EpisodeTitleOrder : SeriesTitleOrder);
+            .Setup(manager => manager.GetTitleSelection(It.IsAny<MetadataEntityType?>(), It.IsAny<IReadOnlyList<MetadataSource>?>()))
+            .Returns((MetadataEntityType? entityType, IReadOnlyList<MetadataSource>? _) => new TitleSelection
+            {
+                Steps =
+                [
+                    .. (UsesEpisodeTitleOrder(entityType) ? EpisodeTitleOrder : SeriesTitleOrder)
+                        .SelectMany(language => _textSources.Select(source => new TitleSelectionStep { Source = source, Language = language })),
+                ],
+            });
+        TextManager
+            .Setup(manager => manager.GetOverviewSelection(It.IsAny<IReadOnlyList<MetadataSource>?>()))
+            .Returns(() => new OverviewSelection
+            {
+                Steps = [.. OverviewOrder.SelectMany(language => _textSources.Select(source => new OverviewSelectionStep { Source = source, Language = language }))],
+            });
 
         var collection = new ServiceCollection();
         collection.AddLogging();
@@ -188,6 +203,15 @@ internal sealed class ServiceHarness : IDisposable
         MetadataEntityType.Studio,
         MetadataEntityType.Network,
     ];
+
+    private static readonly MetadataSource[] _textSources = [MetadataSource.Tvdb, MetadataSource.AniDB];
+
+    // Episodes, seasons, creators and characters follow the episode title order.
+    private static bool UsesEpisodeTitleOrder(MetadataEntityType? entityType)
+        => entityType == MetadataEntityType.Episode
+            || entityType == MetadataEntityType.Season
+            || entityType == MetadataEntityType.Creator
+            || entityType == MetadataEntityType.Character;
 
     /// <summary>The core's series title language order.</summary>
     public List<TitleLanguage> SeriesTitleOrder { get; } = [TitleLanguage.Main, TitleLanguage.English];

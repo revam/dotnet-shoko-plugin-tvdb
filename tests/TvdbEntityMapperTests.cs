@@ -27,7 +27,7 @@ public class TvdbEntityMapperTests
 
     // The same languages for every kind of text.
     private static TvdbTextLanguages Languages(params string[] codes)
-        => new(codes, codes, codes, codes);
+        => new(codes, codes, codes, codes, codes, codes);
 
     private static Shoko.Abstractions.Metadata.Storage.MetadataSeriesData MapOnePiece()
         => TvdbEntityMapper.ToSeriesData(
@@ -388,7 +388,7 @@ public class TvdbEntityMapperTests
     {
         var episode = TvdbEntityMapper.ToSeriesData(
             ReadSeries(),
-            new([], [], [], ["eng"]),
+            new([], [], [], ["eng"], [], []),
             ReadDefaultEpisodes(),
             new Dictionary<string, IReadOnlyList<TvdbEpisode>> { ["eng"] = ReadEpisodes("series-81797-episodes-default-eng.json") }
         ).Episodes[0];
@@ -616,7 +616,7 @@ public class TvdbEntityMapperTests
     }
 
     [Fact]
-    public void People_GiveACharacterItsAliasesEachOncePerLanguage()
+    public void People_NameACharacterByItsCreditAndItsAliasesEachOncePerLanguage()
     {
         // No credit of One Piece has aliases on TvDB, so Luffy is given
         // some here.
@@ -632,8 +632,11 @@ public class TvdbEntityMapperTests
         var people = TvdbEntityMapper.People(series);
 
         var luffy = people.Characters[TvdbUtility.CharacterGuid(65111900)];
-        Assert.Equal([("en", "Straw Hat Luffy"), ("ja", "モンキー・D・ルフィ")], luffy.Synonyms.Select(alias => (alias.LanguageCode, alias.Name)));
-        Assert.Empty(people.Characters[TvdbUtility.CharacterGuid(7002)].Synonyms);
+        Assert.Equal(
+            [(TitleType.Main, "unk", "Monkey D. Luffy"), (TitleType.Synonym, "en", "Straw Hat Luffy"), (TitleType.Synonym, "ja", "モンキー・D・ルフィ")],
+            luffy.Titles.Select(title => (title.Type, title.LanguageCode, title.Value))
+        );
+        Assert.Equal([TitleType.Main], people.Characters[TvdbUtility.CharacterGuid(7002)].Titles.Select(title => title.Type));
     }
 
     [Fact]

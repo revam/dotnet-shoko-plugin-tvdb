@@ -65,11 +65,11 @@ public sealed class TvdbStoreTests : IDisposable
         store.Series.SaveSeries(new() { ID = show, Titles = [], Overviews = [], Seasons = [], Episodes = [] });
         people.SaveCreators(
         [
-            new MetadataCreatorData { ID = TvdbUtility.CreatorGuid(412417), Name = "Mayumi Tanaka" },
-            new MetadataCreatorData { ID = TvdbUtility.CreatorGuid(602), Name = "Eiichiro Oda" },
-            new MetadataCreatorData { ID = TvdbUtility.CreatorGuid(603), Name = "Kazuya Nakai" },
+            new MetadataCreatorData { ID = TvdbUtility.CreatorGuid(412417) },
+            new MetadataCreatorData { ID = TvdbUtility.CreatorGuid(602) },
+            new MetadataCreatorData { ID = TvdbUtility.CreatorGuid(603) },
         ]);
-        people.SaveCharacters([new MetadataCharacterData { ID = TvdbUtility.CharacterGuid(65111900), Name = "Monkey D. Luffy" }]);
+        people.SaveCharacters([new MetadataCharacterData { ID = TvdbUtility.CharacterGuid(65111900) }]);
         people.SetCast(show, [new MetadataCastData { CreatorID = TvdbUtility.CreatorGuid(412417), CharacterID = TvdbUtility.CharacterGuid(65111900), Name = "Monkey D. Luffy" }]);
         people.SetCrew(show, [new MetadataCrewData { CreatorID = TvdbUtility.CreatorGuid(602), Name = "Original Creator" }]);
         people.SetCrew(gone, [new MetadataCrewData { CreatorID = TvdbUtility.CreatorGuid(603), Name = "Director" }]);
@@ -165,7 +165,7 @@ public sealed class TvdbStoreTests : IDisposable
         var (store, people) = CreateStore();
         var show = TvdbUtility.SeriesGuid(81797);
         store.Series.SaveSeries(new() { ID = show, Titles = [], Overviews = [], Seasons = [], Episodes = [] });
-        people.SaveCreators([new MetadataCreatorData { ID = TvdbUtility.CreatorGuid(412417), Name = "Mayumi Tanaka" }]);
+        people.SaveCreators([new MetadataCreatorData { ID = TvdbUtility.CreatorGuid(412417) }]);
         people.SetCrew(show, [new MetadataCrewData { CreatorID = TvdbUtility.CreatorGuid(412417), Name = "Voice" }]);
 
         store.SavePerson(new()

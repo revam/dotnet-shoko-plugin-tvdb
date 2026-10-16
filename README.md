@@ -80,9 +80,9 @@ removed the show's orderings by then, as it does for any purged series.
 
 ## Languages
 
-The translations kept follow the server's language orders, the ones
-`IMetadataTextManager.GetLanguageOrder` hands a provider, as the bundled
-TMDB plugin's do:
+The translations kept follow the server's language orders, as the languages
+of the selections `IMetadataTextManager.GetTitleSelection` and
+`GetOverviewSelection` hand a provider:
 
 | Text | Kept in |
 |---|---|
@@ -90,13 +90,14 @@ TMDB plugin's do:
 | The show's overviews | The description language order and English, or every language with **Download All Overviews** on |
 | An episode's names | The episode title language order |
 | An episode's overviews | The description language order |
-| A person's biography | The first in the description language order, then English, then any |
+| A person's names | Their own language, and the series title language order and English, or every language with **Download All Titles** on |
+| A person's biographies | The first in the description language order that has one, then English, then any, and after it those in the description language order, or every language with **Download All Overviews** on |
 
 The show's own name and overview, in its original language, are always kept,
 and so are its English ones, whatever the orders say: they cost nothing and
 are what the auto-matching searches. An episode gets no such exception.
-The show's record carries every translation, so the switches cost nothing; an
-episode's translations cost one request per page of episodes per language, so
+The show's and a person's records carry every translation, so the switches
+cost nothing; an episode's translations cost one request per page of episodes per language, so
 they never widen past the orders. The episodes are fetched once per language
 either order names, the show's own aside.
 
@@ -114,10 +115,12 @@ provider's `creator` kind is on (the default), a refresh that writes the cast
 and crew also fetches each credited person's own record,
 `/people/{id}/extended?meta=translations`, and writes:
 
-- their name as the record has it, with the credited name, their aliases and
-  their name in every language as other names;
-- one biography as the overview: the first in the server's description
-  language order that has one, then English, then any;
+- their name as the record has it as their main name, in no known language,
+  their name in each language kept as an official name, and the credited name
+  and their aliases as synonyms (see [Languages](#languages));
+- their biographies as overviews, each in its own language, the first one
+  chosen by the server's description language order;
+- their country and language, guessed from where they were born;
 - their gender, birth and death, where a date TvDB knows only part of
   (`1967`, `1930-04-00`) keeps the parts it knows;
 - their page on TvDB under their slug, after the dereferrer link, and their
@@ -141,9 +144,7 @@ or a server error also stops the fetching until the next refresh. Turning the
 written.
 
 Left out, as the core's people store has no place for them: the birthplace,
-the biographies in the other languages, the awards, races, tag options and
-score, and the person's other roles. No original name is set either, since
-the record does not say which language is the person's own.
+the awards, races, tag options and score, and the person's other roles.
 
 ## One entry at a time
 
@@ -317,8 +318,8 @@ out of the source tree, not out of the hands of anyone holding the DLL.
 | Subscriber PIN | *(none)* | Optional. Your TvDB subscriber PIN, to support TvDB; needed with a user-supported key. A refused PIN is left out. |
 | Search Result Limit | `10` | How many search hits to judge per title when auto-linking. |
 | Consider Existing Other Links | off | Leave out episodes another anime is linked to when matching. |
-| Download All Titles | off | Keep the show's names in every language, not only in the series title language order. Episode names never widen. See [Languages](#languages). |
-| Download All Overviews | off | Keep the show's overviews in every language, not only in the description language order. Episode overviews never widen. |
+| Download All Titles | off | Keep the names of the show and its people in every language, not only in the series title language order. Episode names never widen. See [Languages](#languages). |
+| Download All Overviews | off | Keep the overviews of the show and its people in every language, not only in the description language order. Episode overviews never widen. |
 | Download Alternate Orderings | on | Store the other season types as orderings. |
 | Person Details Per Refresh | `50` | The most people one refresh fetches their own records for, while the `creator` kind is on; the rest wait for a later refresh. One request per person not fetched in the last 30 days, shared across shows. |
 

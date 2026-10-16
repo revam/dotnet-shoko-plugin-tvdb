@@ -32,7 +32,7 @@ namespace Shoko.Plugin.Tvdb.Services;
 /// <param name="store">The plugin's store.</param>
 /// <param name="linkingService">Matches the linked anime's episodes again.</param>
 /// <param name="peopleService">Fetches the people's own records.</param>
-/// <param name="textManager">The core's text manager, whose language order picks the translations kept.</param>
+/// <param name="textManager">The core's text manager, whose title and overview selections pick the translations kept.</param>
 /// <param name="configurationProvider">The plugin's configuration.</param>
 /// <param name="logger">The logger.</param>
 public sealed class TvdbRefreshService(
@@ -95,7 +95,7 @@ public sealed class TvdbRefreshService(
 
         // The show's record carries its names and overviews in every
         // language; its episodes are fetched in each language the core's
-        // episode title and description orders name but the show's own,
+        // episode title and overview selections name but the show's own,
         // their names already being in it.
         var languages = TvdbTextLanguages.From(configuration, textManager, remote.OriginalLanguage);
         var existingEpisodes = store.GetSeries(seriesID)?.Episodes.Select(episode => episode.ID).ToHashSet() ?? [];
@@ -140,7 +140,7 @@ public sealed class TvdbRefreshService(
             foreach (var (creatorID, creator) in people.Creators)
             {
                 var person = TvdbUtility.TryGetID(creatorID, MetadataEntityType.Creator, out var peopleID) ? details.GetValueOrDefault(peopleID) : null;
-                creators.Add(TvdbEntityMapper.WithPersonDetails(creator, person, languages.Overviews, languages.SeriesTitles));
+                creators.Add(TvdbEntityMapper.WithPersonDetails(creator, person, languages));
                 if (person?.Image is { Length: > 0 } image)
                     people.Portraits.TryAdd(creatorID, image);
             }
@@ -236,7 +236,7 @@ public sealed class TvdbRefreshService(
         person.ID = peopleID;
         store.SavePerson(person);
         var languages = TvdbTextLanguages.From(configurationProvider.Load(), textManager, null);
-        var creator = TvdbEntityMapper.ToCreatorData(person, languages.Overviews, languages.SeriesTitles);
+        var creator = TvdbEntityMapper.ToCreatorData(person, languages);
         store.People.SaveCreators([creator]);
         if (person.Image is { Length: > 0 } image)
             store.SavePortraits([new(creator.ID, image)]);
