@@ -2,6 +2,7 @@ using System.Net;
 using Shoko.Abstractions.Metadata;
 using Shoko.Abstractions.Metadata.Enums;
 using Shoko.Plugin.Tvdb.Mapping;
+using Shoko.Plugin.Tvdb.Metadata;
 using Shoko.Plugin.Tvdb.Services;
 using Shoko.Plugin.Tvdb.Storage;
 using Xunit;
@@ -25,6 +26,9 @@ public class TvdbPeopleServiceTests
 
     private static ICreator Creator(ServiceHarness harness, int peopleID)
         => harness.People.GetCreator(TvdbUtility.CreatorGuid(peopleID))!;
+
+    private static List<string> Texts(IEnumerable<IText> texts)
+        => [.. texts.Select(text => $"{(text as ITitle)?.Type} {text.LanguageCode} {text.Value}")];
 
     [Fact]
     public async Task ARefresh_FetchesEachCreditedPersonOnceInCreditOrder()
@@ -59,6 +63,24 @@ public class TvdbPeopleServiceTests
         Assert.Contains(tanaka.Resources, resource => resource.ID == "nm0849028");
         Assert.Equal(new FuzzyDateOnly(1967), Creator(harness, 602).BirthDay);
         Assert.Equal(new FuzzyDateOnly(2001, 11, 23), Creator(harness, 605).DeathDay);
+    }
+
+    [Fact]
+    public async Task APerson_IsWrittenTheSameByAShowsRefreshAsByTheirOwn()
+    {
+        // The show is Japanese and so is one of her biographies, so the main
+        // entry would tell the two refreshes apart if either read it as the show's.
+        using var harness = new ServiceHarness(http: OnePieceWithPeople());
+        harness.OverviewOrder.Clear();
+        harness.OverviewOrder.AddRange([TitleLanguage.Main, TitleLanguage.Spanish]);
+
+        await harness.Refresh();
+        var fromShow = Creator(harness, 412417);
+        await harness.Get<TvdbMetadataProvider>().RefreshEntity(TvdbUtility.CreatorGuid(412417), TestContext.Current.CancellationToken);
+        var fromOwn = Creator(harness, 412417);
+
+        Assert.Equal(Texts(fromShow.Overviews), Texts(fromOwn.Overviews));
+        Assert.Equal(Texts(fromShow.Titles), Texts(fromOwn.Titles));
     }
 
     [Fact]

@@ -27,7 +27,7 @@ public class TvdbEntityMapperTests
 
     // The same languages for every kind of text.
     private static TvdbTextLanguages Languages(params string[] codes)
-        => new(codes, codes, codes, codes, codes, codes);
+        => new(codes, codes, codes, codes, codes, codes, codes);
 
     private static Shoko.Abstractions.Metadata.Storage.MetadataSeriesData MapOnePiece()
         => TvdbEntityMapper.ToSeriesData(
@@ -388,7 +388,7 @@ public class TvdbEntityMapperTests
     {
         var episode = TvdbEntityMapper.ToSeriesData(
             ReadSeries(),
-            new([], [], [], ["eng"], [], []),
+            new([], [], [], ["eng"], [], [], []),
             ReadDefaultEpisodes(),
             new Dictionary<string, IReadOnlyList<TvdbEpisode>> { ["eng"] = ReadEpisodes("series-81797-episodes-default-eng.json") }
         ).Episodes[0];

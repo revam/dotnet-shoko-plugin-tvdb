@@ -1150,7 +1150,7 @@ public static class TvdbEntityMapper
     /// language are official titles, and the credited name and the aliases
     /// are synonyms. Where they were born gives their country and language.
     /// The overviews are their biographies, one per language: first the one
-    /// in the first of the overview languages that has one, then English,
+    /// in the first of the person overview order that has one, then English,
     /// then any, and after it those in the person overview languages. The
     /// links are the credits' own, then the person's page and their IDs
     /// elsewhere. A record TvDB did not have adds nothing.
@@ -1333,8 +1333,8 @@ public static class TvdbEntityMapper
         => year is { } known ? DateTime.DaysInMonth(known, month) : month is 2 ? 29 : DateTime.DaysInMonth(2001, month);
 
     // A person's biographies as overviews, one per language, each in its own:
-    // the first chosen by the overview languages, then English, then any, and
-    // after it those in the person overview languages, in the record's order.
+    // the first chosen by the person overview order, then English, then any,
+    // and after it those in the person overview languages, in the record's order.
     private static List<IText> Biographies(IReadOnlyList<TvdbStoredText> biographies, TvdbTextLanguages? languages)
     {
         var usable = biographies
@@ -1346,7 +1346,7 @@ public static class TvdbEntityMapper
             return [];
 
         var first = usable[0];
-        foreach (var language in (languages?.Overviews ?? []).Append("eng"))
+        foreach (var language in (languages?.PersonOverviewOrder ?? []).Append("eng"))
         {
             if (TvdbUtility.ToLanguageCode(language) is not { } code)
                 continue;

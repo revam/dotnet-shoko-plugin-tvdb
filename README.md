@@ -108,8 +108,9 @@ A language is asked for under TvDB's code: ISO 639-2/T (three letters), but
 traditional, Chinese. A regional language TvDB has no code for, such as
 American English, takes its language's code. The order's main (original
 language) entry stands for the show's original language, and for a person's
-names it is left out, their own language being kept anyway. A language TvDB
-cannot express, such as romaji, is skipped.
+names and biographies it is left out, so a person is written the same whether
+a show's refresh or their own wrote them. A language TvDB cannot express, such
+as romaji, is skipped.
 
 ## People
 

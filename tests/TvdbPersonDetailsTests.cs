@@ -34,7 +34,7 @@ public class TvdbPersonDetailsTests
 
     // The same languages for every kind of text.
     private static TvdbTextLanguages Languages(params string[] codes)
-        => new(codes, codes, codes, codes, codes, codes);
+        => new(codes, codes, codes, codes, codes, codes, codes);
 
     private static MetadataCreatorData Map(int peopleID, string name, TvdbTextLanguages? languages = null)
         => TvdbEntityMapper.WithPersonDetails(Credited(peopleID, name), TvdbEntityMapper.ToStoredPerson(ReadPerson(peopleID), _fetchedAt), languages);
