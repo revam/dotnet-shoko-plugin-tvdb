@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Reflection;
 using Moq;
 using Shoko.Abstractions.Connectivity.Suspensions;
@@ -46,7 +47,7 @@ public class TvdbMetadataProviderTests
     {
         using var harness = new ServiceHarness();
 
-        Assert.Equal(new Plugin().EmbeddedIconResourceName, harness.Get<TvdbMetadataProvider>().EmbeddedIconResourceName);
+        Assert.Equal(PluginIcon, harness.Get<TvdbMetadataProvider>().EmbeddedIconResourceName);
     }
 
     [Fact]
@@ -542,4 +543,7 @@ public class TvdbMetadataProviderTests
     private sealed record Entry(MetadataGuid ID, IReadOnlyList<Resource> Resources) : IMetadata, IWithResources;
 
     #endregion
+
+    private static string PluginIcon
+        => typeof(Plugin).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>().Single(attribute => attribute.Key == "PackageIcon").Value!;
 }

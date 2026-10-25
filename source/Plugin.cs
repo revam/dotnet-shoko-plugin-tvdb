@@ -16,47 +16,22 @@ namespace Shoko.Plugin.Tvdb;
 /// Shoko's metadata provider contract.
 /// </summary>
 /// <remarks>
-/// This class carries the plugin's identity. It is built twice during start-up,
-/// and the first of the two, during discovery, uses
-/// <c>Activator.CreateInstance</c> before any container exists, so it must keep
-/// a public parameterless constructor and take no dependencies at all.
+/// The plugin's identity and images are in the project, and the build generates
+/// the rest of this class from them. It is built twice during start-up, and the
+/// first of the two, during discovery, uses <c>Activator.CreateInstance</c>
+/// before any container exists, so it must keep a public parameterless
+/// constructor and take no dependencies at all.
 /// Everything the plugin needs is registered in
 /// <see cref="RegisterServices(IServiceCollection, IApplicationPaths)"/>
 /// instead.
 /// </remarks>
-public class Plugin : IPlugin<TvdbConfiguration>, IPluginServiceRegistration
+public partial class Plugin : IPlugin<TvdbConfiguration>, IPluginServiceRegistration
 {
-    /// <summary>
-    /// The embedded resource of the plugin's thumbnail.
-    /// </summary>
-    internal const string ThumbnailResourceName = "Shoko.Plugin.Tvdb.Assets.thumbnail.svg";
-
     /// <summary>
     /// The embedded resource of the plugin's icon, which is the source's icon
     /// too.
     /// </summary>
-    internal const string IconResourceName = "Shoko.Plugin.Tvdb.Assets.icon.svg";
-
-    /// <inheritdoc/>
-    public Guid ID { get; private init; } = new("12126642-8c32-455f-aca1-e1a2f7b35a8c");
-
-    /// <inheritdoc/>
-    public string Name { get; private set; } = "TvDB";
-
-    /// <inheritdoc/>
-    public string Description { get; private set; } = """
-        Supplies TvDB series, season and episode metadata for the tvdb metadata source
-        through Shoko's metadata provider contract: titles, overviews, images, cast and
-        crew, studios and networks, genres and tags, content ratings and alternate episode
-        orderings. Official builds ship a licensed TvDB key and need no setup; a build
-        from source needs its own project key in the settings.
-    """;
-
-    /// <inheritdoc/>
-    public string? EmbeddedThumbnailResourceName => ThumbnailResourceName;
-
-    /// <inheritdoc/>
-    public string? EmbeddedIconResourceName => IconResourceName;
+    internal const string IconResourceName = "Shoko.Plugin.Tvdb.PluginIcon.svg";
 
     /// <inheritdoc/>
     public static void RegisterServices(IServiceCollection serviceCollection, IApplicationPaths applicationPaths)

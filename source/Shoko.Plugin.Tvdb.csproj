@@ -14,6 +14,15 @@
         <EnableDynamicLoading>true</EnableDynamicLoading>
     </PropertyGroup>
 
+    <PropertyGroup Label="Plugin">
+        <PluginGenerateClass>true</PluginGenerateClass>
+        <PluginID>12126642-8c32-455f-aca1-e1a2f7b35a8c</PluginID>
+        <PluginName>TvDB</PluginName>
+        <PluginOverview>Supplies series, season and episode metadata from TvDB's APIv4 for the `tvdb` metadata source, through Shoko's metadata provider contract.</PluginOverview>
+        <PluginIcon>Assets/icon.svg</PluginIcon>
+        <PluginThumbnail>Assets/thumbnail.svg</PluginThumbnail>
+    </PropertyGroup>
+
     <ItemGroup>
         <InternalsVisibleTo Include="Shoko.Plugin.Tvdb.Tests" />
     </ItemGroup>
@@ -40,18 +49,12 @@
     </ItemGroup>
 
     <ItemGroup>
-        <!-- The plugin's thumbnail and icon, read by the server through the
-             plugin. The icon is also the source's icon. -->
-        <EmbeddedResource Include="Assets\thumbnail.svg" LogicalName="Shoko.Plugin.Tvdb.Assets.thumbnail.svg" />
-        <EmbeddedResource Include="Assets\icon.svg" LogicalName="Shoko.Plugin.Tvdb.Assets.icon.svg" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <!-- Injects the embedded plugin identity metadata the server reads during
-             discovery, taken from `manifest.json` one directory up. PrivateAssets
-             alone is not enough: without ExcludeAssets the package's own MSBuild
-             tasks and satellite assemblies end up in the plugin output. -->
-        <PackageReference Include="Shoko.BuildTools.Targets" Version="0.3.2" PrivateAssets="All" ExcludeAssets="runtime" />
+        <!-- Injects the embedded plugin identity metadata the server reads
+             during discovery, from the `Plugin*` properties above, and
+             generates the plugin class from them. PrivateAssets alone is not
+             enough: without ExcludeAssets the package's own MSBuild tasks and
+             satellite assemblies end up in the plugin output. -->
+        <PackageReference Include="Shoko.BuildTools.Targets" Version="0.6.0" PrivateAssets="All" ExcludeAssets="runtime" />
         <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.203" PrivateAssets="All" />
         <PackageReference Include="SmartAnalyzers.MultithreadingAnalyzer" Version="1.1.31" PrivateAssets="All" />
     </ItemGroup>

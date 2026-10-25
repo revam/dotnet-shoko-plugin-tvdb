@@ -1,19 +1,23 @@
+using System.Linq;
+using System.Reflection;
 using Xunit;
 
 namespace Shoko.Plugin.Tvdb.Tests;
 
 /// <summary>
-/// The thumbnail and icon the plugin names ship in its assembly.
+/// The thumbnail and icon the build stamps into the plugin ship in its assembly.
 /// </summary>
 public class PluginImageTests
 {
-    [Fact]
-    public void ThePluginShipsTheImagesItNames()
+    [Theory]
+    [InlineData("PackageThumbnail")]
+    [InlineData("PackageIcon")]
+    public void ThePluginShipsTheImagesItNames(string key)
     {
-        var plugin = new Plugin();
-        var resources = typeof(Plugin).Assembly.GetManifestResourceNames();
+        var assembly = typeof(Plugin).Assembly;
+        var resourceName = assembly.GetCustomAttributes<AssemblyMetadataAttribute>().FirstOrDefault(attribute => attribute.Key == key)?.Value;
 
-        Assert.Contains(plugin.EmbeddedThumbnailResourceName, resources);
-        Assert.Contains(plugin.EmbeddedIconResourceName, resources);
+        Assert.NotNull(resourceName);
+        Assert.Contains(resourceName, assembly.GetManifestResourceNames());
     }
 }
