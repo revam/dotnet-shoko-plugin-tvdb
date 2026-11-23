@@ -187,6 +187,15 @@ public static class TvdbEntityMapper
     /// names in the languages asked for are official titles, the aliases among
     /// them and the show's own aliases synonyms, each in their own language. A
     /// title already given in a language is not given again.
+    /// <para>
+    /// TvDB files the romanised readings of a Japanese, Chinese or Korean
+    /// show's title as aliases in the show's own language. An alias
+    /// <see cref="RomanizationDetector"/> reads as one is kept in the reading's
+    /// language instead, unchanged, and the best of them in each reading
+    /// language is its official title: a spelling without diacritics first,
+    /// then the one with the most of its letters in syllables, then TvDB's
+    /// order.
+    /// </para>
     /// </remarks>
     /// <param name="series">The show, with its translations.</param>
     /// <param name="languages">The three-letter codes of the languages to take translations in, in order, or <see langword="null"/> for every one.</param>
@@ -205,14 +214,68 @@ public static class TvdbEntityMapper
             foreach (var translation in translations.Where(translation => translation.IsAlias is not true && !string.IsNullOrWhiteSpace(translation.Name)))
                 titles.Add(Title(translation.Name!, language, TitleType.Official));
             foreach (var translation in translations.Where(translation => translation.IsAlias is true && !string.IsNullOrWhiteSpace(translation.Name)))
-                titles.Add(Title(translation.Name!, language, TitleType.Synonym));
+                titles.Add(AliasTitle(translation.Name!, language, series.OriginalLanguage));
         }
 
         foreach (var alias in series.Aliases ?? [])
             if (!string.IsNullOrWhiteSpace(alias.Name))
-                titles.Add(Title(alias.Name, alias.Language, TitleType.Synonym));
+                titles.Add(AliasTitle(alias.Name, alias.Language, series.OriginalLanguage));
 
-        return Deduplicate(titles);
+        return PromoteReadings(Deduplicate(titles));
+    }
+
+    // An alias as a synonym in its own language, or in its reading's language
+    // when it is a romanised reading of the title of a show in the original
+    // language.
+    private static TitleStub AliasTitle(string value, string? languageCode, string? originalLanguageCode)
+    {
+        var title = Title(value, languageCode, TitleType.Synonym);
+        return RomanizationDetector.ReadingOf(title.Value, title.Language, TvdbUtility.ToTitleLanguage(originalLanguageCode)) is { } reading
+            ? new()
+            {
+                Source = title.Source,
+                Language = reading,
+                LanguageCode = reading.GetString(),
+                Value = title.Value,
+                Type = TitleType.Synonym,
+            }
+            : title;
+    }
+
+    // Makes the best synonym in each reading language its official title,
+    // unless it already has one: a spelling without diacritics first, then the
+    // one with the most of its letters in syllables, then the first. Run after
+    // the titles are deduplicated, so the one promoted is the one kept.
+    private static IReadOnlyList<ITitle> PromoteReadings(IReadOnlyList<ITitle> titles)
+    {
+        var promoted = titles
+            .Select((title, index) => (title, index))
+            .Where(pair => pair.title is { Type: TitleType.Synonym, Language: TitleLanguage.Romaji or TitleLanguage.Pinyin or TitleLanguage.KoreanTranscription })
+            .GroupBy(pair => pair.title.Language)
+            .Where(group => !titles.Any(title => title.Language == group.Key && title.Type is TitleType.Official or TitleType.Main))
+            .Select(group => group
+                .OrderByDescending(pair => RomanizationDetector.IsPlain(pair.title.Value))
+                .ThenByDescending(pair => RomanizationDetector.Share(pair.title.Value, pair.title.Language) ?? 0)
+                .ThenBy(pair => pair.index)
+                .First()
+                .index)
+            .ToHashSet();
+        if (promoted.Count is 0)
+            return titles;
+
+        return
+        [
+            .. titles.Select((title, index) => promoted.Contains(index)
+                ? new TitleStub
+                {
+                    Source = title.Source,
+                    Language = title.Language,
+                    LanguageCode = title.LanguageCode,
+                    Value = title.Value,
+                    Type = TitleType.Official,
+                }
+                : title),
+        ];
     }
 
     /// <summary>

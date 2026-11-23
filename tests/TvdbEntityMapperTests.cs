@@ -152,7 +152,7 @@ public class TvdbEntityMapperTests
 
         Assert.DoesNotContain(series.Titles, title => title is { Type: TitleType.Official, LanguageCode: "de" or "it" });
         Assert.DoesNotContain(series.Overviews, overview => overview.LanguageCode is "de" or "it");
-        Assert.Contains(series.Titles, title => title is { Type: TitleType.Synonym, Value: "Wan Pisu", LanguageCode: "ja" });
+        Assert.Contains(series.Titles, title => title is { Type: TitleType.Official, Value: "Wan Pisu", LanguageCode: "x-jat" });
     }
 
     [Fact]
@@ -181,8 +181,9 @@ public class TvdbEntityMapperTests
 
         var titles = TvdbEntityMapper.SeriesTitles(series, ["eng", "jpn"]);
 
+        // Only the romaji alias is official, as the reading of the title.
         Assert.Equal("ワンピース", titles[0].Value);
-        Assert.DoesNotContain(titles, title => title.Type is TitleType.Official);
+        Assert.Equal("Wan Pisu", Assert.Single(titles, title => title.Type is TitleType.Official).Value);
         Assert.Equal(["ja"], TvdbEntityMapper.SeriesOverviews(series, ["eng", "jpn"]).Select(overview => overview.LanguageCode));
     }
 
@@ -286,6 +287,136 @@ public class TvdbEntityMapperTests
 
         Assert.Equal([("BR", "14"), ("ES", "12"), ("US", "TV-Y7")], ratings.Select(rating => (rating.CountryCode, rating.Rating)));
         Assert.All(ratings, rating => Assert.Null(rating.LanguageCode));
+    }
+
+    // A show in its original language with the given aliases, filed both as
+    // the show's own aliases and as alias translations, the way TvDB lists
+    // them.
+    private static TvdbSeriesExtended ShowWithAliases(string name, string originalLanguage, params (string Language, string Name)[] aliases)
+        => new()
+        {
+            ID = 1,
+            Name = name,
+            OriginalLanguage = originalLanguage,
+            Aliases = [.. aliases.Select(alias => new TvdbAlias { Language = alias.Language, Name = alias.Name })],
+            Translations = new()
+            {
+                NameTranslations =
+                [
+                    new() { Language = originalLanguage, Name = name, IsPrimary = true },
+                    .. aliases.Select(alias => new TvdbTranslation { Language = alias.Language, Name = alias.Name, IsAlias = true }),
+                ],
+            },
+        };
+
+    [Fact]
+    public void AJapaneseShowsRomajiAliases_AreRomaji_TheOneWithoutMacronsOfficial()
+    {
+        var titles = TvdbEntityMapper.SeriesTitles(
+            ShowWithAliases(
+                "葬送のフリーレン",
+                "jpn",
+                ("jpn", "Sōsō no Furīren"),
+                ("jpn", "Sōsō no Frieren"),
+                ("jpn", "Sousou no Frieren"),
+                ("eng", "Frieren: Beyond Journey's End"),
+                ("eng", "Frieren")
+            ),
+            null
+        );
+
+        Assert.Equal(("葬送のフリーレン", "ja", TitleType.Main), (titles[0].Value, titles[0].LanguageCode, titles[0].Type));
+        var official = Assert.Single(titles, title => title is { Language: TitleLanguage.Romaji, Type: TitleType.Official });
+        Assert.Equal(("Sousou no Frieren", "x-jat"), (official.Value, official.LanguageCode));
+        Assert.Contains(titles, title => title is { Type: TitleType.Synonym, Value: "Sōsō no Furīren", LanguageCode: "x-jat", Language: TitleLanguage.Romaji });
+        Assert.Contains(titles, title => title is { Type: TitleType.Synonym, Value: "Sōsō no Frieren", LanguageCode: "x-jat", Language: TitleLanguage.Romaji });
+        Assert.Contains(titles, title => title is { Type: TitleType.Synonym, Value: "Frieren: Beyond Journey's End", LanguageCode: "en" });
+        Assert.Contains(titles, title => title is { Type: TitleType.Synonym, Value: "Frieren", LanguageCode: "en" });
+        // Each alias is kept once, though TvDB lists it twice.
+        Assert.Equal(6, titles.Count);
+    }
+
+    [Fact]
+    public void AJapaneseShowsAliasMostlyOfNames_StaysInItsLanguage()
+    {
+        var titles = TvdbEntityMapper.SeriesTitles(ShowWithAliases("九龍ジェネリックロマンス", "jpn", ("jpn", "Kowloon Generic Romance"), ("jpn", "Charlotte (2015)")), null);
+
+        Assert.Contains(titles, title => title is { Type: TitleType.Synonym, Value: "Kowloon Generic Romance", LanguageCode: "ja" });
+        Assert.Contains(titles, title => title is { Type: TitleType.Synonym, Value: "Charlotte (2015)", LanguageCode: "ja" });
+        Assert.DoesNotContain(titles, title => title.Language is TitleLanguage.Romaji);
+    }
+
+    [Fact]
+    public void AJapaneseShowWithOnlyMacronSpellings_HasTheBestOfThemOfficial()
+    {
+        var titles = TvdbEntityMapper.SeriesTitles(
+            ShowWithAliases("狼と香辛料", "jpn", ("jpn", "Ōkami to Kōshinryō: Wise Wolf"), ("jpn", "Ōkami to Kōshinryō")),
+            null
+        );
+
+        // Neither is plain, so the one most of whose letters are romaji wins,
+        // and no plain spelling is made up.
+        var official = Assert.Single(titles, title => title is { Language: TitleLanguage.Romaji, Type: TitleType.Official });
+        Assert.Equal("Ōkami to Kōshinryō", official.Value);
+        Assert.Contains(titles, title => title is { Type: TitleType.Synonym, Value: "Ōkami to Kōshinryō: Wise Wolf", LanguageCode: "x-jat" });
+        Assert.DoesNotContain(titles, title => title.Value == "Okami to Koshinryo");
+    }
+
+    [Fact]
+    public void AKoreanAliasOnAJapaneseShow_IsLeftAlone()
+    {
+        var titles = TvdbEntityMapper.SeriesTitles(ShowWithAliases("ああっ女神さまっ", "jpn", ("kor", "Ah! My Goddess"), ("kor", "Liz to Aoi Tori")), null);
+
+        Assert.All(titles.Skip(1), title => Assert.Equal(("ko", TitleType.Synonym), (title.LanguageCode, title.Type)));
+    }
+
+    [Fact]
+    public void AKoreanShowsLatinAliases_AreKoreanReadings_TheFirstOfficial()
+    {
+        var titles = TvdbEntityMapper.SeriesTitles(
+            ShowWithAliases(
+                "나 혼자만 레벨업",
+                "kor",
+                ("kor", "Na Honjaman Rebereop"),
+                ("kor", "Na Honjaman Level Up"),
+                ("kor", "王ドロボウJING in Seventh Heaven"),
+                ("eng", "Solo Leveling")
+            ),
+            null
+        );
+
+        Assert.Contains(titles, title => title is { Type: TitleType.Official, Value: "Na Honjaman Rebereop", LanguageCode: "x-kot", Language: TitleLanguage.KoreanTranscription });
+        Assert.Contains(titles, title => title is { Type: TitleType.Synonym, Value: "Na Honjaman Level Up", LanguageCode: "x-kot" });
+        // Kanji without Hangul is no reading either.
+        Assert.Contains(titles, title => title is { Type: TitleType.Synonym, Value: "王ドロボウJING in Seventh Heaven", LanguageCode: "ko" });
+        Assert.Contains(titles, title => title is { Type: TitleType.Synonym, Value: "Solo Leveling", LanguageCode: "en" });
+    }
+
+    [Fact]
+    public void AChineseShowsPinyinAliases_ArePinyin_ButItsEnglishOnesStayChinese()
+    {
+        var titles = TvdbEntityMapper.SeriesTitles(
+            ShowWithAliases("仙逆", "zho", ("zho", "Xiān Nì"), ("zho", "Xian Ni"), ("zho", "Twin Moons"), ("zho", "Cinderella Chef"), ("zho", "SYWZ")),
+            null
+        );
+
+        Assert.Contains(titles, title => title is { Type: TitleType.Official, Value: "Xian Ni", LanguageCode: "x-zht", Language: TitleLanguage.Pinyin });
+        Assert.Contains(titles, title => title is { Type: TitleType.Synonym, Value: "Xiān Nì", LanguageCode: "x-zht" });
+        Assert.All(
+            titles.Where(title => title.Value is "Twin Moons" or "Cinderella Chef" or "SYWZ"),
+            title => Assert.Equal(("zh", TitleType.Synonym), (title.LanguageCode, title.Type))
+        );
+    }
+
+    [Fact]
+    public void AnAliasSpellingTheMainTitle_IsKeptAsItsReading()
+    {
+        // A show TvDB names in romaji keeps that name as its main title, and
+        // the alias spelling it the same is its official reading.
+        var titles = TvdbEntityMapper.SeriesTitles(ShowWithAliases("Sousou no Frieren", "jpn", ("jpn", "Sousou no Frieren")), null);
+
+        Assert.Equal(("Sousou no Frieren", "ja", TitleType.Main), (titles[0].Value, titles[0].LanguageCode, titles[0].Type));
+        Assert.Contains(titles, title => title is { Type: TitleType.Official, Value: "Sousou no Frieren", LanguageCode: "x-jat" });
     }
 
     #endregion
