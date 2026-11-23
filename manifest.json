@@ -5,9 +5,31 @@
   "authors": "revam",
   "repository_url": "https://github.com/revam/dotnet-shoko-plugin-tvdb",
   "tags": [
+    "metadata-provider",
+    "metadata-auto-linker",
+    "metadata-series-linker",
+    "suspension-provider",
     "service-registration"
   ],
+  "thumbnail_url": "https://raw.githubusercontent.com/revam/dotnet-shoko-plugin-tvdb/stable/source/Assets/thumbnail.svg",
+  "icon_url": "https://raw.githubusercontent.com/revam/dotnet-shoko-plugin-tvdb/stable/source/Assets/icon.svg",
   "releases": [
+    {
+      "version": "1.6.0",
+      "tag": "v1.6.0",
+      "released_at": "2026-11-23T03:32:27.4330263Z",
+      "channel": "Stable",
+      "release_notes": "A show\u0027s romanised titles are now kept as readings. TvDB lists a show\u0027s romaji, pinyin or Korean romanisation as an alias in the show\u0027s own language; such an alias, written in Latin letters (for Japanese and Chinese, made of romaji or pinyin syllables), is now a Romaji, Pinyin or Korean transcription title, and one of them is the show\u0027s official title in that language, preferring a spelling without macrons or tone marks. Someone who prefers romanised titles now gets them for shows only TvDB knows. Shows pick it up on their next refresh.\n\nRequires Shoko Server with abstractions \u00606.0.0-alpha.114\u0060.",
+      "dependencies": [],
+      "archives": [
+        {
+          "runtime": "any",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/revam/dotnet-shoko-plugin-tvdb/releases/download/v1.6.0/TvDB-v1.6.0-any.zip",
+          "checksum": "sha256:80b2b9ee5312956daae1c6a904ad21e6696de880e7997dc36409481d0b9266e2"
+        }
+      ]
+    },
     {
       "version": "1.5.0",
       "tag": "v1.5.0",
@@ -136,7 +158,5 @@
         }
       ]
     }
-  ],
-  "thumbnail_url": "https://raw.githubusercontent.com/revam/dotnet-shoko-plugin-tvdb/stable/source/Assets/thumbnail.svg",
-  "icon_url": "https://raw.githubusercontent.com/revam/dotnet-shoko-plugin-tvdb/stable/source/Assets/icon.svg"
+  ]
 }
